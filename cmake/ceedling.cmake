@@ -12,7 +12,6 @@ if(CEEDLING_ENABLE_SANITIZER)
     include(${CMAKE_CURRENT_LIST_DIR}/sanitizer.cmake)
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/clangformat.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/unity.cmake)
 
 function(add_unit_test)
