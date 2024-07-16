@@ -1,0 +1,133 @@
+---
+Checks: >
+  -*,
+  bugprone-assert-side-effect,
+  bugprone-assignment-in-if-condition,
+  bugprone-bool-pointer-implicit-conversio,
+  bugprone-branch-clone,
+  bugprone-infinite-loop,
+  bugprone-integer-division,
+  bugprone-macro-parentheses,
+  bugprone-macro-repeated-side-effects,
+  bugprone-misplaced-operator-in-strlen-in-alloc,
+  bugprone-misplaced-pointer-arithmetic-in-alloc,
+  bugprone-misplaced-widening-cast,
+  bugprone-redundant-branch-condition,
+  bugprone-reserved-identifier,
+  bugprone-signed-char-misuse,
+  bugprone-sizeof-expression,
+  bugprone-string-literal-with-embedded-nul,
+  bugprone-suspicious-enum-usage,
+  bugprone-suspicious-include,
+  bugprone-suspicious-memset-usage,
+  bugprone-suspicious-missing-comma,
+  bugprone-suspicious-semicolon,
+  bugprone-suspicious-string-compare,
+  bugprone-terminating-continue,
+  bugprone-too-small-loop-variable,
+  clang-analyzer-core*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-avoid-goto,
+  hicpp-multiway-paths-covered,
+  hicpp-signed-bitwise,
+  llvm-header-guard,
+  llvm-include-order,
+  misc-definitions-in-headers,
+  misc-misplaced-const,
+  misc-const-correctness,
+  misc-no-recursion,
+  misc-redundant-expression,
+  modernize-use-bool-literals,
+  readability-braces-around-statements,
+  readability-duplicate-include,
+  readability-identifier-naming,
+  readability-isolate-declaration,
+  readability-magic-numbers,
+  readability-non-const-parameter,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-redundant-preprocessor,
+  readability-simplify-boolean-expr,
+  readability-uppercase-literal-suffix,
+  google-readability-todo,
+  google-runtime-int,
+  readability-function-cognitive-complexity,
+  readability-function-size,
+  cert-dcl21-cpp,
+  cert-flp30-c,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+WarningsAsErrors: >
+  bugprone-assert-side-effect,
+  bugprone-assignment-in-if-condition,
+  bugprone-bool-pointer-implicit-conversio,
+  bugprone-branch-clone,
+  bugprone-infinite-loop,
+  bugprone-integer-division,
+  bugprone-macro-parentheses,
+  bugprone-redundant-branch-condition,
+  bugprone-reserved-identifier,
+  bugprone-signed-char-misuse,
+  bugprone-sizeof-expression,
+  bugprone-string-literal-with-embedded-nul,
+  bugprone-too-small-loop-variable,
+  clang-analyzer-core*,
+  clang-diagnostic-parentheses,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-avoid-goto,
+  hicpp-multiway-paths-covered,
+  hicpp-signed-bitwise,
+  llvm-header-guard,
+  llvm-include-order,
+  misc-definitions-in-headers,
+  misc-misplaced-const,
+  misc-no-recursion,
+  readability-braces-around-statements,
+  readability-duplicate-include,
+  readability-identifier-naming,
+  readability-isolate-declaration,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-uppercase-literal-suffix,
+  google-runtime-int,
+  readability-function-cognitive-complexity,
+  readability-function-size,
+  cert-flp30-c,
+FormatStyle: file
+CheckOptions:
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: assert
+  - key: readability-identifier-naming.TypedefCase
+    value: camelBack
+  - key: readability-identifier-naming.EnumCase
+    value: camelBack
+  # - key: readability-identifier-naming.EnumSuffix
+  #   value: _e
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalPointerCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.PointerParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.StaticConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.StructCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ConstantCase
+    value: camelBack
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 15
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: true
+  - key: readability-function-size.NestingThreshold
+    value: 5
