@@ -1,0 +1,3 @@
+[submodule "cmake/prune_compile_commands"]
+	path = cmake/prune_compile_commands
+	url = https://gist.github.com/9bab6467c21c22845330943af39c9297.git
