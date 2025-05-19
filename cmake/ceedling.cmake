@@ -53,8 +53,8 @@ function(add_unit_test)
         target_add_gcov(${UT_TARGET} PUBLIC)
     endif()
 
-    if(CEEDLING_ENABLE_SANITIZER AND 
-       ((CEEDLING_SANITIZER_DEFAULT AND NOT UT_DISABLE_SANITIZER) OR 
+    if(CEEDLING_ENABLE_SANITIZER AND
+       ((CEEDLING_SANITIZER_DEFAULT AND NOT UT_DISABLE_SANITIZER) OR
         (NOT CEEDLING_SANITIZER_DEFAULT AND UT_ENABLE_SANITIZER)))
         target_add_sanitizer(${UT_TARGET} PUBLIC)
     endif()
@@ -67,5 +67,31 @@ function(add_unit_test)
             SKIP_LINTING TRUE
     )
 
-    add_test(NAME ${UT_NAME} COMMAND ${UT_NAME})
+    # Set some variables for use down below
+    set(ctest_file_base "${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}")
+    set(ctest_include_file "${ctest_file_base}_include.cmake")
+    set(ctest_tests_file "${ctest_file_base}_tests.cmake")
+
+    # Discover and add tests for the given file once it is built
+    add_custom_command(
+      TARGET ${UT_NAME} POST_BUILD
+      BYPRODUCTS "${ctest_tests_file}"
+      COMMAND "${CMAKE_COMMAND}"
+              -D "TEST_EXECUTABLE=$<TARGET_FILE:${UT_NAME}>"
+              -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+              -D "TEST_SUITE=$<TARGET_FILE_NAME:${UT_NAME}>"
+              -D "TEST_FILE=${ctest_tests_file}"
+              -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ceedlingDiscoverTests.cmake"
+      VERBATIM
+    )
+
+    # Mechanism to add the unit tests after building and discovering
+    #   - Can't call include(...) here since at the time that this function
+    #     is called the file is not yet generated.
+    file(WRITE "${ctest_include_file}" "include(\"${ctest_tests_file}\")" )
+    set_property(DIRECTORY
+        APPEND PROPERTY TEST_INCLUDE_FILES "${ctest_include_file}"
+    )
+
+    # add_test(NAME ${UT_NAME} COMMAND ${UT_NAME})
 endfunction()
