@@ -3,6 +3,7 @@ include_guard(GLOBAL)
 option(CEEDLING_ENABLE_GCOV "Enable coverage" OFF)
 option(CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
 option(CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
+option(CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
 
 if(CEEDLING_ENABLE_GCOV)
     include(${CMAKE_CURRENT_LIST_DIR}/gcov.cmake)
@@ -13,6 +14,11 @@ if(CEEDLING_ENABLE_SANITIZER)
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/unity.cmake)
+
+if(CEEDLING_EXTRACT_FUNCTIONS)
+    # Need to set 'UNITY_USE_COMMAND_LINE_ARGS' when building unity to allow the -l command to work
+    target_compile_definitions(unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+endif()
 
 function(add_unit_test)
     set(options DISABLE_SANITIZER ENABLE_SANITIZER)
@@ -67,31 +73,42 @@ function(add_unit_test)
             SKIP_LINTING TRUE
     )
 
-    # Set some variables for use down below
-    set(ctest_file_base "${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}")
-    set(ctest_include_file "${ctest_file_base}_include.cmake")
-    set(ctest_tests_file "${ctest_file_base}_tests.cmake")
+    if(CEEDLING_EXTRACT_FUNCTIONS)
+        # When CEEDLING_EXTRACT_FUNCTIONS is set this script will call each unit test
+        # application after being build (POST_BUILD) with the '-l' argument. The output
+        # is then parsed and each test reported is added as a new test using the name
+        # <UT_NAME>/<TEST>.
+        # This is loosely based on how gtest and boost test integration with cmake
+        # is done.
 
-    # Discover and add tests for the given file once it is built
-    add_custom_command(
-      TARGET ${UT_NAME} POST_BUILD
-      BYPRODUCTS "${ctest_tests_file}"
-      COMMAND "${CMAKE_COMMAND}"
-              -D "TEST_EXECUTABLE=$<TARGET_FILE:${UT_NAME}>"
-              -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-              -D "TEST_SUITE=$<TARGET_FILE_NAME:${UT_NAME}>"
-              -D "TEST_FILE=${ctest_tests_file}"
-              -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ceedlingDiscoverTests.cmake"
-      VERBATIM
-    )
+        # Set some variables for use down below
+        set(TB_UNITY_FILE_BASE    "${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}")
+        set(TB_UNITY_INCLUDE_FILE "${TB_UNITY_FILE_BASE}_include.cmake")
+        set(TB_UNITY_TEST_FILE    "${TB_UNITY_FILE_BASE}_tests.cmake")
 
-    # Mechanism to add the unit tests after building and discovering
-    #   - Can't call include(...) here since at the time that this function
-    #     is called the file is not yet generated.
-    file(WRITE "${ctest_include_file}" "include(\"${ctest_tests_file}\")" )
-    set_property(DIRECTORY
-        APPEND PROPERTY TEST_INCLUDE_FILES "${ctest_include_file}"
-    )
+        # Discover and add tests for the given file once it is built
+        add_custom_command(
+            TARGET ${UT_NAME} POST_BUILD
+            BYPRODUCTS "${TB_UNITY_TEST_FILE}"
+            COMMAND "${CMAKE_COMMAND}"
+                    -D "TEST_EXECUTABLE=$<TARGET_FILE:${UT_NAME}>"
+                    -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+                    -D "TEST_SUITE=$<TARGET_FILE_NAME:${UT_NAME}>"
+                    -D "TEST_FILE=${TB_UNITY_TEST_FILE}"
+                    -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/discovertests.cmake"
+            VERBATIM
+        )
 
-    # add_test(NAME ${UT_NAME} COMMAND ${UT_NAME})
+        # Mechanism to add the unit tests after building and discovering
+        #   - Can't call include(...) here since at the time that this function
+        #     is called the file is not yet generated.
+        file(WRITE "${TB_UNITY_INCLUDE_FILE}" "include(\"${TB_UNITY_TEST_FILE}\")" )
+        set_property(DIRECTORY
+            APPEND PROPERTY TEST_INCLUDE_FILES "${TB_UNITY_INCLUDE_FILE}"
+        )
+    else()
+        # Add the whole file as a single test
+        add_test(NAME ${UT_NAME} COMMAND ${UT_NAME})
+    endif()
+
 endfunction()
