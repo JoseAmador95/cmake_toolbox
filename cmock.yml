@@ -58,3 +58,6 @@
   #:array_size_type:  []            # Specify a type or types that should be used for array lengths
   #:array_size_name:  'size|len'    # Specify a name or names that CMock might automatically recognize as the length of an array
   :exclude_setjmp_h: false # Don't use setjmp when running CMock. Note that this might result in late reporting or out-of-order failures.
+
+:unity:
+  :cmdline_args: @TB_EXTRACT_FUNCTIONS_TF@ # Allow extraction of test functions as separate tests

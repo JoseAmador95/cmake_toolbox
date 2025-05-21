@@ -33,6 +33,12 @@ set(CMOCK_MOCK_DIR ${CMOCK_OUTPUT_DIR}/${CMOCK_MOCK_SUBDIR})
 set(RUNNER_OUTPUT_DIR ${CMOCK_OUTPUT_DIR}/runners)
 set(CMOCK_EXE ${cmock_repo_SOURCE_DIR}/lib/cmock.rb)
 set(RUNNER_EXE ${unity_SOURCE_DIR}/auto/generate_test_runner.rb)
+# Set option to be used in the cmock config file
+if(CEEDLING_EXTRACT_FUNCTIONS)
+    set(TB_EXTRACT_FUNCTIONS_TF true)
+else()
+    set(TB_EXTRACT_FUNCTIONS_TF false)
+endif()
 
 configure_file(${CMOCK_CONFIG_FILE} ${CMOCK_GENERATED_CONFIG_FILE} @ONLY)
 file(MAKE_DIRECTORY ${CMOCK_OUTPUT_DIR})
