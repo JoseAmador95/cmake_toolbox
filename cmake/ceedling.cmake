@@ -81,10 +81,9 @@ function(add_unit_test)
         # This is loosely based on how gtest and boost test integration with cmake
         # is done.
 
-        # Set some variables for use down below
-        set(TB_UNITY_FILE_BASE    "${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}")
-        set(TB_UNITY_INCLUDE_FILE "${TB_UNITY_FILE_BASE}_include.cmake")
-        set(TB_UNITY_TEST_FILE    "${TB_UNITY_FILE_BASE}_tests.cmake")
+        # Define name for the file generated for this test that will contain
+        # the name for each test case in the test file
+        set(TB_UNITY_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}_tests.cmake")
 
         # Discover and add tests for the given file once it is built
         add_custom_command(
@@ -102,9 +101,8 @@ function(add_unit_test)
         # Mechanism to add the unit tests after building and discovering
         #   - Can't call include(...) here since at the time that this function
         #     is called the file is not yet generated.
-        file(WRITE "${TB_UNITY_INCLUDE_FILE}" "include(\"${TB_UNITY_TEST_FILE}\")" )
         set_property(DIRECTORY
-            APPEND PROPERTY TEST_INCLUDE_FILES "${TB_UNITY_INCLUDE_FILE}"
+            APPEND PROPERTY TEST_INCLUDE_FILES "${TB_UNITY_TEST_FILE}"
         )
     else()
         # Add the whole file as a single test
