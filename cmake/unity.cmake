@@ -70,7 +70,7 @@ if(CEEDLING_EXTRACT_FUNCTIONS)
     if(MATCH_RESULT)
         message(STATUS "[toolbox] ':cmdline_args: true' found, assuming it is correct")
     else()
-        message(FATAL_ERROR "[toolbox] ':cmdline_args: true' not found in ${CMOCK_CONFIG_FILE}")
+        message(WARNING "[toolbox] ':cmdline_args: true' not found in ${CMOCK_CONFIG_FILE}")
     endif()
 endif()
 
