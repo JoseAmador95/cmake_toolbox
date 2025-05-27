@@ -1,6 +1,3 @@
-# New 'list(REMOVE_AT)' behavior to keep empty parts
-cmake_policy(SET CMP0007 NEW)
-
 # Function that runs the unity test to extract the list of tests
 # This function generates the '$TEST_FILE' file that contains the
 # extracted tests
