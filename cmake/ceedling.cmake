@@ -15,11 +15,6 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/unity.cmake)
 
-if(CEEDLING_EXTRACT_FUNCTIONS)
-    # Need to set 'UNITY_USE_COMMAND_LINE_ARGS' when building unity to allow the -l command to work
-    target_compile_definitions(unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
-endif()
-
 function(add_unit_test)
     set(options DISABLE_SANITIZER ENABLE_SANITIZER)
     set(oneValueArgs NAME UNIT_TEST TARGET)

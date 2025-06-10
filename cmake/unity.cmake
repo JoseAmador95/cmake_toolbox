@@ -33,8 +33,10 @@ set(CMOCK_MOCK_DIR ${CMOCK_OUTPUT_DIR}/${CMOCK_MOCK_SUBDIR})
 set(RUNNER_OUTPUT_DIR ${CMOCK_OUTPUT_DIR}/runners)
 set(CMOCK_EXE ${cmock_repo_SOURCE_DIR}/lib/cmock.rb)
 set(RUNNER_EXE ${unity_SOURCE_DIR}/auto/generate_test_runner.rb)
-# Set option to be used in the cmock config file
+# Set option needed when extracting functions
 if(CEEDLING_EXTRACT_FUNCTIONS)
+    # Need to set 'UNITY_USE_COMMAND_LINE_ARGS' when building unity to allow the -l command to work
+    target_compile_definitions(unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
     set(TB_EXTRACT_FUNCTIONS_TF true)
 else()
     set(TB_EXTRACT_FUNCTIONS_TF false)
