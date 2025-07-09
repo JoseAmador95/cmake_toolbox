@@ -1,11 +1,10 @@
-
 # ==============================================================================
 # PUBLIC API FUNCTIONS
 # ==============================================================================
 
 function(policy_register)
     set(options)
-    set(oneValueArgs NAME DESCRIPTION DEFAULT INTRODUCED_VERSION)
+    set(oneValueArgs NAME DESCRIPTION DEFAULT INTRODUCED_VERSION WARNING)
     set(multiValueArgs)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -22,6 +21,14 @@ function(policy_register)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires INTRODUCED_VERSION <version>")
     endif()
 
+    # WARNING is optional, default to empty string
+    if(NOT ARG_WARNING)
+        set(ARG_WARNING "")
+    endif()
+
+    # Escape pipe characters in warning message to avoid conflicts with field separator
+    string(REPLACE "|" "\\|" _escaped_warning "${ARG_WARNING}")
+
     _policy_check_newold("${ARG_DEFAULT}")
     _policy_registry_get(_policy_registry)
     foreach(_entry ${_policy_registry})
@@ -35,7 +42,7 @@ function(policy_register)
             endif()
         endif()
     endforeach()
-    _policy_registry_append("'${ARG_NAME}'|'${ARG_DESCRIPTION}'|'${ARG_DEFAULT}'|'${ARG_INTRODUCED_VERSION}'")
+    _policy_registry_append("'${ARG_NAME}'|'${ARG_DESCRIPTION}'|'${ARG_DEFAULT}'|'${ARG_INTRODUCED_VERSION}'|'${_escaped_warning}'")
 endfunction()
 
 function(policy_set)
@@ -141,6 +148,61 @@ function(policy_version)
     endforeach()
 endfunction()
 
+function(policy_info)
+    set(options)
+    set(oneValueArgs POLICY)
+    set(multiValueArgs)
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_POLICY)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires POLICY <policy_name>")
+    endif()
+
+    _policy_find("${ARG_POLICY}" _idx)
+    if(_idx LESS 0)
+        message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
+    endif()
+    _policy_registry_get(_policy_registry)
+    list(GET _policy_registry ${_idx} _entry)
+    if("${_entry}" STREQUAL "")
+        message(FATAL_ERROR "POLICY: Registry is corrupted or empty for ${ARG_POLICY}")
+    endif()
+    _policy_record_unpack("${_entry}" _fields)
+    if(NOT _fields)
+        message(FATAL_ERROR "POLICY: Policy entry malformed for ${ARG_POLICY}: ${_entry}")
+    endif()
+    list(LENGTH _fields _field_len)
+    if(_field_len LESS 4)
+        message(FATAL_ERROR "POLICY: Policy registry entry too short for ${ARG_POLICY} (fields: ${_fields})")
+    endif()
+    
+    list(GET _fields 0 _name)
+    list(GET _fields 1 _desc)
+    list(GET _fields 2 _default)
+    list(GET _fields 3 _version)
+    
+    # Get warning if available (field 4, index 4)
+    set(_warning "")
+    if(_field_len GREATER 4)
+        list(GET _fields 4 _warning)
+    endif()
+    
+    # Get current value
+    _policy_read("${ARG_POLICY}" _current_value)
+    if(_current_value STREQUAL "")
+        set(_current_value "${_default} (default)")
+    endif()
+    
+    message(STATUS "Policy Information for ${ARG_POLICY}:")
+    message(STATUS "  Description: ${_desc}")
+    message(STATUS "  Default: ${_default}")
+    message(STATUS "  Introduced in version: ${_version}")
+    message(STATUS "  Current value: ${_current_value}")
+    if(NOT _warning STREQUAL "")
+        message(STATUS "  Warning: ${_warning}")
+    endif()
+endfunction()
+
 # ==============================================================================
 # PRIVATE HELPER FUNCTIONS
 # ==============================================================================
@@ -176,9 +238,19 @@ function(_policy_registry_append RECORD)
 endfunction()
 
 function(_policy_record_unpack RECORD OUTVAR)
-    string(REPLACE "|" " " RECORD ${RECORD})
+    # First, temporarily replace escaped pipes with a placeholder
+    string(REPLACE "\\|" "___ESCAPED_PIPE___" RECORD "${RECORD}")
+    # Then replace field separator pipes with spaces
+    string(REPLACE "|" " " RECORD "${RECORD}")
+    # Parse the fields
     separate_arguments(_fields UNIX_COMMAND "${RECORD}")
-    set(${OUTVAR} "${_fields}" PARENT_SCOPE)
+    # Restore escaped pipes in each field
+    set(_restored_fields "")
+    foreach(_field ${_fields})
+        string(REPLACE "___ESCAPED_PIPE___" "|" _field "${_field}")
+        list(APPEND _restored_fields "${_field}")
+    endforeach()
+    set(${OUTVAR} "${_restored_fields}" PARENT_SCOPE)
 endfunction()
 
 function(_policy_find POLICY_NAME OUTINDEX)

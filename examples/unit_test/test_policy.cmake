@@ -2,8 +2,8 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 
-policy_register(NAME MY0001 DESCRIPTION "Use new behavior for XYZ" DEFAULT OLD INTRODUCED_VERSION 1.0)
-policy_register(NAME MY0002 DESCRIPTION "Enable advanced optimization" DEFAULT OLD INTRODUCED_VERSION 2.0)
+policy_register(NAME MY0001 DESCRIPTION "Use new behavior for XYZ" DEFAULT OLD INTRODUCED_VERSION 1.0 WARNING "This policy changes behavior significantly. Please test thoroughly.")
+policy_register(NAME MY0002 DESCRIPTION "Enable advanced optimization" DEFAULT OLD INTRODUCED_VERSION 2.0 WARNING "May cause compilation issues|with older compilers.")
 policy_register(NAME MY0003 DESCRIPTION "New parser syntax" DEFAULT OLD INTRODUCED_VERSION 3.1)
 
 message(STATUS "=== Set policies for API v2.5 (policy_version MINIMUM 2.5) ===")
