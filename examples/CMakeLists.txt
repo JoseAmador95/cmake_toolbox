@@ -16,7 +16,16 @@ add_unit_test(
     ENABLE_SANITIZER
 )
 
-add_test(
-    NAME policy
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_LIST_DIR}/unit_test/test_policy.cmake
-)
+# Automatically add all policy unit tests to CTest
+file(GLOB POLICY_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/policy/test_*.cmake")
+foreach(test_file ${POLICY_TEST_FILES})
+    # Extract the test name from the filename (test_<name>.cmake -> <name>)
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    
+    # Add the test to CTest with name policy_<name>
+    add_test(
+        NAME policy_${test_name}
+        COMMAND ${CMAKE_COMMAND} -P ${test_file}
+    )
+endforeach()
