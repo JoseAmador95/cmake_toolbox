@@ -203,6 +203,67 @@ function(policy_info)
     endif()
 endfunction()
 
+function(policy_get_fields)
+    set(options)
+    set(oneValueArgs POLICY PREFIX)
+    set(multiValueArgs)
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_POLICY)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires POLICY <policy_name>")
+    endif()
+    if(NOT ARG_PREFIX)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires PREFIX <variable_prefix>")
+    endif()
+
+    _policy_find("${ARG_POLICY}" _idx)
+    if(_idx LESS 0)
+        message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
+    endif()
+    _policy_registry_get(_policy_registry)
+    list(GET _policy_registry ${_idx} _entry)
+    if("${_entry}" STREQUAL "")
+        message(FATAL_ERROR "POLICY: Registry is corrupted or empty for ${ARG_POLICY}")
+    endif()
+    _policy_record_unpack("${_entry}" _fields)
+    if(NOT _fields)
+        message(FATAL_ERROR "POLICY: Policy entry malformed for ${ARG_POLICY}: ${_entry}")
+    endif()
+    list(LENGTH _fields _field_len)
+    if(_field_len LESS 4)
+        message(FATAL_ERROR "POLICY: Policy registry entry too short for ${ARG_POLICY} (fields: ${_fields})")
+    endif()
+    
+    # Set the basic fields
+    list(GET _fields 0 _name)
+    list(GET _fields 1 _desc)
+    list(GET _fields 2 _default)
+    list(GET _fields 3 _version)
+    
+    set(${ARG_PREFIX}_NAME "${_name}" PARENT_SCOPE)
+    set(${ARG_PREFIX}_DESCRIPTION "${_desc}" PARENT_SCOPE)
+    set(${ARG_PREFIX}_DEFAULT "${_default}" PARENT_SCOPE)
+    set(${ARG_PREFIX}_INTRODUCED_VERSION "${_version}" PARENT_SCOPE)
+    
+    # Set warning if available
+    if(_field_len GREATER 4)
+        list(GET _fields 4 _warning)
+        set(${ARG_PREFIX}_WARNING "${_warning}" PARENT_SCOPE)
+    else()
+        set(${ARG_PREFIX}_WARNING "" PARENT_SCOPE)
+    endif()
+    
+    # Get and set current value
+    _policy_read("${ARG_POLICY}" _current_value)
+    if(_current_value STREQUAL "")
+        set(${ARG_PREFIX}_CURRENT_VALUE "${_default}" PARENT_SCOPE)
+        set(${ARG_PREFIX}_IS_DEFAULT TRUE PARENT_SCOPE)
+    else()
+        set(${ARG_PREFIX}_CURRENT_VALUE "${_current_value}" PARENT_SCOPE)
+        set(${ARG_PREFIX}_IS_DEFAULT FALSE PARENT_SCOPE)
+    endif()
+endfunction()
+
 # ==============================================================================
 # PRIVATE HELPER FUNCTIONS
 # ==============================================================================
