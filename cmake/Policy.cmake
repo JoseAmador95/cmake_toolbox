@@ -4,7 +4,7 @@
 
 function(policy_register)
     set(options)
-    set(oneValueArgs NAME DESCRIPTION DEFAULT INTRODUCED_VERSION WARNING)
+    set(oneValueArgs NAME DESCRIPTION DEFAULT INTRODUCED_VERSION WARNING DEPRECATED_VERSION REMOVED_VERSION)
     set(multiValueArgs)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -25,6 +25,14 @@ function(policy_register)
     if(NOT ARG_WARNING)
         set(ARG_WARNING "")
     endif()
+    
+    # DEPRECATED_VERSION and REMOVED_VERSION are optional
+    if(NOT ARG_DEPRECATED_VERSION)
+        set(ARG_DEPRECATED_VERSION "")
+    endif()
+    if(NOT ARG_REMOVED_VERSION)
+        set(ARG_REMOVED_VERSION "")
+    endif()
 
     # Escape pipe characters in warning message to avoid conflicts with field separator
     string(REPLACE "|" "\\|" _escaped_warning "${ARG_WARNING}")
@@ -42,7 +50,7 @@ function(policy_register)
             endif()
         endif()
     endforeach()
-    _policy_registry_append("'${ARG_NAME}'|'${ARG_DESCRIPTION}'|'${ARG_DEFAULT}'|'${ARG_INTRODUCED_VERSION}'|'${_escaped_warning}'")
+    _policy_registry_append("'${ARG_NAME}'|'${ARG_DESCRIPTION}'|'${ARG_DEFAULT}'|'${ARG_INTRODUCED_VERSION}'|'${_escaped_warning}'|'${ARG_DEPRECATED_VERSION}'|'${ARG_REMOVED_VERSION}'")
 endfunction()
 
 function(policy_set)
@@ -64,6 +72,13 @@ function(policy_set)
     endif()
     _policy_check_newold("${ARG_VALUE}")
     _policy_write("${ARG_POLICY}" "${ARG_VALUE}")
+    
+    # Clear warning flags since the policy state has changed
+    # This allows appropriate warnings to be shown again if accessed
+    set_property(GLOBAL PROPERTY POLICY_WARNED_CURRENT_${ARG_POLICY} FALSE)
+    set_property(GLOBAL PROPERTY POLICY_WARNED_DEPRECATED_UNSET_${ARG_POLICY} FALSE)
+    set_property(GLOBAL PROPERTY POLICY_WARNED_DEPRECATED_SET_${ARG_POLICY} FALSE)
+    # Note: REMOVED warnings are not cleared as they should always warn once regardless
 endfunction()
 
 function(policy_get)
@@ -83,6 +98,10 @@ function(policy_get)
     if(_idx LESS 0)
         message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
     endif()
+    
+    # Check policy status and print warnings before getting value
+    _policy_check_and_warn("${ARG_POLICY}")
+    
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
@@ -181,10 +200,19 @@ function(policy_info)
     list(GET _fields 2 _default)
     list(GET _fields 3 _version)
     
-    # Get warning if available (field 4, index 4)
+    # Get optional fields
     set(_warning "")
+    set(_deprecated_ver "")
+    set(_removed_ver "")
+    
     if(_field_len GREATER 4)
         list(GET _fields 4 _warning)
+    endif()
+    if(_field_len GREATER 5)
+        list(GET _fields 5 _deprecated_ver)
+    endif()
+    if(_field_len GREATER 6)
+        list(GET _fields 6 _removed_ver)
     endif()
     
     # Get current value
@@ -198,6 +226,13 @@ function(policy_info)
     message(STATUS "  Default: ${_default}")
     message(STATUS "  Introduced in version: ${_version}")
     message(STATUS "  Current value: ${_current_value}")
+    
+    if(NOT _deprecated_ver STREQUAL "")
+        message(STATUS "  Deprecated in version: ${_deprecated_ver}")
+    endif()
+    if(NOT _removed_ver STREQUAL "")
+        message(STATUS "  Removed in version: ${_removed_ver}")
+    endif()
     if(NOT _warning STREQUAL "")
         message(STATUS "  Warning: ${_warning}")
     endif()
@@ -245,12 +280,26 @@ function(policy_get_fields)
     set(${ARG_PREFIX}_DEFAULT "${_default}" PARENT_SCOPE)
     set(${ARG_PREFIX}_INTRODUCED_VERSION "${_version}" PARENT_SCOPE)
     
-    # Set warning if available
+    # Set optional fields
     if(_field_len GREATER 4)
         list(GET _fields 4 _warning)
         set(${ARG_PREFIX}_WARNING "${_warning}" PARENT_SCOPE)
     else()
         set(${ARG_PREFIX}_WARNING "" PARENT_SCOPE)
+    endif()
+    
+    if(_field_len GREATER 5)
+        list(GET _fields 5 _deprecated_ver)
+        set(${ARG_PREFIX}_DEPRECATED_VERSION "${_deprecated_ver}" PARENT_SCOPE)
+    else()
+        set(${ARG_PREFIX}_DEPRECATED_VERSION "" PARENT_SCOPE)
+    endif()
+    
+    if(_field_len GREATER 6)
+        list(GET _fields 6 _removed_ver)
+        set(${ARG_PREFIX}_REMOVED_VERSION "${_removed_ver}" PARENT_SCOPE)
+    else()
+        set(${ARG_PREFIX}_REMOVED_VERSION "" PARENT_SCOPE)
     endif()
     
     # Get and set current value
@@ -301,14 +350,14 @@ endfunction()
 function(_policy_record_unpack RECORD OUTVAR)
     # First, temporarily replace escaped pipes with a placeholder
     string(REPLACE "\\|" "___ESCAPED_PIPE___" RECORD "${RECORD}")
-    # Then replace field separator pipes with spaces
-    string(REPLACE "|" " " RECORD "${RECORD}")
-    # Parse the fields
-    separate_arguments(_fields UNIX_COMMAND "${RECORD}")
-    # Restore escaped pipes in each field
+    # Then split on pipes to get fields
+    string(REPLACE "|" ";" _fields "${RECORD}")
+    # Restore escaped pipes and strip quotes from each field
     set(_restored_fields "")
     foreach(_field ${_fields})
         string(REPLACE "___ESCAPED_PIPE___" "|" _field "${_field}")
+        # Strip leading and trailing single quotes
+        string(REPLACE "'" "" _field "${_field}")
         list(APPEND _restored_fields "${_field}")
     endforeach()
     set(${OUTVAR} "${_restored_fields}" PARENT_SCOPE)
@@ -375,6 +424,103 @@ function(_policy_version_compare_gte v1 v2 OUT)
         set(${OUT} 1 PARENT_SCOPE)
     else()
         set(${OUT} 0 PARENT_SCOPE)
+    endif()
+endfunction()
+
+function(_policy_check_and_warn POLICY_NAME)
+    _policy_find("${POLICY_NAME}" _idx)
+    if(_idx LESS 0)
+        return() # Policy not found, caller will handle error
+    endif()
+    
+    _policy_registry_get(_policy_registry)
+    list(GET _policy_registry ${_idx} _entry)
+    _policy_record_unpack("${_entry}" _fields)
+    list(LENGTH _fields _field_len)
+    
+    if(_field_len LESS 4)
+        return() # Malformed entry, caller will handle error
+    endif()
+    
+    # Get policy information
+    list(GET _fields 0 _name)
+    list(GET _fields 1 _desc)
+    list(GET _fields 2 _default)
+    list(GET _fields 3 _introduced_ver)
+    
+    # Get optional fields
+    set(_warning "")
+    set(_deprecated_ver "")
+    set(_removed_ver "")
+    
+    if(_field_len GREATER 4)
+        list(GET _fields 4 _warning)
+    endif()
+    if(_field_len GREATER 5)
+        list(GET _fields 5 _deprecated_ver)
+    endif()
+    if(_field_len GREATER 6)
+        list(GET _fields 6 _removed_ver)
+    endif()
+    
+    # Check if policy is explicitly set
+    _policy_read("${POLICY_NAME}" _current_value)
+    set(_is_explicitly_set FALSE)
+    if(NOT _current_value STREQUAL "")
+        set(_is_explicitly_set TRUE)
+    endif()
+    
+    # Determine warning type and check if we've already warned about this specific scenario
+    set(_warning_key "")
+    set(_should_warn FALSE)
+    
+    # Check policy status and determine appropriate warning
+    # Priority: REMOVED > DEPRECATED > REGULAR WARNING
+    if(NOT _removed_ver STREQUAL "")
+        # Policy is removed - always warn regardless of whether it's set
+        set(_warning_key "POLICY_WARNED_REMOVED_${POLICY_NAME}")
+        get_property(_already_warned GLOBAL PROPERTY ${_warning_key})
+        if(NOT _already_warned)
+            message(AUTHOR_WARNING "Policy ${POLICY_NAME} was removed in version ${_removed_ver}. "
+                    "This policy is no longer supported and should not be used.")
+            set(_should_warn TRUE)
+        endif()
+    elseif(NOT _deprecated_ver STREQUAL "")
+        # Policy is deprecated - different warning based on whether it's set
+        if(NOT _is_explicitly_set)
+            set(_warning_key "POLICY_WARNED_DEPRECATED_UNSET_${POLICY_NAME}")
+            get_property(_already_warned GLOBAL PROPERTY ${_warning_key})
+            if(NOT _already_warned)
+                message(AUTHOR_WARNING "Policy ${POLICY_NAME} is deprecated since version ${_deprecated_ver}. "
+                        "Please set this policy explicitly using cmake_policy(SET ${POLICY_NAME} NEW) or cmake_policy(SET ${POLICY_NAME} OLD). "
+                        "This policy will be removed in a future version.")
+                set(_should_warn TRUE)
+            endif()
+        else()
+            set(_warning_key "POLICY_WARNED_DEPRECATED_SET_${POLICY_NAME}")
+            get_property(_already_warned GLOBAL PROPERTY ${_warning_key})
+            if(NOT _already_warned)
+                message(AUTHOR_WARNING "Policy ${POLICY_NAME} is deprecated since version ${_deprecated_ver} "
+                        "and will be removed in a future version.")
+                set(_should_warn TRUE)
+            endif()
+        endif()
+    else()
+        # Policy is current - print warning only if not explicitly set and has a warning
+        if(NOT _is_explicitly_set AND NOT _warning STREQUAL "")
+            set(_warning_key "POLICY_WARNED_CURRENT_${POLICY_NAME}")
+            get_property(_already_warned GLOBAL PROPERTY ${_warning_key})
+            if(NOT _already_warned)
+                message(AUTHOR_WARNING "Policy ${POLICY_NAME}: ${_warning} "
+                        "Please set this policy explicitly using cmake_policy(SET ${POLICY_NAME} NEW) or cmake_policy(SET ${POLICY_NAME} OLD).")
+                set(_should_warn TRUE)
+            endif()
+        endif()
+    endif()
+    
+    # Mark this specific warning scenario as shown
+    if(_should_warn AND NOT _warning_key STREQUAL "")
+        set_property(GLOBAL PROPERTY ${_warning_key} TRUE)
     endif()
 endfunction()
 
