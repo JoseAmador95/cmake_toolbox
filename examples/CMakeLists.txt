@@ -1,13 +1,14 @@
 include(ceedling)
 include(clangformat)
 include(clangtidy)
+include(Policy)
+
+include(unit_test/test_policy.cmake)
 
 add_library(example STATIC ${CMAKE_CURRENT_SOURCE_DIR}/source/example.c)
 add_library(dependency INTERFACE)
 target_include_directories(dependency INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(example PUBLIC dependency)
-
-target_set_clang_tidy(example ON)
 
 add_unit_test(
     NAME example_test

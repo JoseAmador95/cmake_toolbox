@@ -199,38 +199,3 @@ function(policy_version)
     endforeach()
 endfunction()
 
-# === Usage Example ===
-
-policy_register(MY0001 "Use new behavior for XYZ" OLD 1.0)
-policy_register(MY0002 "Enable advanced optimization" OLD 2.0)
-policy_register(MY0003 "New parser syntax" OLD 3.1)
-
-message(STATUS "=== Set policies for API v2.5 (policy_version MINIMUM 2.5) ===")
-policy_version(MINIMUM 2.5)
-
-policy_get(MY0001 v1)
-policy_get(MY0002 v2)
-policy_get(MY0003 v3)
-message(STATUS "MY0001: ${v1}")
-message(STATUS "MY0002: ${v2}")
-message(STATUS "MY0003: ${v3}")
-
-message(STATUS "=== Now try API v3.2 (policy_version MINIMUM 3.2) ===")
-policy_version(MINIMUM 3.2)
-
-policy_get(MY0001 v1)
-policy_get(MY0002 v2)
-policy_get(MY0003 v3)
-message(STATUS "MY0001: ${v1}")
-message(STATUS "MY0002: ${v2}")
-message(STATUS "MY0003: ${v3}")
-
-message(STATUS "=== Try with explicit MAXIMUM (policy_version MINIMUM 4.0 MAXIMUM 3.5): all policies OLD ===")
-policy_version(MINIMUM 4.0 MAXIMUM 3.5)
-
-policy_get(MY0001 v1)
-policy_get(MY0002 v2)
-policy_get(MY0003 v3)
-message(STATUS "MY0001: ${v1}")
-message(STATUS "MY0002: ${v2}")
-message(STATUS "MY0003: ${v3}")
