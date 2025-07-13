@@ -30,9 +30,17 @@ set(CMOCK_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmock.yml CACHE STRING "Configuration 
 set(CMOCK_GENERATED_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml)
 set(CMOCK_MOCK_SUBDIR mocks)
 set(CMOCK_MOCK_DIR ${CMOCK_OUTPUT_DIR}/${CMOCK_MOCK_SUBDIR})
-set(RUNNER_OUTPUT_DIR ${CMOCK_OUTPUT_DIR}/runners) 
+set(RUNNER_OUTPUT_DIR ${CMOCK_OUTPUT_DIR}/runners)
 set(CMOCK_EXE ${cmock_repo_SOURCE_DIR}/lib/cmock.rb)
 set(RUNNER_EXE ${unity_SOURCE_DIR}/auto/generate_test_runner.rb)
+# Set option needed when extracting functions
+if(CEEDLING_EXTRACT_FUNCTIONS)
+    # Need to set 'UNITY_USE_COMMAND_LINE_ARGS' when building unity to allow the -l command to work
+    target_compile_definitions(unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+    set(TB_EXTRACT_FUNCTIONS_TF true)
+else()
+    set(TB_EXTRACT_FUNCTIONS_TF false)
+endif()
 
 configure_file(${CMOCK_CONFIG_FILE} ${CMOCK_GENERATED_CONFIG_FILE} @ONLY)
 file(MAKE_DIRECTORY ${CMOCK_OUTPUT_DIR})
@@ -44,6 +52,31 @@ target_link_libraries(cmock PUBLIC unity)
 set_target_properties(cmock PROPERTIES C_CLANG_TIDY "" SKIP_LINTING TRUE)
 set_target_properties(unity PROPERTIES C_CLANG_TIDY "" SKIP_LINTING TRUE)
 
+# When .. is specified, ensure that :cmdline_args: true is found under unity option
+# If not fail and warn the user (or reconsider this to add it)
+if(CEEDLING_EXTRACT_FUNCTIONS)
+    # Need to set 'UNITY_USE_COMMAND_LINE_ARGS' when building unity to allow the -l command to work
+    target_compile_definitions(unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+
+    message(STATUS "[toolbox] Checking if 'cmdline_args' is set to true")
+    # Read the content of the file
+    file(READ "${CMOCK_GENERATED_CONFIG_FILE}" CONFIG_CONTENT)
+    # Define the regex pattern to match ':cmdline_args: true' nested under ':unity:'
+    # This regex is not a cath call, it will at most handle commented out option but
+    # not incorrect nesting etc
+    set(REGEX_PATTERN "[ \\t]+:cmdline_args:[ \\t]*true")
+
+    # Check if the pattern exists in the file content
+    string(REGEX MATCH "${REGEX_PATTERN}" MATCH_RESULT "${CONFIG_CONTENT}")
+
+    if(MATCH_RESULT)
+        message(STATUS "[toolbox] ':cmdline_args: true' found, assuming it is correct")
+    else()
+        message(WARNING "[toolbox] ':cmdline_args: true' not found in ${CMOCK_CONFIG_FILE}")
+    endif()
+endif()
+
+
 function(mock_header _header _mock_source _mock_header _output_dir)
     cmake_path(GET _header STEM _header_name)
     set(MOCK_DIR ${_output_dir}/${CMOCK_MOCK_SUBDIR})
@@ -54,7 +87,7 @@ function(mock_header _header _mock_source _mock_header _output_dir)
         OUTPUT ${MOCK_SOURCE} ${MOCK_HEADER}
         COMMAND ${Ruby_EXECUTABLE} ${CMOCK_EXE} ${_header} -o${CMOCK_GENERATED_CONFIG_FILE}
         WORKING_DIRECTORY ${_output_dir}
-        DEPENDS ${CMOCK_GENERATED_CONFIG_FILE} 
+        DEPENDS ${CMOCK_GENERATED_CONFIG_FILE}
                 ${_header}
                 ${Ruby_EXECUTABLE}
         COMMENT "Generate a mock for ${_header}"
@@ -69,7 +102,7 @@ function(generate_runner _test_source _runner_source)
     add_custom_command(
         OUTPUT ${RUNNER_SOURCE}
         COMMAND ${Ruby_EXECUTABLE} ${RUNNER_EXE} ${CMOCK_GENERATED_CONFIG_FILE} ${_test_source} ${RUNNER_SOURCE}
-        DEPENDS ${_test_source} 
+        DEPENDS ${_test_source}
                 ${CMOCK_GENERATED_CONFIG_FILE}
                 ${Ruby_EXECUTABLE}
         COMMENT "Generate a test runner for ${_test_source}"
