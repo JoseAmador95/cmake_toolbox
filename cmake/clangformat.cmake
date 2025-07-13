@@ -2,6 +2,7 @@ option(CLANG_FORMAT_USE_FILE "Use .clang-format file" ON)
 set(CLANG_FORMAT_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-format" CACHE STRING "Clang-Format config file")
 set(CLANG_FORMAT_ARGS "" CACHE STRING "Additional arguments to pass to clang-format")
 set(CLANG_FORMAT_SOURCE_DIRS "examples/source;examples/include" CACHE STRING "Semicolon-separated list of source directories to format")
+set(CLANG_FORMAT_EXCLUDE_PATTERNS "" CACHE STRING "Semicolon-separated list of regex patterns to exclude from formatting")
 
 find_program(CLANG_FORMAT_EXECUTABLE clang-format)
 
@@ -43,6 +44,45 @@ endforeach()
 
 # Remove duplicates
 list(REMOVE_DUPLICATES ALL_SOURCE_FILES)
+
+# Store original count for exclude reporting
+list(LENGTH ALL_SOURCE_FILES ORIGINAL_FILE_COUNT)
+
+# Apply exclude patterns
+if(CLANG_FORMAT_EXCLUDE_PATTERNS)
+    set(FILTERED_SOURCE_FILES "")
+    foreach(source_file IN LISTS ALL_SOURCE_FILES)
+        set(EXCLUDE_FILE FALSE)
+        foreach(regex_pattern IN LISTS CLANG_FORMAT_EXCLUDE_PATTERNS)
+            # Check relative path from CMAKE_SOURCE_DIR for path-based patterns
+            file(RELATIVE_PATH relative_path "${CMAKE_SOURCE_DIR}" "${source_file}")
+            if(relative_path MATCHES "${regex_pattern}")
+                set(EXCLUDE_FILE TRUE)
+                break()
+            endif()
+            
+            # Check just the filename without path for filename-based patterns
+            get_filename_component(filename "${source_file}" NAME)
+            if(filename MATCHES "${regex_pattern}")
+                set(EXCLUDE_FILE TRUE)
+                break()
+            endif()
+        endforeach()
+        
+        if(NOT EXCLUDE_FILE)
+            list(APPEND FILTERED_SOURCE_FILES "${source_file}")
+        endif()
+    endforeach()
+    
+    set(ALL_SOURCE_FILES "${FILTERED_SOURCE_FILES}")
+    
+    # Report excluded files count
+    list(LENGTH ALL_SOURCE_FILES FILTERED_COUNT)
+    math(EXPR EXCLUDED_COUNT "${ORIGINAL_FILE_COUNT} - ${FILTERED_COUNT}")
+    if(EXCLUDED_COUNT GREATER 0)
+        message(STATUS "Excluded ${EXCLUDED_COUNT} files matching patterns: ${CLANG_FORMAT_EXCLUDE_PATTERNS}")
+    endif()
+endif()
 
 if(NOT ALL_SOURCE_FILES)
     message(WARNING "No source files found for clang-format in directories: ${CLANG_FORMAT_SOURCE_DIRS}")
