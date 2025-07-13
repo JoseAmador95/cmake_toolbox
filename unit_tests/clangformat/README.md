@@ -39,11 +39,18 @@ All clang-format-related unit tests are located in `unit_tests/clangformat/` and
    - No source files found scenarios
 
 6. **`test_file_exclusion.cmake`** - Tests file exclusion patterns
-   - Directory-based exclusions (e.g., `generated/*`)
-   - Filename-based exclusions (e.g., `*test*`)
-   - Wildcard pattern matching
+   - Directory-based exclusions (e.g., `^generated/.*`)
+   - Filename-based exclusions (e.g., `.*test.*`)
+   - Regex pattern matching
    - Combined exclusion patterns
    - Empty pattern handling
+
+7. **`test_regex_exclusion.cmake`** - Tests advanced regex exclusion patterns
+   - Complex regex patterns with alternation
+   - Anchored patterns (start/end of string)
+   - Character classes and special characters
+   - Case-sensitive matching
+   - Pattern escaping
 
 ## Test Execution
 
@@ -70,6 +77,8 @@ Available test names:
 - `clangformat_configuration`
 - `clangformat_target_creation`
 - `clangformat_edge_cases`
+- `clangformat_file_exclusion`
+- `clangformat_regex_exclusion`
 
 To run individual tests directly (for debugging):
 ```cmake
