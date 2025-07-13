@@ -38,6 +38,13 @@ All clang-format-related unit tests are located in `unit_tests/clangformat/` and
    - Invalid directory paths
    - No source files found scenarios
 
+6. **`test_file_exclusion.cmake`** - Tests file exclusion patterns
+   - Directory-based exclusions (e.g., `generated/*`)
+   - Filename-based exclusions (e.g., `*test*`)
+   - Wildcard pattern matching
+   - Combined exclusion patterns
+   - Empty pattern handling
+
 ## Test Execution
 
 The clang-format tests are automatically integrated with CTest. To run all tests:
