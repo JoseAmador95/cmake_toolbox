@@ -7,18 +7,13 @@ set(CMOCK_TAG v2.5.3 CACHE STRING "CMock tag")
 
 include(FetchContent)
 
-FetchContent_Declare(
-    cmock_repo
-    GIT_REPOSITORY ${CMOCK_REPO}
-    GIT_TAG        ${CMOCK_TAG}
-)
+FetchContent_Declare(cmock_repo GIT_REPOSITORY ${CMOCK_REPO} GIT_TAG ${CMOCK_TAG})
 
-FetchContent_Declare(
+FetchContent_Declare(unity_repo GIT_REPOSITORY ${UNITY_REPO} GIT_TAG ${UNITY_TAG})
+FetchContent_MakeAvailable(
     unity_repo
-    GIT_REPOSITORY ${UNITY_REPO}
-    GIT_TAG        ${UNITY_TAG}
+    cmock_repo
 )
-FetchContent_MakeAvailable(unity_repo cmock_repo)
 
 find_package(Ruby REQUIRED)
 
@@ -49,8 +44,22 @@ file(MAKE_DIRECTORY ${RUNNER_OUTPUT_DIR})
 add_library(cmock STATIC ${cmock_repo_SOURCE_DIR}/src/cmock.c)
 target_include_directories(cmock PUBLIC ${cmock_repo_SOURCE_DIR}/src)
 target_link_libraries(cmock PUBLIC unity)
-set_target_properties(cmock PROPERTIES C_CLANG_TIDY "" SKIP_LINTING TRUE)
-set_target_properties(unity PROPERTIES C_CLANG_TIDY "" SKIP_LINTING TRUE)
+set_target_properties(
+    cmock
+    PROPERTIES
+        C_CLANG_TIDY
+            ""
+        SKIP_LINTING
+            TRUE
+)
+set_target_properties(
+    unity
+    PROPERTIES
+        C_CLANG_TIDY
+            ""
+        SKIP_LINTING
+            TRUE
+)
 
 # When .. is specified, ensure that :cmdline_args: true is found under unity option
 # If not fail and warn the user (or reconsider this to add it)
@@ -76,7 +85,6 @@ if(CEEDLING_EXTRACT_FUNCTIONS)
     endif()
 endif()
 
-
 function(mock_header _header _mock_source _mock_header _output_dir)
     cmake_path(GET _header STEM _header_name)
     set(MOCK_DIR ${_output_dir}/${CMOCK_MOCK_SUBDIR})
@@ -84,12 +92,16 @@ function(mock_header _header _mock_source _mock_header _output_dir)
     set(MOCK_SOURCE ${MOCK_DIR}/${CMOCK_MOCK_PREFIX}${_header_name}.c)
     set(MOCK_HEADER ${MOCK_DIR}/${CMOCK_MOCK_PREFIX}${_header_name}.h)
     add_custom_command(
-        OUTPUT ${MOCK_SOURCE} ${MOCK_HEADER}
-        COMMAND ${Ruby_EXECUTABLE} ${CMOCK_EXE} ${_header} -o${CMOCK_GENERATED_CONFIG_FILE}
+        OUTPUT
+            ${MOCK_SOURCE}
+            ${MOCK_HEADER}
+        COMMAND
+            ${Ruby_EXECUTABLE} ${CMOCK_EXE} ${_header} -o${CMOCK_GENERATED_CONFIG_FILE}
         WORKING_DIRECTORY ${_output_dir}
-        DEPENDS ${CMOCK_GENERATED_CONFIG_FILE}
-                ${_header}
-                ${Ruby_EXECUTABLE}
+        DEPENDS
+            ${CMOCK_GENERATED_CONFIG_FILE}
+            ${_header}
+            ${Ruby_EXECUTABLE}
         COMMENT "Generate a mock for ${_header}"
     )
     set(${_mock_source} ${MOCK_SOURCE} PARENT_SCOPE)
@@ -100,11 +112,15 @@ function(generate_runner _test_source _runner_source)
     cmake_path(GET _test_source STEM _test_name)
     set(RUNNER_SOURCE ${RUNNER_OUTPUT_DIR}/${_test_name}_runner.c)
     add_custom_command(
-        OUTPUT ${RUNNER_SOURCE}
-        COMMAND ${Ruby_EXECUTABLE} ${RUNNER_EXE} ${CMOCK_GENERATED_CONFIG_FILE} ${_test_source} ${RUNNER_SOURCE}
-        DEPENDS ${_test_source}
-                ${CMOCK_GENERATED_CONFIG_FILE}
-                ${Ruby_EXECUTABLE}
+        OUTPUT
+            ${RUNNER_SOURCE}
+        COMMAND
+            ${Ruby_EXECUTABLE} ${RUNNER_EXE} ${CMOCK_GENERATED_CONFIG_FILE} ${_test_source}
+            ${RUNNER_SOURCE}
+        DEPENDS
+            ${_test_source}
+            ${CMOCK_GENERATED_CONFIG_FILE}
+            ${Ruby_EXECUTABLE}
         COMMENT "Generate a test runner for ${_test_source}"
     )
     set(${_runner_source} ${RUNNER_SOURCE} PARENT_SCOPE)

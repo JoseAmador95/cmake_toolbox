@@ -12,7 +12,8 @@ add_unit_test(
     NAME example_test
     UNIT_TEST ${CMAKE_CURRENT_SOURCE_DIR}/unit_test/test_example.c
     TARGET example
-    MOCK_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/dependency.h
+    MOCK_HEADERS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/dependency.h
     ENABLE_SANITIZER
 )
 
@@ -22,11 +23,12 @@ foreach(test_file ${POLICY_TEST_FILES})
     # Extract the test name from the filename (test_<name>.cmake -> <name>)
     get_filename_component(test_filename ${test_file} NAME_WE)
     string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    
+
     # Add the test to CTest with name policy_<name>
     add_test(
         NAME policy_${test_name}
-        COMMAND ${CMAKE_COMMAND} -P ${test_file}
+        COMMAND
+            ${CMAKE_COMMAND} -P ${test_file}
     )
 endforeach()
 
@@ -36,10 +38,11 @@ foreach(test_file ${CLANGFORMAT_TEST_FILES})
     # Extract the test name from the filename (test_<n>.cmake -> <n>)
     get_filename_component(test_filename ${test_file} NAME_WE)
     string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    
+
     # Add the test to CTest with name clangformat_<n>
     add_test(
         NAME clangformat_${test_name}
-        COMMAND ${CMAKE_COMMAND} -P ${test_file}
+        COMMAND
+            ${CMAKE_COMMAND} -P ${test_file}
     )
 endforeach()

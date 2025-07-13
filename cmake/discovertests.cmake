@@ -13,8 +13,9 @@ function(add_unit_test_impl)
     cmake_parse_arguments(PARSE_ARGV 0 arg "${options}" "${oneValueArgs}" "${multiValueArgs}")
 
     # Run the executable and list the tests, extracting them one by one
-    cmake_language(EVAL CODE
-      "execute_process(
+    cmake_language(
+        EVAL CODE
+            "execute_process(
         COMMAND ${arg_TEST_EXECUTABLE} -l
         WORKING_DIRECTORY [==[${arg_TEST_WORKING_DIR}]==]
         OUTPUT_VARIABLE output
@@ -22,7 +23,7 @@ function(add_unit_test_impl)
       )"
     )
     if(NOT ${result} EQUAL 0)
-      message(FATAL_ERROR "Failed to get tests from '${arg_TEST_EXECUTABLE}'!")
+        message(FATAL_ERROR "Failed to get tests from '${arg_TEST_EXECUTABLE}'!")
     endif()
 
     # Convert the output to a cmake friendly string
@@ -33,13 +34,16 @@ function(add_unit_test_impl)
     # Iterate each test and add a test for it
     set(script)
     foreach(line ${output})
-      string(STRIP "${line}" test)
-      string(APPEND script "add_test(\"${arg_TEST_SUITE}/${test}\" ${arg_TEST_SUITE} -f ${test})\n")
+        string(STRIP "${line}" test)
+        string(
+            APPEND
+            script
+            "add_test(\"${arg_TEST_SUITE}/${test}\" ${arg_TEST_SUITE} -f ${test})\n"
+        )
     endforeach()
 
     # Write the file to disk
     file(WRITE "${arg_TEST_FILE}" "${script}")
-
 endfunction()
 
 # This cmake script is called as a cmake -P command: Call the function and forward the args
