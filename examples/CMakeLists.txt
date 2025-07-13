@@ -29,3 +29,17 @@ foreach(test_file ${POLICY_TEST_FILES})
         COMMAND ${CMAKE_COMMAND} -P ${test_file}
     )
 endforeach()
+
+# Automatically add all clang-format unit tests to CTest
+file(GLOB CLANGFORMAT_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/clangformat/test_*.cmake")
+foreach(test_file ${CLANGFORMAT_TEST_FILES})
+    # Extract the test name from the filename (test_<n>.cmake -> <n>)
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    
+    # Add the test to CTest with name clangformat_<n>
+    add_test(
+        NAME clangformat_${test_name}
+        COMMAND ${CMAKE_COMMAND} -P ${test_file}
+    )
+endforeach()
