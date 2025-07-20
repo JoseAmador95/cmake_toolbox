@@ -10,12 +10,21 @@ Variables:
   ClangFormat_VERSION      - Version string of clang-format
 
 Functions:
-  clangformat_add_targets(TARGET_PREFIX [options]) - Add clang-format targets
+  ClangFormat_AddTargets(TARGET_PREFIX [options]) - Add clang-format targets
+
+Example usage:
+  find_package(ClangFormat REQUIRED)
+  ClangFormat_AddTargets(
+    my_project
+    SOURCE_DIRS src include
+    CONFIG_FILE ${CMAKE_SOURCE_DIR}/.clang-format
+    EXCLUDE_PATTERNS ".*generated.*"
+  )
 
 #]=======================================================================]
 
 include(FindPackageHandleStandardArgs)
-include(clangformat) # Include basic clang-format utilities
+include(ClangFormat) # Include basic clang-format utilities
 
 # Define supported ClangFormat version range
 set(CLANGFORMAT_MAX_VERSION 22)
@@ -63,7 +72,7 @@ find_package_handle_standard_args(
 mark_as_advanced(ClangFormat_EXECUTABLE)
 
 # Function to add clang-format targets
-function(clangformat_add_targets TARGET_PREFIX)
+function(ClangFormat_AddTargets TARGET_PREFIX)
     if(NOT ClangFormat_FOUND)
         message(WARNING "ClangFormat not found, skipping targets for ${TARGET_PREFIX}")
         return()
@@ -86,10 +95,10 @@ function(clangformat_add_targets TARGET_PREFIX)
     endif()
 
     # Validate configuration file and get style argument
-    clangformat_validate_config("${ARG_CONFIG_FILE}" STYLE_ARG)
+    ClangFormat_ValidateConfig("${ARG_CONFIG_FILE}" STYLE_ARG)
 
     # Collect source files using the utility function
-    clangformat_collect_files(
+    ClangFormat_CollectFiles(
         ALL_SOURCE_FILES
         SOURCE_DIRS
             ${ARG_SOURCE_DIRS}
@@ -111,7 +120,7 @@ function(clangformat_add_targets TARGET_PREFIX)
     message(STATUS "Found ${SOURCE_FILE_COUNT} source files for ${TARGET_PREFIX} clang-format")
 
     # Create check command
-    clangformat_create_command(
+    ClangFormat_CreateCommand(
         CHECK_COMMAND
         EXECUTABLE ${ClangFormat_EXECUTABLE}
         STYLE_ARG "${STYLE_ARG}"
@@ -123,7 +132,7 @@ function(clangformat_add_targets TARGET_PREFIX)
     )
 
     # Create format command
-    clangformat_create_command(
+    ClangFormat_CreateCommand(
         FORMAT_COMMAND
         EXECUTABLE ${ClangFormat_EXECUTABLE}
         STYLE_ARG "${STYLE_ARG}"

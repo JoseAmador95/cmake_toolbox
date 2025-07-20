@@ -1,4 +1,4 @@
-# clangformat.cmake - Basic clang-format utilities
+# ClangFormat.cmake - Basic clang-format utilities
 # This module provides basic clang-format functionality and utilities
 
 # Define standard file extensions for C/C++ source code formatting
@@ -16,7 +16,7 @@ set(CLANGFORMAT_DEFAULT_EXTENSIONS
 )
 
 # Function to validate clang-format configuration file
-function(clangformat_validate_config ARG_CONFIG_FILE ARG_OUTPUT_VAR)
+function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
     if(EXISTS "${ARG_CONFIG_FILE}")
         set(${ARG_OUTPUT_VAR} "--style=file:${ARG_CONFIG_FILE}" PARENT_SCOPE)
     else()
@@ -26,7 +26,7 @@ function(clangformat_validate_config ARG_CONFIG_FILE ARG_OUTPUT_VAR)
 endfunction()
 
 # Function to collect source files from directories
-function(clangformat_collect_files ARG_OUTPUT_VAR)
+function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
     set(options "")
     set(oneValueArgs "")
     set(multiValueArgs
@@ -88,7 +88,7 @@ function(clangformat_collect_files ARG_OUTPUT_VAR)
 endfunction()
 
 # Function to create clang-format command
-function(clangformat_create_command ARG_OUTPUT_VAR)
+function(ClangFormat_CreateCommand ARG_OUTPUT_VAR)
     set(options "")
     set(oneValueArgs
         EXECUTABLE
