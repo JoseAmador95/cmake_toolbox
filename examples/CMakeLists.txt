@@ -1,5 +1,5 @@
 include(ceedling)
-include(clangformat)
+find_package(ClangFormat QUIET)
 include(clangtidy)
 include(Policy)
 
