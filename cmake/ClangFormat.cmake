@@ -108,21 +108,35 @@ function(ClangFormat_CreateCommand ARG_OUTPUT_VAR)
     endif()
 
     if(ARG_MODE STREQUAL "CHECK")
-        list(
-            APPEND
-            COMMAND_ARGS
-            --dry-run
-            --Werror
-        )
+        # For check mode, use CMake script for cross-platform compatibility
+        # Pass parameters to the script via -D arguments
+        set(COMMAND_ARGS "${CMAKE_COMMAND}")
+        list(APPEND COMMAND_ARGS "-DCLANG_FORMAT_EXECUTABLE=${ARG_EXECUTABLE}")
+        if(ARG_STYLE_ARG)
+            list(APPEND COMMAND_ARGS "-DCLANG_FORMAT_STYLE_ARG=${ARG_STYLE_ARG}")
+        endif()
+        if(ARG_ADDITIONAL_ARGS)
+            string(REPLACE ";" "\\;" ESCAPED_ARGS "${ARG_ADDITIONAL_ARGS}")
+            list(APPEND COMMAND_ARGS "-DCLANG_FORMAT_ADDITIONAL_ARGS=${ESCAPED_ARGS}")
+        endif()
+        
+        # Convert file list to string for passing to script
+        string(REPLACE ";" "\\;" ESCAPED_FILES "${ARG_FILES}")
+        list(APPEND COMMAND_ARGS "-DCLANG_FORMAT_FILES=${ESCAPED_FILES}")
+        
+        # Add the script to execute
+        list(APPEND COMMAND_ARGS "-P")
+        list(APPEND COMMAND_ARGS "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ClangFormatCheck.cmake")
+        
+        set(COMMAND_ARGS "${COMMAND_ARGS}")
+        
     elseif(ARG_MODE STREQUAL "FORMAT")
         list(APPEND COMMAND_ARGS -i)
+        if(ARG_ADDITIONAL_ARGS)
+            list(APPEND COMMAND_ARGS ${ARG_ADDITIONAL_ARGS})
+        endif()
+        list(APPEND COMMAND_ARGS ${ARG_FILES})
     endif()
-
-    if(ARG_ADDITIONAL_ARGS)
-        list(APPEND COMMAND_ARGS ${ARG_ADDITIONAL_ARGS})
-    endif()
-
-    list(APPEND COMMAND_ARGS ${ARG_FILES})
 
     set(${ARG_OUTPUT_VAR} "${COMMAND_ARGS}" PARENT_SCOPE)
 endfunction()
