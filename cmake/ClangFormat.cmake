@@ -1,8 +1,8 @@
 # ClangFormat.cmake - Basic clang-format utilities
 # This module provides basic clang-format functionality and utilities
 
-# Define standard file extensions for C/C++ source code formatting
-set(CLANGFORMAT_DEFAULT_EXTENSIONS
+# Define standard file patterns for C/C++ source code formatting
+set(CLANGFORMAT_DEFAULT_PATTERNS
     "*.c"
     "*.h"
     "*.cpp"
@@ -31,7 +31,7 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
     set(oneValueArgs "")
     set(multiValueArgs
         SOURCE_DIRS
-        EXTENSIONS
+        PATTERNS
         EXCLUDE_PATTERNS
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -41,9 +41,9 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: SOURCE_DIRS must be provided")
     endif()
 
-    # Set default extensions if not provided
-    if(NOT ARG_EXTENSIONS)
-        set(ARG_EXTENSIONS ${CLANGFORMAT_DEFAULT_EXTENSIONS})
+    # Set default patterns if not provided
+    if(NOT ARG_PATTERNS)
+        set(ARG_PATTERNS ${CLANGFORMAT_DEFAULT_PATTERNS})
     endif()
 
     # Collect source files from specified directories
@@ -51,8 +51,8 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
     foreach(SOURCE_DIR IN LISTS ARG_SOURCE_DIRS)
         set(FULL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/${SOURCE_DIR}")
         if(IS_DIRECTORY "${FULL_SOURCE_DIR}")
-            foreach(EXTENSION IN LISTS ARG_EXTENSIONS)
-                file(GLOB_RECURSE FOUND_FILES "${FULL_SOURCE_DIR}/${EXTENSION}")
+            foreach(PATTERN IN LISTS ARG_PATTERNS)
+                file(GLOB_RECURSE FOUND_FILES "${FULL_SOURCE_DIR}/${PATTERN}")
                 list(APPEND ALL_FILES ${FOUND_FILES})
             endforeach()
         else()

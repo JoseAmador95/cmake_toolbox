@@ -102,7 +102,7 @@ function(ClangFormat_AddTargets TARGET_PREFIX)
         ALL_SOURCE_FILES
         SOURCE_DIRS
             ${ARG_SOURCE_DIRS}
-        EXTENSIONS
+        PATTERNS
             ${ARG_EXTENSIONS}
         EXCLUDE_PATTERNS
             ${ARG_EXCLUDE_PATTERNS}
