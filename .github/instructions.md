@@ -247,6 +247,132 @@ if(actual_count EQUAL expected_count)
 endif()
 ```
 
+### Critical Rule: All Test Functions Must Include Verification
+
+**Every test function must verify its operations, not just perform actions without checking results.**
+
+#### ❌ Bad Example - Action Without Verification
+```cmake
+function(test_policy_setting)
+    message(STATUS "Test 3: Setting policy values")
+    
+    policy_set(POLICY BASIC001 VALUE NEW)
+    policy_set(POLICY BASIC002 VALUE OLD)
+    
+    message(STATUS "  ✓ Successfully set policy values")  # MISLEADING!
+endfunction()
+```
+**Problem**: This claims success without actually verifying the values were set correctly.
+
+#### ✅ Good Example - Action With Immediate Verification
+```cmake
+function(test_policy_setting)
+    message(STATUS "Test 3: Setting and verifying policy values")
+    
+    # Set the values
+    policy_set(POLICY BASIC001 VALUE NEW)
+    policy_set(POLICY BASIC002 VALUE OLD)
+    
+    # Immediately verify they were set correctly
+    policy_get(POLICY BASIC001 OUTVAR val1_new)
+    if(NOT val1_new STREQUAL "NEW")
+        message(STATUS "  ✗ BASIC001 should be NEW after setting, got: ${val1_new}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    
+    policy_get(POLICY BASIC002 OUTVAR val2_old)
+    if(NOT val2_old STREQUAL "OLD")
+        message(STATUS "  ✗ BASIC002 should be OLD after setting, got: ${val2_old}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    
+    message(STATUS "  ✓ Policy values set and verified correctly")
+endfunction()
+```
+
+#### Verification Requirements for All Test Functions
+
+1. **Setup Functions**: If they register, create, or configure something, verify it worked:
+```cmake
+function(test_policy_registration)
+    # Register policies
+    policy_register(NAME TEST001 DESCRIPTION "Test policy" DEFAULT OLD INTRODUCED_VERSION 1.0)
+    
+    # Verify registration worked
+    policy_get_fields(POLICY TEST001 PREFIX T1)
+    if(NOT T1_DESCRIPTION STREQUAL "Test policy")
+        message(STATUS "  ✗ Registration failed: description mismatch")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    
+    message(STATUS "  ✓ Policy registered and verified correctly")
+endfunction()
+```
+
+2. **Action Functions**: Perform the action AND verify the result:
+```cmake
+function(test_file_creation)
+    # Create file
+    file(WRITE "${TEST_DIR}/test.txt" "Hello World")
+    
+    # Verify file was created with correct content
+    if(NOT EXISTS "${TEST_DIR}/test.txt")
+        message(STATUS "  ✗ File was not created")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    
+    file(READ "${TEST_DIR}/test.txt" content)
+    if(NOT content STREQUAL "Hello World")
+        message(STATUS "  ✗ File content incorrect: '${content}'")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    
+    message(STATUS "  ✓ File created and verified correctly")
+endfunction()
+```
+
+3. **Error Handling Functions**: Verify that invalid operations fail appropriately:
+```cmake
+function(test_invalid_input_handling)
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -P -c "
+            include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Module.cmake)
+            Module_Function(INVALID_PARAMETER)
+        "
+        RESULT_VARIABLE result
+        OUTPUT_VARIABLE output
+        ERROR_VARIABLE error
+    )
+    
+    if(result EQUAL 0)
+        message(STATUS "  ✗ Invalid input should have failed but succeeded")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    
+    message(STATUS "  ✓ Invalid input correctly rejected")
+endfunction()
+```
+
+#### Benefits of Complete Verification
+
+- **Catches Silent Failures**: Operations that appear to succeed but don't work correctly
+- **Provides Clear Feedback**: Shows exactly what went wrong when tests fail
+- **Documents Expected Behavior**: The verification code serves as executable documentation
+- **Prevents False Positives**: Eliminates misleading "success" messages for failed operations
+- **Improves Debugging**: Specific failure messages help identify issues quickly
+
 ### Function-Based Test Organization Benefits
 - **Better debugging**: Call stack shows which test function failed
 - **Improved maintainability**: Each test is isolated and can be run independently
@@ -383,6 +509,26 @@ if(file_count EQUAL expected_count)
 - **Don't create monolithic test files** - organize into functions for better debugging and maintainability
 - **Don't skip test environment cleanup** - always clean up temporary files and restore original state
 - **Don't ignore error propagation** - use `PARENT_SCOPE` to propagate ERROR_COUNT across functions
+- **Don't write action-only tests without verification** - every test function must verify its operations worked correctly:
+```cmake
+# BAD: Action without verification
+function(test_something)
+    do_something()
+    message(STATUS "  ✓ Something completed")  # Misleading - no verification!
+endfunction()
+
+# GOOD: Action with verification
+function(test_something)
+    do_something()
+    verify_something_worked()
+    if(verification_failed)
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+    message(STATUS "  ✓ Something completed and verified")
+endfunction()
+```
 
 ### Function Design Issues
 - **Don't mix behavior testing with implementation testing** - focus on what functions do, not how they do it
@@ -469,10 +615,13 @@ execute_process(
 4. **Create comprehensive unit tests** in `unit_tests/<module>/test_*.cmake`:
    - Include the actual module under test
    - Organize tests into functions (setup, individual tests, cleanup, orchestration)
+   - **Ensure every test function includes verification** - no action-only tests
    - Test behavior, not implementation details
    - Use proper error counting with PARENT_SCOPE
    - Create realistic test environments
    - Calculate expected values dynamically (avoid magic numbers)
+   - **Verify setup operations worked correctly** (registration, file creation, etc.)
+   - **Immediately verify action results** (value changes, transformations, etc.)
 5. **Format with gersemi** before testing
 6. **Run unit tests with CTest** to verify functionality: `cd build && ctest -R module_name --verbose`
 7. **Test in a real CMake project** for integration testing (not just script mode)
@@ -482,12 +631,17 @@ execute_process(
 ### Unit Test Development Checklist
 - [ ] Tests include actual module implementation (not duplicate logic)
 - [ ] Tests are organized into functions for better debugging
+- [ ] **Every test function includes verification of its operations** - no action-only tests
 - [ ] Error counting uses PARENT_SCOPE for proper propagation
 - [ ] Test environment is created and cleaned up properly
 - [ ] Expected values are calculated dynamically, not hardcoded
 - [ ] Tests focus on behavior/output, not implementation details
 - [ ] Both success and error conditions are tested
-- [ ] Test output uses clear ✓/✗ indicators
+- [ ] **Setup functions verify their setup worked correctly** (e.g., registration, file creation)
+- [ ] **Action functions immediately verify their results** (e.g., setting values, transformations)
+- [ ] **Error tests verify that invalid operations fail appropriately**
+- [ ] Test output uses clear ✓/✗ indicators with specific failure messages
+- [ ] **Success messages accurately reflect verified operations, not just completed actions**
 - [ ] CMAKE_SOURCE_DIR is saved/restored if modified
 - [ ] All test functions are called from run_all_tests()
 
