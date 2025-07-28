@@ -5,7 +5,7 @@ This document outlines the coding standards, patterns, and best practices to fol
 ## Code StyFunctions:
   ModuleName_AddTargets(PREFIX [options]) - Description
 
-#]=======================================================================]nd Formatting
+#]=======================================================================]
 
 ### CMake Formatting with Gersemi
 - **Always use gersemi** for formatting CMake files
@@ -261,17 +261,38 @@ set(ORIGINAL_CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 # ... modify CMAKE_SOURCE_DIR for testing ...
 set(CMAKE_SOURCE_DIR "${ORIGINAL_CMAKE_SOURCE_DIR}" PARENT_SCOPE)
 ```
+- **Use consistent TEST_DIR variable** to avoid path duplication and improve maintainability:
+```cmake
+set(ERROR_COUNT 0)
+set(TEST_DIR "${CMAKE_BINARY_DIR}/module_specific_test")
+
+function(setup_test_environment)
+    file(REMOVE_RECURSE "${TEST_DIR}")
+    file(MAKE_DIRECTORY "${TEST_DIR}")
+    # Use TEST_DIR consistently throughout all functions
+    set(CMAKE_SOURCE_DIR "${TEST_DIR}" PARENT_SCOPE)
+endfunction()
+
+function(cleanup_test_environment)
+    file(REMOVE_RECURSE "${TEST_DIR}")
+    set(CMAKE_SOURCE_DIR "${ORIGINAL_CMAKE_SOURCE_DIR}" PARENT_SCOPE)
+endfunction()
+```
+- **Define TEST_DIR once at module level** to make it accessible to all functions
+- **Never hardcode test directory paths** - always use the TEST_DIR variable
+- **Use descriptive test directory names** that clearly identify the module being tested
 - **Create isolated test directories** to avoid conflicts with the actual build
 - **Clean up test artifacts** to prevent test pollution between runs
 - **Use absolute paths** for test directories to avoid working directory issues
-    test_specific_function()
-    message(STATUS "=== All ModuleName tests passed ===")
-endfunction()
 
-if(CMAKE_SCRIPT_MODE_FILE)
-    run_all_tests()
-endif()
-```
+#### Benefits of Consistent TEST_DIR Usage
+- **Maintainability**: Changes to test directory paths only need to be made in one place
+- **Readability**: Code is cleaner without repeated hardcoded paths
+- **DRY Principle**: Don't Repeat Yourself - define the path once and reuse
+- **Debugging**: Easier to identify test directories when they follow a consistent pattern
+- **Refactoring**: Moving or renaming test directories becomes trivial
+
+### General Testing Guidelines
 - **Avoid testing implementation details** like checking if specific CMAKE variables are used internally
 - **Focus on public API behavior** and observable outputs rather than internal mechanisms
 - **Test error conditions** by verifying expected warnings and error messages
@@ -318,7 +339,7 @@ docs/
 ### RST Documentation Headers
 - **Include comprehensive RST documentation** in Find modules:
 ```cmake
-#[=======================================================================[.rst:
+#[=======================================================================[
 FindToolName
 ------------
 
