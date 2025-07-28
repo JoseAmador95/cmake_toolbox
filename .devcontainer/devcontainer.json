@@ -1,0 +1,22 @@
+{
+    "name": "cmake_toolbox",
+    "build": {
+        "dockerfile": "dockerfile"
+    },
+    "mounts": [
+        {
+            "source": "${localWorkspaceFolder}",
+            "target": "${localWorkspaceFolder}",
+            "type": "bind"
+        }
+    ],
+    "workspaceFolder": "${localWorkspaceFolder}",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools"
+            ]
+        }
+    }
+}
