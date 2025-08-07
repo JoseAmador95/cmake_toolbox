@@ -13,7 +13,10 @@ if(CEEDLING_ENABLE_SANITIZER)
     include(${CMAKE_CURRENT_LIST_DIR}/sanitizer.cmake)
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/unity.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/Unity.cmake)
+
+# Initialize Unity once for ceedling
+Unity_Initialize()
 
 function(add_unit_test)
     set(options
@@ -43,9 +46,38 @@ function(add_unit_test)
 
     set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}.dir)
     file(MAKE_DIRECTORY ${TEST_BINARY_DIR})
+    
+    # Set default mock subdirectory if not defined
+    if(NOT DEFINED CMOCK_MOCK_SUBDIR)
+        set(CMOCK_MOCK_SUBDIR "mocks")
+    endif()
+
+    # Look for config file in common locations
+    set(config_locations
+        ${CMAKE_SOURCE_DIR}/cmock.yml
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
+        ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
+    )
+    
+    set(default_config "")
+    foreach(config_path ${config_locations})
+        if(EXISTS ${config_path})
+            set(default_config ${config_path})
+            break()
+        endif()
+    endforeach()
+    
+    if(NOT default_config)
+        message(FATAL_ERROR "add_unit_test: No cmock.yml configuration file found in expected locations")
+    endif()
 
     unset(RUNNER_SOURCE)
-    generate_runner(${UT_UNIT_TEST} RUNNER_SOURCE)
+    Unity_GenerateRunner(
+        TEST_SOURCE ${UT_UNIT_TEST}
+        OUTPUT_DIR ${TEST_BINARY_DIR}
+        CONFIG_FILE ${default_config}
+        RUNNER_SOURCE_VAR RUNNER_SOURCE
+    )
     cmake_path(GET RUNNER_SOURCE STEM RUNNER_STEM)
     set(TEST_RUNNER ${TEST_BINARY_DIR}/${RUNNER_STEM}.c)
     add_custom_command(
@@ -62,7 +94,13 @@ function(add_unit_test)
 
     foreach(HEADER IN LISTS UT_MOCK_HEADERS)
         unset(MOCK_SOURCE)
-        mock_header(${HEADER} MOCK_SOURCE MOCK_HEADER ${TEST_BINARY_DIR})
+        Unity_GenerateMock(
+            HEADER ${HEADER}
+            OUTPUT_DIR ${TEST_BINARY_DIR}
+            CONFIG_FILE ${default_config}
+            MOCK_SOURCE_VAR MOCK_SOURCE
+            MOCK_HEADER_VAR MOCK_HEADER
+        )
         target_sources(${UT_NAME} PRIVATE ${MOCK_SOURCE})
     endforeach()
 

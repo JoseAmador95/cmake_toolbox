@@ -109,14 +109,14 @@ function(Unity_Initialize)
     set(_CMOCK_TAG ${ARG_CMOCK_TAG} CACHE INTERNAL "CMock version tag")
     set(_CEEDLING_EXTRACT_FUNCTIONS ${ARG_ENABLE_CEEDLING} CACHE INTERNAL "Ceedling extract functions mode")
 
-    # Fetch Unity and CMock dependencies
+    # Fetch Unity and CMock repositories
     include(FetchContent)
     FetchContent_Declare(cmock_repo GIT_REPOSITORY ${ARG_CMOCK_REPO} GIT_TAG ${ARG_CMOCK_TAG})
     FetchContent_Declare(unity_repo GIT_REPOSITORY ${ARG_UNITY_REPO} GIT_TAG ${ARG_UNITY_TAG})
     FetchContent_MakeAvailable(unity_repo cmock_repo)
 
-    # Validate Ruby dependency
-    find_package(Ruby REQUIRED)
+    # Find Ruby executable for CMock and runner generation
+    find_program(Ruby_EXECUTABLE ruby REQUIRED)
 
     # Store paths globally for internal use
     set(_CMOCK_EXE ${cmock_repo_SOURCE_DIR}/lib/cmock.rb CACHE INTERNAL "CMock executable path")

@@ -46,3 +46,19 @@ foreach(test_file ${CLANGFORMAT_TEST_FILES})
             ${CMAKE_COMMAND} -P ${test_file}
     )
 endforeach()
+
+# Note: Unity module testing is not included in unit tests because:
+# - Unity_Initialize() requires FetchContent (external dependencies)
+# - Unity_GenerateMock(), Unity_GenerateRunner(), Unity_CreateTestTarget() all use 
+#   add_custom_command/add_executable which don't work in script mode (cmake -P)
+# - These functions should be tested in integration tests within actual CMake projects
+# 
+# The Unity module is designed for use in real CMake projects where:
+# - FetchContent can download dependencies
+# - add_custom_command can generate mocks and runners  
+# - add_executable can create test targets
+# 
+# Unit testing these functions would require either:
+# 1. External dependencies (defeating the purpose of unit tests)
+# 2. Complex mocking that doesn't test real behavior
+# 3. Running in project mode (not true unit testing)
