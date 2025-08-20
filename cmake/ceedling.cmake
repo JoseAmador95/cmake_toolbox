@@ -46,7 +46,7 @@ function(add_unit_test)
 
     set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}.dir)
     file(MAKE_DIRECTORY ${TEST_BINARY_DIR})
-    
+
     # Set default mock subdirectory if not defined
     if(NOT DEFINED CMOCK_MOCK_SUBDIR)
         set(CMOCK_MOCK_SUBDIR "mocks")
@@ -58,7 +58,7 @@ function(add_unit_test)
         ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
         ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
     )
-    
+
     set(default_config "")
     foreach(config_path ${config_locations})
         if(EXISTS ${config_path})
@@ -66,9 +66,12 @@ function(add_unit_test)
             break()
         endif()
     endforeach()
-    
+
     if(NOT default_config)
-        message(FATAL_ERROR "add_unit_test: No cmock.yml configuration file found in expected locations")
+        message(
+            FATAL_ERROR
+            "add_unit_test: No cmock.yml configuration file found in expected locations"
+        )
     endif()
 
     unset(RUNNER_SOURCE)

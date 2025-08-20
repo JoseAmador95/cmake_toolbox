@@ -39,7 +39,8 @@ endforeach()
 
 find_program(
     ClangFormat_EXECUTABLE
-    NAMES ${CLANGFORMAT_NAMES}
+    NAMES
+        ${CLANGFORMAT_NAMES}
     DOC "Path to clang-format executable"
 )
 
