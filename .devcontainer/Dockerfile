@@ -11,6 +11,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ noble main" \
     | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
     && apt-get update && apt-get -y install --no-install-recommends \
+    pipx \
     cmake \
     git \
     clang \
@@ -22,3 +23,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     build-essential \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pipx ensurepath \
+    && pipx install gersemi
