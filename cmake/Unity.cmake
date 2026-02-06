@@ -257,9 +257,11 @@ function(Unity_GenerateMock)
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE ignored - using CMock schema ${_CMOCK_SCHEMA_VERSION}")
         endif()
         
-        # Generate configuration using schema
+        # Generate configuration using schema (only if not already generated)
         set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
-        CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
+        if(NOT EXISTS "${GENERATED_CONFIG_FILE}")
+            CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
+        endif()
         
     else()
         # Using CONFIG_FILE mode for unsupported versions
@@ -386,9 +388,11 @@ function(Unity_GenerateRunner)
             message(WARNING "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_SCHEMA_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}")
         endif()
         
-        # Generate CMock configuration file
+        # Generate CMock configuration file (only if not already generated)
         set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
-        CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
+        if(NOT EXISTS "${GENERATED_CONFIG_FILE}")
+            CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
+        endif()
         
     else()
         # CONFIG_FILE mode - validate CONFIG_FILE parameter and file existence
