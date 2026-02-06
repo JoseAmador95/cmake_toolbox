@@ -126,62 +126,63 @@ function(Unity_Initialize)
     set(_CMOCK_TAG ${ARG_CMOCK_TAG} CACHE INTERNAL "CMock version tag")
     set(_CEEDLING_EXTRACT_FUNCTIONS ${ARG_ENABLE_CEEDLING} CACHE INTERNAL "Ceedling extract functions mode")
 
-    # Fetch Unity and CMock repositories
-    include(FetchContent)
-    FetchContent_Declare(cmock_repo GIT_REPOSITORY ${ARG_CMOCK_REPO} GIT_TAG ${ARG_CMOCK_TAG})
-    FetchContent_Declare(unity_repo GIT_REPOSITORY ${ARG_UNITY_REPO} GIT_TAG ${ARG_UNITY_TAG})
-    FetchContent_MakeAvailable(unity_repo cmock_repo)
+    # Use FindUnity to locate or fetch Unity and CMock
+    set(UNITY_FETCH ON)
+    set(UNITY_GIT_REPOSITORY ${ARG_UNITY_REPO})
+    set(UNITY_GIT_TAG ${ARG_UNITY_TAG})
+    set(CMOCK_GIT_REPOSITORY ${ARG_CMOCK_REPO})
+    set(CMOCK_GIT_TAG ${ARG_CMOCK_TAG})
+    
+    find_package(Unity REQUIRED)
 
     # Find Ruby executable for CMock and runner generation
     find_program(Ruby_EXECUTABLE ruby REQUIRED)
 
-    # Store paths globally for internal use
-    set(_CMOCK_EXE ${cmock_repo_SOURCE_DIR}/lib/cmock.rb CACHE INTERNAL "CMock executable path")
-    set(_RUNNER_EXE ${unity_repo_SOURCE_DIR}/auto/generate_test_runner.rb CACHE INTERNAL "Unity runner generator path")
+    # Set up paths from FindUnity results
+    if(CMock_EXECUTABLE)
+        set(_CMOCK_EXE ${CMock_EXECUTABLE} CACHE INTERNAL "CMock executable path")
+    endif()
+    
+    if(Unity_RUNNER_GENERATOR)
+        set(_RUNNER_EXE ${Unity_RUNNER_GENERATOR} CACHE INTERNAL "Unity runner generator path")
+    else()
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Unity runner generator not found")
+    endif()
 
     # Detect CMock version and set up configuration mode
-    CMockSchema_DetectVersion("${_CMOCK_EXE}" "${ARG_CMOCK_TAG}" DETECTED_SCHEMA_VERSION)
-    if(DETECTED_SCHEMA_VERSION)
-        # Use schema-based configuration
-        set(_CMOCK_SCHEMA_VERSION "${DETECTED_SCHEMA_VERSION}" CACHE INTERNAL "Detected CMock schema version")
-        set(_CMOCK_CONFIG_MODE "SCHEMA" CACHE INTERNAL "CMock configuration mode")
-        
-        # Set version-specific defaults
-        CMockSchema_SetDefaults("${DETECTED_SCHEMA_VERSION}")
-        
+    if(_CMOCK_EXE)
+        CMockSchema_DetectVersion("${_CMOCK_EXE}" "${ARG_CMOCK_TAG}" DETECTED_SCHEMA_VERSION)
+        if(DETECTED_SCHEMA_VERSION)
+            # Use schema-based configuration
+            set(_CMOCK_SCHEMA_VERSION "${DETECTED_SCHEMA_VERSION}" CACHE INTERNAL "Detected CMock schema version")
+            set(_CMOCK_CONFIG_MODE "SCHEMA" CACHE INTERNAL "CMock configuration mode")
+            
+            # Set version-specific defaults
+            CMockSchema_SetDefaults("${DETECTED_SCHEMA_VERSION}")
+            
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: Using CMock schema version ${DETECTED_SCHEMA_VERSION}")
-    else()
-        # Fall back to CONFIG_FILE mode
-        set(_CMOCK_SCHEMA_VERSION "" CACHE INTERNAL "Detected CMock schema version")
-        set(_CMOCK_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "CMock configuration mode")
-        
+            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Configure via CMOCK_* cached variables (see module documentation)")
+        else()
+            # Fall back to CONFIG_FILE mode
+            set(_CMOCK_SCHEMA_VERSION "" CACHE INTERNAL "Detected CMock schema version")
+            set(_CMOCK_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "CMock configuration mode")
+            
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: CMock version ${ARG_CMOCK_TAG} not supported by schema system")
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: Please use CONFIG_FILE parameter in Unity functions")
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: Configuration experience may vary for unsupported versions")
+        endif()
+    else()
+        # No CMock available
+        set(_CMOCK_SCHEMA_VERSION "" CACHE INTERNAL "Detected CMock schema version")
+        set(_CMOCK_CONFIG_MODE "" CACHE INTERNAL "CMock configuration mode")
+        message(STATUS "${CMAKE_CURRENT_FUNCTION}: CMock not found - mocking features unavailable")
     endif()
-
-    # Create and configure CMock library
-    add_library(cmock STATIC ${cmock_repo_SOURCE_DIR}/src/cmock.c)
-    target_include_directories(cmock PUBLIC ${cmock_repo_SOURCE_DIR}/src)
-    target_link_libraries(cmock PUBLIC unity)
-    
-    # Disable linting for external dependencies
-    set_target_properties(cmock PROPERTIES
-        C_CLANG_TIDY ""
-        SKIP_LINTING TRUE
-    )
 
     # Configure Ceedling extract functions mode if enabled
-    if(ARG_ENABLE_CEEDLING)
-        target_compile_definitions(unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+    if(ARG_ENABLE_CEEDLING AND TARGET Unity::Unity)
+        target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
         message(STATUS "${CMAKE_CURRENT_FUNCTION}: Ceedling extract functions mode enabled")
     endif()
-    
-    # Disable linting for external dependencies
-    set_target_properties(unity PROPERTIES
-        C_CLANG_TIDY ""
-        SKIP_LINTING TRUE
-    )
 
     # Mark as initialized globally
     set(_UNITY_INITIALIZED TRUE CACHE INTERNAL "Unity initialization status")
@@ -382,7 +383,7 @@ function(Unity_GenerateRunner)
     if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
         # Schema mode - no CONFIG_FILE needed
         if(ARG_CONFIG_FILE)
-            message(WARNING "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_SCHEMA_VERSION} detected)")
+            message(WARNING "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_SCHEMA_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}")
         endif()
         
         # Generate CMock configuration file
@@ -493,7 +494,7 @@ function(Unity_CreateTestTarget)
     if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
         # Schema mode - no CONFIG_FILE needed
         if(ARG_CONFIG_FILE)
-            message(WARNING "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_VERSION} detected)")
+            message(WARNING "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}")
         endif()
         
     else()
@@ -580,9 +581,11 @@ function(Unity_CreateTestTarget)
     add_executable(${ARG_TARGET_NAME} ${all_sources})
     
     # Link required libraries
-    target_link_libraries(${ARG_TARGET_NAME} PRIVATE unity)
-    if(ARG_MOCK_HEADERS)
-        target_link_libraries(${ARG_TARGET_NAME} PRIVATE cmock)
+    if(TARGET Unity::Unity)
+        target_link_libraries(${ARG_TARGET_NAME} PRIVATE Unity::Unity)
+    endif()
+    if(ARG_MOCK_HEADERS AND TARGET Unity::CMock)
+        target_link_libraries(${ARG_TARGET_NAME} PRIVATE Unity::CMock)
     endif()
     if(ARG_LINK_LIBRARIES)
         target_link_libraries(${ARG_TARGET_NAME} PRIVATE ${ARG_LINK_LIBRARIES})

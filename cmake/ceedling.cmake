@@ -40,8 +40,8 @@ function(add_unit_test)
         ${UT_NAME}
         PRIVATE
             ${UT_TARGET}
-            cmock
-            unity
+            Unity::CMock
+            Unity::Unity
     )
 
     set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}.dir)
