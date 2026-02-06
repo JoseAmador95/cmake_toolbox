@@ -12,8 +12,7 @@ Ceedling_AddUnitTest(
     NAME example_test
     UNIT_TEST ${CMAKE_CURRENT_SOURCE_DIR}/unit_test/test_example.c
     TARGET example
-    MOCK_HEADERS
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/dependency.h
+    # MOCK_HEADERS are auto-detected from #include "mock_dependency.h" in test file
     ENABLE_SANITIZER
 )
 
