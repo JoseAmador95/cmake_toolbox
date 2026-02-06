@@ -1,7 +1,7 @@
 {
     "name": "cmake_toolbox",
     "build": {
-        "dockerfile": "dockerfile"
+        "dockerfile": "Dockerfile"
     },
     "mounts": [
         {
