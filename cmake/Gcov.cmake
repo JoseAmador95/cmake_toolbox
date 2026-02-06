@@ -10,24 +10,65 @@ CMake module for enabling code coverage instrumentation using gcov/gcovr.
 This module provides functions to add coverage instrumentation to CMake targets
 and custom targets to generate coverage reports.
 
+Configuration Modes
+^^^^^^^^^^^^^^^^^^^
+
+This module supports two configuration modes:
+
+**SCHEMA Mode** (default when gcovr version is supported):
+  Configuration is managed through CMake cache variables (``GCOVR_*``).
+  A configuration file is auto-generated from these variables.
+  No external config file is required.
+
+**CONFIG_FILE Mode** (fallback for unsupported gcovr versions):
+  Uses an external configuration file specified by ``GCOVR_CONFIG_FILE``.
+
 Dependencies
 ^^^^^^^^^^^^
 
 This module requires gcovr to be installed. Use ``find_package(Gcovr)`` before
 including this module, or let the module find it automatically.
 
-Cache Variables
-^^^^^^^^^^^^^^^
+Cache Variables (SCHEMA Mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``GCOV_CONFIG_FILE``
+When in SCHEMA mode, the following variables control gcovr behavior.
+See ``cmake/schemas/gcovr-<version>.cmake`` for the complete list.
+
+``GCOVR_FAIL_UNDER_LINE``
+  Minimum line coverage percentage (0-100). Default: 0
+
+``GCOVR_FAIL_UNDER_BRANCH``
+  Minimum branch coverage percentage (0-100). Default: 0
+
+``GCOVR_HTML_HIGH_THRESHOLD``
+  High coverage threshold for HTML reports. Default: 95
+
+``GCOVR_HTML_MEDIUM_THRESHOLD``
+  Medium coverage threshold for HTML reports. Default: 85
+
+``GCOVR_EXCLUDE``
+  Semicolon-separated list of regex patterns to exclude files.
+
+``GCOVR_FILTER``
+  Semicolon-separated list of regex patterns to include files.
+
+``GCOVR_OUTPUT_FORMATS``
+  Semicolon-separated list of output formats (html, xml, json, cobertura, lcov).
+
+Cache Variables (Both Modes)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``GCOVR_CONFIG_FILE``
   Path to gcovr configuration file.
-  Default: ``${CMAKE_SOURCE_DIR}/gcovr.cfg``
+  Only required in CONFIG_FILE mode.
+  In SCHEMA mode, this is auto-generated.
 
-``GCOV_OUTPUT_FILE``
-  Path to coverage output HTML file.
-  Default: ``${CMAKE_CURRENT_BINARY_DIR}/coverage/results.html``
+``GCOVR_OUTPUT_DIR``
+  Directory for coverage output files.
+  Default: ``${CMAKE_CURRENT_BINARY_DIR}/coverage``
 
-``GCOV_ROOT_DIR``
+``GCOVR_ROOT_DIR``
   Root directory for coverage analysis.
   Default: ``${CMAKE_SOURCE_DIR}``
 
@@ -54,11 +95,20 @@ Functions
   ``<scope>``
     The scope for compile options and link libraries (PUBLIC, PRIVATE, INTERFACE).
 
+.. command:: Gcovr_Initialize
+
+  Initialize gcovr configuration (called automatically on first use)::
+
+    Gcovr_Initialize()
+
+  Detects gcovr version and sets up appropriate configuration mode.
+
 Targets
 ^^^^^^^
 
-``gcovr_html``
-  Custom target to generate HTML coverage report.
+``gcovr``
+  Custom target to generate coverage reports. Always prints text summary.
+  Generates all formats specified in ``GCOVR_OUTPUT_FORMATS`` (html, xml, json, lcov, csv, coveralls).
 
 Example
 ^^^^^^^
@@ -66,6 +116,10 @@ Example
 .. code-block:: cmake
 
   include(Gcov)
+  
+  # Configure coverage thresholds via CMake (SCHEMA mode)
+  set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING "" FORCE)
+  set(GCOVR_EXCLUDE "test;build" CACHE STRING "" FORCE)
   
   add_executable(my_test test.c)
   Gcov_AddToTarget(my_test PRIVATE)
@@ -80,29 +134,52 @@ Example
 include_guard(GLOBAL)
 
 # ==============================================================================
-# Find gcovr
+# Find Dependencies
 # ==============================================================================
 
 find_package(Gcovr REQUIRED)
+include(GcovrSchema)
 
 # ==============================================================================
-# Cache Variables
+# Internal State Variables
 # ==============================================================================
 
-set(GCOV_CONFIG_FILE
-    ${CMAKE_SOURCE_DIR}/gcovr.cfg
-    CACHE FILEPATH
-    "Path to gcovr configuration file"
+set(_GCOVR_CONFIG_MODE
+    ""
+    CACHE INTERNAL
+    "Gcovr configuration mode: SCHEMA or CONFIG_FILE"
 )
 
-set(GCOV_OUTPUT_FILE
-    ${CMAKE_CURRENT_BINARY_DIR}/coverage/results.html
-    CACHE FILEPATH
-    "Path to coverage output file"
+set(_GCOVR_SCHEMA_VERSION
+    ""
+    CACHE INTERNAL
+    "Detected gcovr schema version"
 )
 
-set(GCOV_ROOT_DIR
-    ${CMAKE_SOURCE_DIR}
+set(_GCOVR_INITIALIZED
+    FALSE
+    CACHE INTERNAL
+    "Whether Gcovr module has been initialized"
+)
+
+# ==============================================================================
+# Cache Variables (preserved from original + new)
+# ==============================================================================
+
+set(GCOVR_CONFIG_FILE
+    ""
+    CACHE FILEPATH
+    "Path to gcovr configuration file (optional in SCHEMA mode)"
+)
+
+set(GCOVR_OUTPUT_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/coverage"
+    CACHE PATH
+    "Directory for coverage output files"
+)
+
+set(GCOVR_ROOT_DIR
+    "${CMAKE_SOURCE_DIR}"
     CACHE PATH
     "Root directory for coverage analysis"
 )
@@ -119,12 +196,110 @@ set(GCOV_LINKER_FLAGS
     "Linker flags for coverage instrumentation"
 )
 
-# ==============================================================================
-# Setup
-# ==============================================================================
+# Backward compatibility alias
+set(GCOV_OUTPUT_FILE
+    "${GCOVR_OUTPUT_DIR}/results.html"
+    CACHE FILEPATH
+    "Path to coverage output file (deprecated, use GCOVR_OUTPUT_DIR)"
+)
+mark_as_advanced(GCOV_OUTPUT_FILE)
 
-cmake_path(GET GCOV_OUTPUT_FILE PARENT_PATH _gcov_output_dir)
-file(MAKE_DIRECTORY ${_gcov_output_dir})
+# ==============================================================================
+# Gcovr_Initialize
+# ==============================================================================
+#
+# Initialize gcovr configuration by detecting version and setting up
+# the appropriate configuration mode (SCHEMA or CONFIG_FILE).
+#
+function(Gcovr_Initialize)
+    if(_GCOVR_INITIALIZED)
+        return()
+    endif()
+
+    # Create output directory
+    file(MAKE_DIRECTORY "${GCOVR_OUTPUT_DIR}")
+
+    # Check if user provided a config file explicitly
+    if(GCOVR_CONFIG_FILE AND EXISTS "${GCOVR_CONFIG_FILE}")
+        set(_GCOVR_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "" FORCE)
+        set(_GCOVR_INITIALIZED TRUE CACHE INTERNAL "" FORCE)
+        message(STATUS "Gcovr_Initialize: Using provided config file: ${GCOVR_CONFIG_FILE}")
+        return()
+    endif()
+
+    # Try to detect version and use SCHEMA mode
+    GcovrSchema_DetectVersion("${Gcovr_EXECUTABLE}" DETECTED_VERSION)
+
+    if(DETECTED_VERSION)
+        set(_GCOVR_SCHEMA_VERSION "${DETECTED_VERSION}" CACHE INTERNAL "" FORCE)
+        set(_GCOVR_CONFIG_MODE "SCHEMA" CACHE INTERNAL "" FORCE)
+        
+        # Load schema defaults
+        GcovrSchema_SetDefaults("${DETECTED_VERSION}")
+        
+        message(STATUS "Gcovr_Initialize: Using SCHEMA mode with gcovr ${DETECTED_VERSION}")
+    else()
+        set(_GCOVR_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "" FORCE)
+        
+        # In CONFIG_FILE mode without a file, check for default location
+        set(DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/gcovr.cfg")
+        if(EXISTS "${DEFAULT_CONFIG}")
+            set(GCOVR_CONFIG_FILE "${DEFAULT_CONFIG}" CACHE FILEPATH "" FORCE)
+            message(STATUS "Gcovr_Initialize: Found config file at ${DEFAULT_CONFIG}")
+        else()
+            message(WARNING 
+                "Gcovr_Initialize: Unsupported gcovr version and no config file found.\n"
+                "Please either:\n"
+                "  1. Update to a supported gcovr version (see GcovrSchema_GetSupportedVersions())\n"
+                "  2. Provide a config file via GCOVR_CONFIG_FILE\n"
+                "  3. Create ${DEFAULT_CONFIG}"
+            )
+        endif()
+    endif()
+
+    set(_GCOVR_INITIALIZED TRUE CACHE INTERNAL "" FORCE)
+endfunction()
+
+# ==============================================================================
+# _Gcovr_EnsureInitialized (Internal)
+# ==============================================================================
+#
+# Ensure Gcovr is initialized before use
+#
+macro(_Gcovr_EnsureInitialized)
+    if(NOT _GCOVR_INITIALIZED)
+        Gcovr_Initialize()
+    endif()
+endmacro()
+
+# ==============================================================================
+# _Gcovr_GetConfigFile (Internal)
+# ==============================================================================
+#
+# Get the configuration file path, generating it if in SCHEMA mode
+#
+# Parameters:
+#   OUTPUT_VAR - Variable to store the config file path
+#
+function(_Gcovr_GetConfigFile OUTPUT_VAR)
+    _Gcovr_EnsureInitialized()
+
+    if(_GCOVR_CONFIG_MODE STREQUAL "SCHEMA")
+        # Generate config file from cached variables
+        set(GENERATED_CONFIG "${GCOVR_OUTPUT_DIR}/gcovr_generated.cfg")
+        GcovrSchema_GenerateConfigFile("${GENERATED_CONFIG}")
+        set(${OUTPUT_VAR} "${GENERATED_CONFIG}" PARENT_SCOPE)
+    else()
+        # Use provided config file
+        if(NOT GCOVR_CONFIG_FILE OR NOT EXISTS "${GCOVR_CONFIG_FILE}")
+            message(FATAL_ERROR 
+                "_Gcovr_GetConfigFile: CONFIG_FILE mode requires GCOVR_CONFIG_FILE to be set "
+                "and point to an existing file. Current value: '${GCOVR_CONFIG_FILE}'"
+            )
+        endif()
+        set(${OUTPUT_VAR} "${GCOVR_CONFIG_FILE}" PARENT_SCOPE)
+    endif()
+endfunction()
 
 # ==============================================================================
 # Gcov_AddToTarget
@@ -155,25 +330,121 @@ function(Gcov_AddToTarget TARGET SCOPE)
 endfunction()
 
 # ==============================================================================
-# Coverage Report Target
+# Coverage Report Targets
 # ==============================================================================
 
-if(NOT TARGET gcovr_html)
-    add_custom_target(gcovr_html
-        COMMAND
-            ${Gcovr_EXECUTABLE}
-            --config ${GCOV_CONFIG_FILE}
-            --root ${GCOV_ROOT_DIR}
-            --print-summary
-            --html-details ${GCOV_OUTPUT_FILE}
-        WORKING_DIRECTORY ${GCOV_ROOT_DIR}
-        COMMENT "Generate coverage HTML report"
+# Initialize on include to set up defaults
+_Gcovr_EnsureInitialized()
+
+# Create output directory
+file(MAKE_DIRECTORY "${GCOVR_OUTPUT_DIR}")
+
+# ==============================================================================
+# Generate Config File at Configure Time (SCHEMA mode)
+# ==============================================================================
+# 
+# In SCHEMA mode, the config file is generated at configure time from the
+# GCOVR_* cache variables. This ensures all user-configured values are included.
+# The file will be regenerated on each cmake configure.
+#
+
+set(_GCOVR_GENERATED_CONFIG_FILE "")
+if(_GCOVR_CONFIG_MODE STREQUAL "SCHEMA")
+    set(_GCOVR_GENERATED_CONFIG_FILE "${GCOVR_OUTPUT_DIR}/gcovr_generated.cfg")
+    GcovrSchema_GenerateConfigFile("${_GCOVR_GENERATED_CONFIG_FILE}")
+    set(_GCOVR_ACTIVE_CONFIG_FILE "${_GCOVR_GENERATED_CONFIG_FILE}")
+else()
+    set(_GCOVR_ACTIVE_CONFIG_FILE "${GCOVR_CONFIG_FILE}")
+endif()
+
+# ==============================================================================
+# Coverage Report Target
+# ==============================================================================
+#
+# Single 'gcovr' target that generates all configured output formats.
+# Always prints text summary to console.
+# Output formats are controlled by GCOVR_OUTPUT_FORMATS variable.
+#
+
+if(NOT TARGET gcovr)
+    # Build gcovr command arguments
+    set(_gcovr_args
+        "${Gcovr_EXECUTABLE}"
+        --config "${_GCOVR_ACTIVE_CONFIG_FILE}"
+        --root "${GCOVR_ROOT_DIR}"
+        --print-summary  # Always print text summary
+    )
+
+    # Collect output files for comment
+    set(_gcovr_outputs "")
+
+    # HTML output
+    if("html" IN_LIST GCOVR_OUTPUT_FORMATS)
+        set(_gcovr_html_output "${GCOVR_OUTPUT_DIR}/coverage.html")
+        if(GCOVR_HTML_NESTED)
+            list(APPEND _gcovr_args --html-nested "${_gcovr_html_output}")
+        elseif(GCOVR_HTML_DETAILS)
+            list(APPEND _gcovr_args --html-details "${_gcovr_html_output}")
+        else()
+            list(APPEND _gcovr_args --html "${_gcovr_html_output}")
+        endif()
+        list(APPEND _gcovr_outputs "HTML")
+    endif()
+
+    # XML/Cobertura output
+    if("xml" IN_LIST GCOVR_OUTPUT_FORMATS OR "cobertura" IN_LIST GCOVR_OUTPUT_FORMATS)
+        list(APPEND _gcovr_args --xml "${GCOVR_OUTPUT_DIR}/coverage.xml")
+        list(APPEND _gcovr_outputs "XML")
+    endif()
+
+    # JSON output
+    if("json" IN_LIST GCOVR_OUTPUT_FORMATS)
+        list(APPEND _gcovr_args --json "${GCOVR_OUTPUT_DIR}/coverage.json")
+        list(APPEND _gcovr_outputs "JSON")
+    endif()
+
+    # LCOV output
+    if("lcov" IN_LIST GCOVR_OUTPUT_FORMATS)
+        list(APPEND _gcovr_args --lcov "${GCOVR_OUTPUT_DIR}/coverage.lcov")
+        list(APPEND _gcovr_outputs "LCOV")
+    endif()
+
+    # CSV output
+    if("csv" IN_LIST GCOVR_OUTPUT_FORMATS)
+        list(APPEND _gcovr_args --csv "${GCOVR_OUTPUT_DIR}/coverage.csv")
+        list(APPEND _gcovr_outputs "CSV")
+    endif()
+
+    # Coveralls output
+    if("coveralls" IN_LIST GCOVR_OUTPUT_FORMATS)
+        list(APPEND _gcovr_args --coveralls "${GCOVR_OUTPUT_DIR}/coveralls.json")
+        list(APPEND _gcovr_outputs "Coveralls")
+    endif()
+
+    # Build comment string
+    list(JOIN _gcovr_outputs ", " _gcovr_outputs_str)
+    if(_gcovr_outputs_str)
+        set(_gcovr_comment "Generate coverage report (${_gcovr_outputs_str}) -> ${GCOVR_OUTPUT_DIR}")
+    else()
+        set(_gcovr_comment "Generate coverage summary (text only)")
+    endif()
+
+    add_custom_target(gcovr
+        COMMAND ${_gcovr_args}
+        WORKING_DIRECTORY "${GCOVR_ROOT_DIR}"
+        COMMENT "${_gcovr_comment}"
     )
 endif()
 
 # ==============================================================================
-# Backward Compatibility Alias
+# Backward Compatibility
 # ==============================================================================
+
+# Deprecated alias for old config variable
+if(DEFINED GCOV_CONFIG_FILE AND NOT GCOVR_CONFIG_FILE)
+    set(GCOVR_CONFIG_FILE "${GCOV_CONFIG_FILE}" CACHE FILEPATH "" FORCE)
+    message(DEPRECATION "GCOV_CONFIG_FILE is deprecated, use GCOVR_CONFIG_FILE instead")
+endif()
 
 function(target_add_gcov _target _scope)
     message(DEPRECATION "target_add_gcov() is deprecated, use Gcov_AddToTarget() instead")
