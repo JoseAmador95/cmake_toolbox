@@ -79,6 +79,7 @@ function(CMockSchema_2.6_GenerateYAML CONFIG_FILE)
     # Handle TREAT_AS mappings (TYPE:TREATMENT;TYPE:TREATMENT -> YAML)
     set(TREAT_AS_YAML "")
     if(CMOCK_TREAT_AS)
+        set(TREAT_AS_YAML "  :treat_as:\n")
         foreach(mapping IN LISTS CMOCK_TREAT_AS)
             if(mapping MATCHES "^([^:]+):([^:]+)$")
                 set(type "${CMAKE_MATCH_1}")
@@ -119,14 +120,13 @@ function(CMockSchema_2.6_GenerateYAML CONFIG_FILE)
     # Generate YAML content
     set(YAML_CONTENT
         ":cmock:
-  :mock_path: '${CMAKE_CURRENT_BINARY_DIR}/${CMOCK_MOCK_PATH}'
-  :mock_prefix: ${CMOCK_MOCK_PREFIX}
-  :mock_suffix: ${CMOCK_MOCK_SUFFIX}
+  :mock_path: '${CONFIG_DIR}/${CMOCK_MOCK_PATH}'
+  :mock_prefix: '${CMOCK_MOCK_PREFIX}'
+  :mock_suffix: '${CMOCK_MOCK_SUFFIX}'
   :includes:
     - ${INCLUDES_YAML}
   :plugins:
     - ${PLUGINS_YAML}
-  :treat_as:
 ${TREAT_AS_YAML}  :when_no_prototypes: ${CMOCK_WHEN_NO_PROTOTYPES}
   :enforce_strict_ordering: ${STRICT_ORDERING_YAML}
   :callback_include_count: ${CALLBACK_COUNT_YAML}
