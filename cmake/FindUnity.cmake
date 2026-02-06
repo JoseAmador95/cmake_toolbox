@@ -233,16 +233,18 @@ endif()
 # Unity requires both header and source
 if(Unity_INCLUDE_DIR AND Unity_SOURCE)
     if(NOT TARGET Unity::Unity)
-        add_library(Unity::Unity STATIC "${Unity_SOURCE}")
-        target_include_directories(Unity::Unity
+        add_library(unity_unity STATIC "${Unity_SOURCE}")
+        target_include_directories(unity_unity
             PUBLIC
                 "${Unity_INCLUDE_DIR}"
         )
         # Disable linting for external dependencies
-        set_target_properties(Unity::Unity PROPERTIES
+        set_target_properties(unity_unity PROPERTIES
             C_CLANG_TIDY ""
             SKIP_LINTING TRUE
         )
+        # Create namespaced alias
+        add_library(Unity::Unity ALIAS unity_unity)
     endif()
 endif()
 
@@ -251,20 +253,22 @@ set(CMock_FOUND FALSE)
 if(CMock_INCLUDE_DIR AND CMock_SOURCE)
     set(CMock_FOUND TRUE)
     if(NOT TARGET Unity::CMock)
-        add_library(Unity::CMock STATIC "${CMock_SOURCE}")
-        target_include_directories(Unity::CMock
+        add_library(unity_cmock STATIC "${CMock_SOURCE}")
+        target_include_directories(unity_cmock
             PUBLIC
                 "${CMock_INCLUDE_DIR}"
         )
         # CMock depends on Unity
-        if(TARGET Unity::Unity)
-            target_link_libraries(Unity::CMock PUBLIC Unity::Unity)
+        if(TARGET unity_unity)
+            target_link_libraries(unity_cmock PUBLIC unity_unity)
         endif()
         # Disable linting for external dependencies
-        set_target_properties(Unity::CMock PROPERTIES
+        set_target_properties(unity_cmock PROPERTIES
             C_CLANG_TIDY ""
             SKIP_LINTING TRUE
         )
+        # Create namespaced alias
+        add_library(Unity::CMock ALIAS unity_cmock)
     endif()
 endif()
 
