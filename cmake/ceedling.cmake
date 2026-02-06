@@ -52,33 +52,41 @@ function(add_unit_test)
         set(CMOCK_MOCK_SUBDIR "mocks")
     endif()
 
-    # Look for config file in common locations
-    set(config_locations
-        ${CMAKE_SOURCE_DIR}/cmock.yml
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
-        ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
-    )
-
+    # Only look for config file when NOT in schema mode
     set(default_config "")
-    foreach(config_path ${config_locations})
-        if(EXISTS ${config_path})
-            set(default_config ${config_path})
-            break()
-        endif()
-    endforeach()
-
-    if(NOT default_config)
-        message(
-            FATAL_ERROR
-            "add_unit_test: No cmock.yml configuration file found in expected locations"
+    if(NOT _CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
+        set(config_locations
+            ${CMAKE_SOURCE_DIR}/cmock.yml
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
+            ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
         )
+
+        foreach(config_path ${config_locations})
+            if(EXISTS ${config_path})
+                set(default_config ${config_path})
+                break()
+            endif()
+        endforeach()
+
+        if(NOT default_config)
+            message(
+                FATAL_ERROR
+                "add_unit_test: No cmock.yml configuration file found in expected locations"
+            )
+        endif()
+    endif()
+
+    # Build optional CONFIG_FILE argument
+    set(config_file_arg "")
+    if(default_config)
+        set(config_file_arg CONFIG_FILE ${default_config})
     endif()
 
     unset(RUNNER_SOURCE)
     Unity_GenerateRunner(
         TEST_SOURCE ${UT_UNIT_TEST}
         OUTPUT_DIR ${TEST_BINARY_DIR}
-        CONFIG_FILE ${default_config}
+        ${config_file_arg}
         RUNNER_SOURCE_VAR RUNNER_SOURCE
     )
     cmake_path(GET RUNNER_SOURCE STEM RUNNER_STEM)
@@ -100,7 +108,7 @@ function(add_unit_test)
         Unity_GenerateMock(
             HEADER ${HEADER}
             OUTPUT_DIR ${TEST_BINARY_DIR}
-            CONFIG_FILE ${default_config}
+            ${config_file_arg}
             MOCK_SOURCE_VAR MOCK_SOURCE
             MOCK_HEADER_VAR MOCK_HEADER
         )
