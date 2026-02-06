@@ -1,6 +1,6 @@
-include(ceedling)
+include(Ceedling)
 find_package(ClangFormat QUIET)
-include(clangtidy)
+include(ClangTidy)
 include(Policy)
 
 add_library(example STATIC ${CMAKE_CURRENT_SOURCE_DIR}/source/example.c)
@@ -8,7 +8,7 @@ add_library(dependency INTERFACE)
 target_include_directories(dependency INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(example PUBLIC dependency)
 
-add_unit_test(
+Ceedling_AddUnitTest(
     NAME example_test
     UNIT_TEST ${CMAKE_CURRENT_SOURCE_DIR}/unit_test/test_example.c
     TARGET example
