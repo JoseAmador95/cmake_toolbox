@@ -145,6 +145,45 @@ function(test_policy_setting)
     message(STATUS "  ✓ Policy values set and verified correctly")
 endfunction()
 
+function(test_policy_set_get_roundtrip)
+    message(STATUS "Test 3b: Policy set/get roundtrip (regression for issue #7)")
+
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_set_get_roundtrip.cmake")
+    file(WRITE "${temp_script}" "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+Policy_Register(NAME ROUND001 DESCRIPTION \"Roundtrip policy\" DEFAULT OLD INTRODUCED_VERSION 1.0)
+Policy_Set(ROUND001 NEW)
+Policy_Get(ROUND001 round_val)
+if(NOT round_val STREQUAL \"NEW\")
+    message(FATAL_ERROR \"Roundtrip failed: expected NEW, got '\\${round_val}'\")
+endif()
+")
+
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
+        RESULT_VARIABLE round_result
+        OUTPUT_VARIABLE round_output
+        ERROR_VARIABLE round_error
+    )
+
+    # Clean up
+    file(REMOVE "${temp_script}")
+
+    if(NOT round_result EQUAL 0)
+        message(STATUS "  ✗ Roundtrip set/get failed")
+        if(NOT round_output STREQUAL "")
+            message(STATUS "    Output: ${round_output}")
+        endif()
+        if(NOT round_error STREQUAL "")
+            message(STATUS "    Error: ${round_error}")
+        endif()
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Policy set/get roundtrip works")
+endfunction()
+
 function(test_policy_value_persistence)
     message(STATUS "Test 4: Verifying policy values persist correctly")
     
@@ -266,6 +305,7 @@ function(run_all_tests)
     test_basic_policy_registration()
     test_default_policy_values()
     test_policy_setting()
+    test_policy_set_get_roundtrip()
     test_policy_value_persistence()
     test_error_handling()
     cleanup_test_environment()

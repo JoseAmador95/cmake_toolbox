@@ -529,7 +529,6 @@ function(_policy_write POLICY VALUE)
     set_property(
         GLOBAL
         PROPERTY
-        PROPERTY
             POLICY_${POLICY}
                 "${VALUE}"
     )
