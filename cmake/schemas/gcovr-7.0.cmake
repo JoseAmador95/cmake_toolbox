@@ -197,7 +197,7 @@ function(GcovrSchema_7_0_GenerateConfig CONFIG_FILE)
     endmacro()
 
     macro(_gcovr_append_bool key var)
-        if(${var})
+        if(DEFINED ${var} AND ${var})
             _gcovr_append_config("${key}" "yes")
         endif()
     endmacro()

@@ -54,7 +54,7 @@ include_guard(GLOBAL)
 # ----------------------------------------------------------------------------
 set(_Unity_HINT_DIRS)
 foreach(var IN ITEMS Unity_ROOT UNITY_ROOT)
-    if(${var})
+    if(DEFINED ${var})
         list(APPEND _Unity_HINT_DIRS "${${var}}")
     endif()
 endforeach()

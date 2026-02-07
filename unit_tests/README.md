@@ -6,6 +6,7 @@ This directory contains unit tests for the CMake modules in this toolbox.
 
 - **`policy/`** - Unit tests for the Policy.cmake module
 - **`clangformat/`** - Unit tests for the ClangFormat.cmake module
+- **`findunity/`** - Unit tests for FindUnity.cmake hint variable handling (Issue #10)
 
 ## Why No Unity Tests?
 
@@ -13,6 +14,15 @@ Unity module testing is **not included** in unit tests because:
 
 - **`Unity_Initialize()`** requires FetchContent (external dependencies)
 - **`Unity_GenerateMock()`**, **`Unity_GenerateRunner()`**, **`Unity_CreateTestTarget()`** all use `add_custom_command`/`add_executable` which don't work in script mode (`cmake -P`)
+
+### FindUnity.cmake Testing Limitation
+
+**FindUnity.cmake** (the Find module) also cannot be tested in script mode because:
+- `find_package()` command requires a real CMake project context
+- Find module logic depends on CMake search paths and system introspection
+- Testing would require mocking the entire CMake find system
+
+**Note:** Bug fixes in FindUnity.cmake (e.g., issue #10 - unsafe if() expansion for hints) must be verified manually by using `find_package(Unity)` in a real CMake project with various hint variable states (undefined, empty, valid paths).
 
 These functions are designed for use in real CMake projects where:
 - FetchContent can download dependencies  
@@ -34,9 +44,10 @@ Integration testing of Unity.cmake should be done within actual CMake projects t
 
 ```bash
 # Run all unit tests
-ctest -R "policy|clangformat"
+ctest -R "policy|clangformat|findunity"
 
 # Run specific module tests  
 ctest -R "policy"
 ctest -R "clangformat"
+ctest -R "findunity"
 ```
