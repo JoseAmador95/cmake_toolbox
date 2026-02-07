@@ -46,7 +46,7 @@ function(test_no_exclusion_baseline)
     )
     
     # Count all .c, .cpp, .h files (should exclude .bak automatically due to default patterns)
-    set(EXPECTED_COUNT 10)  # All files except .bak which isn't in default patterns
+    set(EXPECTED_COUNT 11)  # All files except .bak which isn't in default patterns
     list(LENGTH ALL_FILES actual_count)
     
     if(actual_count EQUAL EXPECTED_COUNT)
@@ -82,7 +82,8 @@ function(test_wildcard_exclusion)
     
     # Verify specific files are excluded
     foreach(file IN LISTS FILTERED_FILES)
-        if(file MATCHES "test")
+        file(RELATIVE_PATH rel_file "${CMAKE_SOURCE_DIR}" "${file}")
+        if(rel_file MATCHES "test")
             message(STATUS "  ✗ File with 'test' incorrectly included: ${file}")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
             set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
@@ -113,7 +114,8 @@ function(test_directory_exclusion)
     
     # Verify generated/ directory files are excluded
     foreach(file IN LISTS NO_GENERATED_FILES)
-        if(file MATCHES "generated/")
+        file(RELATIVE_PATH rel_file "${CMAKE_SOURCE_DIR}" "${file}")
+        if(rel_file MATCHES "generated/")
             message(STATUS "  ✗ Generated directory file incorrectly included: ${file}")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
             set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)

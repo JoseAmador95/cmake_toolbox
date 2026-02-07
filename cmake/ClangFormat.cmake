@@ -107,6 +107,8 @@ include_guard(GLOBAL)
 set(CLANGFORMAT_DEFAULT_PATTERNS
     "*.c"
     "*.h"
+    "*.C"
+    "*.H"
     "*.cpp"
     "*.cxx"
     "*.cc"
@@ -119,8 +121,27 @@ set(CLANGFORMAT_DEFAULT_PATTERNS
 
 # Function to validate clang-format configuration file
 function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
-    if(EXISTS "${ARG_CONFIG_FILE}")
-        set(${ARG_OUTPUT_VAR} "--style=file:${ARG_CONFIG_FILE}" PARENT_SCOPE)
+    # Handle empty string
+    if(NOT ARG_CONFIG_FILE)
+        set(${ARG_OUTPUT_VAR} "" PARENT_SCOPE)
+        return()
+    endif()
+    
+    # Convert relative paths to absolute paths
+    if(NOT IS_ABSOLUTE "${ARG_CONFIG_FILE}")
+        set(ABSOLUTE_CONFIG_FILE "${CMAKE_SOURCE_DIR}/${ARG_CONFIG_FILE}")
+    else()
+        set(ABSOLUTE_CONFIG_FILE "${ARG_CONFIG_FILE}")
+    endif()
+    
+    # Check if path exists and is a file (not a directory)
+    if(EXISTS "${ABSOLUTE_CONFIG_FILE}")
+        if(NOT IS_DIRECTORY "${ABSOLUTE_CONFIG_FILE}")
+            set(${ARG_OUTPUT_VAR} "--style=file:${ABSOLUTE_CONFIG_FILE}" PARENT_SCOPE)
+        else()
+            message(WARNING "ClangFormat config file is a directory, not a file: ${ABSOLUTE_CONFIG_FILE}")
+            set(${ARG_OUTPUT_VAR} "" PARENT_SCOPE)
+        endif()
     else()
         message(WARNING "ClangFormat config file not found: ${ARG_CONFIG_FILE}")
         set(${ARG_OUTPUT_VAR} "" PARENT_SCOPE)

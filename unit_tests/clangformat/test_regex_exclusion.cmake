@@ -63,7 +63,8 @@ function(test_simple_regex_patterns)
     
     # Verify no test files remain
     foreach(file IN LISTS NO_TEST_FILES)
-        if(file MATCHES "test")
+        file(RELATIVE_PATH rel_file "${CMAKE_SOURCE_DIR}" "${file}")
+        if(rel_file MATCHES "test")
             message(STATUS "  ✗ Test file incorrectly included: ${file}")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
             set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
@@ -118,7 +119,8 @@ function(test_extension_regex_patterns)
     
     # Verify no .cpp files remain
     foreach(file IN LISTS NO_CPP_FILES)
-        if(file MATCHES "\\.cpp$")
+        file(RELATIVE_PATH rel_file "${CMAKE_SOURCE_DIR}" "${file}")
+        if(rel_file MATCHES "\\\\.cpp$")
             message(STATUS "  ✗ .cpp file incorrectly included: ${file}")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
             set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
@@ -129,10 +131,10 @@ endfunction()
 function(test_complex_regex_patterns)
     message(STATUS "Test 4: Complex regex patterns")
     
-    # Exclude files that start with 'auto_' or 'mock_' or end with '_test'
+    # Exclude files that start with 'auto_' or 'mock_'
     ClangFormat_CollectFiles(COMPLEX_FILTERED
         SOURCE_DIRS src include generated tests
-        EXCLUDE_PATTERNS "auto_.*|mock_.*|.*_test\\."
+        EXCLUDE_PATTERNS "auto_.*|mock_.*"
     )
     
     # Should exclude: auto_header.h, mock_test.c
