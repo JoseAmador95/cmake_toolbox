@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # ClangFormat check script
 # This script checks if files need formatting using clang-format
 #

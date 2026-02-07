@@ -1,5 +1,4 @@
-# Distributed under the OSI-approved BSD 3-Clause License.
-# See accompanying file LICENSE.txt for details.
+# SPDX-License-Identifier: MIT
 
 #[=======================================================================[.rst:
 Internal CMake script helper for CompileCommands_Trim function.
