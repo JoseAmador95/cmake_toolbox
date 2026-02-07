@@ -25,8 +25,8 @@ foreach(FILE IN LISTS CLANG_FORMAT_FILES)
     file(RELATIVE_PATH REL_FILE "${CMAKE_SOURCE_DIR}" "${FILE}")
     message(STATUS "Checking: ${REL_FILE}")
 
-    # Create temporary file (use simple naming to avoid path issues)
-    string(REPLACE "/" "_" SAFE_NAME "${REL_FILE}")
+    # Create temporary file (sanitize all non-alphanumeric chars for cross-platform safety)
+    string(REGEX REPLACE "[^A-Za-z0-9._-]" "_" SAFE_NAME "${REL_FILE}")
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/temp")
     set(TEMP_FILE "${CMAKE_BINARY_DIR}/temp/${SAFE_NAME}.formatted")
 
@@ -62,11 +62,25 @@ foreach(FILE IN LISTS CLANG_FORMAT_FILES)
                 fc
         )
         if(DIFF_TOOL)
+            # Use platform-specific diff options
+            get_filename_component(DIFF_NAME "${DIFF_TOOL}" NAME_WE)
+            if(DIFF_NAME STREQUAL "diff")
+                # Unix/Linux diff supports -u for unified format
+                set(DIFF_ARGS "-u")
+            elseif(DIFF_NAME STREQUAL "fc")
+                # Windows fc doesn't support -u, use /N for line numbers
+                set(DIFF_ARGS "/N")
+            else()
+                # Unknown diff tool, try without extra args
+                set(DIFF_ARGS "")
+            endif()
+
             execute_process(
                 COMMAND
-                    "${DIFF_TOOL}" "-u" "${FILE}" "${TEMP_FILE}"
+                    "${DIFF_TOOL}" ${DIFF_ARGS} "${FILE}" "${TEMP_FILE}"
                 OUTPUT_VARIABLE DIFF_OUTPUT
                 ERROR_QUIET
+                RESULT_VARIABLE DIFF_RESULT
             )
             if(DIFF_OUTPUT)
                 # Replace absolute paths with relative paths in diff output
