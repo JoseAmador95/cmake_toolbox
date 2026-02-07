@@ -28,12 +28,15 @@ Functions
 
   Add sanitizer instrumentation to a target::
 
-    Sanitizer_AddToTarget(<target> <scope>)
+    Sanitizer_AddToTarget(
+      TARGET <target>
+      SCOPE <scope>
+    )
 
-  ``<target>``
+  ``TARGET``
     The target to add sanitizer instrumentation to.
 
-  ``<scope>``
+  ``SCOPE``
     The scope for compile options and link libraries (PUBLIC, PRIVATE, INTERFACE).
 
 Example
@@ -44,7 +47,7 @@ Example
   include(Sanitizer)
   
   add_executable(my_test test.c)
-  Sanitizer_AddToTarget(my_test PRIVATE)
+  Sanitizer_AddToTarget(TARGET my_test SCOPE PRIVATE)
 
 #]=======================================================================]
 
@@ -76,25 +79,38 @@ set(SANITIZER_ENV_VARS
 #   TARGET - The target to add sanitizer instrumentation to
 #   SCOPE  - The scope for compile options and link libraries
 #
-function(Sanitizer_AddToTarget TARGET SCOPE)
-    if(NOT TARGET ${TARGET})
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${TARGET}' does not exist")
+function(Sanitizer_AddToTarget)
+    set(options "")
+    set(oneValueArgs TARGET SCOPE)
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_TARGET)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TARGET must be specified")
+    endif()
+
+    if(NOT ARG_SCOPE)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: SCOPE must be specified")
+    endif()
+
+    if(NOT TARGET ${ARG_TARGET})
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
     endif()
 
     target_compile_options(
-        ${TARGET}
-        ${SCOPE}
+        ${ARG_TARGET}
+        ${ARG_SCOPE}
         ${SANITIZER_FLAGS}
     )
 
     target_link_libraries(
-        ${TARGET}
-        ${SCOPE}
+        ${ARG_TARGET}
+        ${ARG_SCOPE}
         ${SANITIZER_FLAGS}
     )
 
     set_target_properties(
-        ${TARGET}
+        ${ARG_TARGET}
         PROPERTIES
             ENVIRONMENT "${SANITIZER_ENV_VARS}"
     )
@@ -106,5 +122,5 @@ endfunction()
 
 function(target_add_sanitizer _target _scope)
     message(DEPRECATION "target_add_sanitizer() is deprecated, use Sanitizer_AddToTarget() instead")
-    Sanitizer_AddToTarget(${_target} ${_scope})
+    Sanitizer_AddToTarget(TARGET ${_target} SCOPE ${_scope})
 endfunction()

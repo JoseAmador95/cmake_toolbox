@@ -130,13 +130,26 @@ Unity_Initialize()
 #   TEST_SOURCE - Path to the test source file
 #   OUTPUT_VAR  - Variable name to store the list of detected mock base names
 #
-function(_Ceedling_ParseMockIncludes TEST_SOURCE OUTPUT_VAR)
-    if(NOT EXISTS "${TEST_SOURCE}")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Test source file not found: ${TEST_SOURCE}")
+function(_Ceedling_ParseMockIncludes)
+    set(options "")
+    set(oneValueArgs TEST_SOURCE OUTPUT_VAR)
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_TEST_SOURCE)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TEST_SOURCE must be specified")
+    endif()
+
+    if(NOT ARG_OUTPUT_VAR)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTPUT_VAR must be specified")
+    endif()
+
+    if(NOT EXISTS "${ARG_TEST_SOURCE}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Test source file not found: ${ARG_TEST_SOURCE}")
     endif()
 
     # Read the test file content
-    file(READ "${TEST_SOURCE}" file_content)
+    file(READ "${ARG_TEST_SOURCE}" file_content)
 
     # Get the mock prefix (default: "mock_")
     if(NOT DEFINED CMOCK_MOCK_PREFIX)
@@ -163,7 +176,7 @@ function(_Ceedling_ParseMockIncludes TEST_SOURCE OUTPUT_VAR)
         list(REMOVE_DUPLICATES detected_mocks)
     endif()
 
-    set(${OUTPUT_VAR} "${detected_mocks}" PARENT_SCOPE)
+    set(${ARG_OUTPUT_VAR} "${detected_mocks}" PARENT_SCOPE)
 endfunction()
 
 # ==============================================================================
@@ -176,12 +189,25 @@ endfunction()
 #   TARGET     - The target to get include directories from
 #   OUTPUT_VAR - Variable name to store the list of include directories
 #
-function(_Ceedling_GetTargetIncludeDirs TARGET OUTPUT_VAR)
+function(_Ceedling_GetTargetIncludeDirs)
+    set(options "")
+    set(oneValueArgs TARGET OUTPUT_VAR)
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_TARGET)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TARGET must be specified")
+    endif()
+
+    if(NOT ARG_OUTPUT_VAR)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTPUT_VAR must be specified")
+    endif()
+
     set(all_include_dirs "")
     set(processed_targets "")
 
     # Internal recursive function using a worklist
-    set(worklist "${TARGET}")
+    set(worklist "${ARG_TARGET}")
 
     while(worklist)
         # Pop first item from worklist
@@ -240,7 +266,7 @@ function(_Ceedling_GetTargetIncludeDirs TARGET OUTPUT_VAR)
         list(REMOVE_DUPLICATES clean_dirs)
     endif()
 
-    set(${OUTPUT_VAR} "${clean_dirs}" PARENT_SCOPE)
+    set(${ARG_OUTPUT_VAR} "${clean_dirs}" PARENT_SCOPE)
 endfunction()
 
 # ==============================================================================
@@ -254,14 +280,31 @@ endfunction()
 #   INCLUDE_DIRS     - List of directories to search in
 #   OUTPUT_VAR       - Variable name to store the full path to the header
 #
-function(_Ceedling_ResolveHeader HEADER_BASE_NAME INCLUDE_DIRS OUTPUT_VAR)
+function(_Ceedling_ResolveHeader)
+    set(options "")
+    set(oneValueArgs HEADER_BASE_NAME OUTPUT_VAR)
+    set(multiValueArgs INCLUDE_DIRS)
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_HEADER_BASE_NAME)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: HEADER_BASE_NAME must be specified")
+    endif()
+
+    if(NOT ARG_INCLUDE_DIRS)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: INCLUDE_DIRS must be specified")
+    endif()
+
+    if(NOT ARG_OUTPUT_VAR)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTPUT_VAR must be specified")
+    endif()
+
     set(extensions ".h" ".hpp")
 
-    foreach(dir IN LISTS INCLUDE_DIRS)
+    foreach(dir IN LISTS ARG_INCLUDE_DIRS)
         foreach(ext IN LISTS extensions)
-            set(candidate "${dir}/${HEADER_BASE_NAME}${ext}")
+            set(candidate "${dir}/${ARG_HEADER_BASE_NAME}${ext}")
             if(EXISTS "${candidate}")
-                set(${OUTPUT_VAR} "${candidate}" PARENT_SCOPE)
+                set(${ARG_OUTPUT_VAR} "${candidate}" PARENT_SCOPE)
                 return()
             endif()
         endforeach()
@@ -269,9 +312,9 @@ function(_Ceedling_ResolveHeader HEADER_BASE_NAME INCLUDE_DIRS OUTPUT_VAR)
 
     # Not found - fatal error
     message(FATAL_ERROR 
-        "${CMAKE_CURRENT_FUNCTION}: Could not find header '${HEADER_BASE_NAME}.h' or '${HEADER_BASE_NAME}.hpp'\n"
-        "Searched in directories:\n  ${INCLUDE_DIRS}\n"
-        "This header was detected from a mock include (${CMOCK_MOCK_PREFIX}${HEADER_BASE_NAME}.h) in the test file.\n"
+        "${CMAKE_CURRENT_FUNCTION}: Could not find header '${ARG_HEADER_BASE_NAME}.h' or '${ARG_HEADER_BASE_NAME}.hpp'\n"
+        "Searched in directories:\n  ${ARG_INCLUDE_DIRS}\n"
+        "This header was detected from a mock include (${CMOCK_MOCK_PREFIX}${ARG_HEADER_BASE_NAME}.h) in the test file.\n"
         "Make sure the header exists and the target's include directories are set correctly."
     )
 endfunction()
@@ -293,34 +336,34 @@ function(Ceedling_AddUnitTest)
         TARGET
     )
     set(multiValueArgs "")
-    cmake_parse_arguments(UT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     # Validate arguments
-    if(NOT UT_NAME)
+    if(NOT ARG_NAME)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: NAME must be specified")
     endif()
-    if(NOT UT_UNIT_TEST)
+    if(NOT ARG_UNIT_TEST)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: UNIT_TEST must be specified")
     endif()
-    if(NOT UT_TARGET)
+    if(NOT ARG_TARGET)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TARGET must be specified")
     endif()
-    if(UT_DISABLE_SANITIZER AND UT_ENABLE_SANITIZER)
+    if(ARG_DISABLE_SANITIZER AND ARG_ENABLE_SANITIZER)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Cannot enable and disable sanitizer at the same time")
     endif()
 
     # Create test executable
-    add_executable(${UT_NAME} ${UT_UNIT_TEST})
+    add_executable(${ARG_NAME} ${ARG_UNIT_TEST})
     target_link_libraries(
-        ${UT_NAME}
+        ${ARG_NAME}
         PRIVATE
-            ${UT_TARGET}
+            ${ARG_TARGET}
             Unity::CMock
             Unity::Unity
     )
 
     # Setup build directory
-    set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}.dir)
+    set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}.dir)
     file(MAKE_DIRECTORY ${TEST_BINARY_DIR})
 
     # Set default mock subdirectory if not defined
@@ -361,7 +404,7 @@ function(Ceedling_AddUnitTest)
     # Generate test runner
     unset(RUNNER_SOURCE)
     Unity_GenerateRunner(
-        TEST_SOURCE ${UT_UNIT_TEST}
+        TEST_SOURCE ${ARG_UNIT_TEST}
         OUTPUT_DIR ${TEST_BINARY_DIR}
         ${config_file_arg}
         RUNNER_SOURCE_VAR RUNNER_SOURCE
@@ -374,20 +417,20 @@ function(Ceedling_AddUnitTest)
         COMMAND ${CMAKE_COMMAND} -E rename ${RUNNER_SOURCE} ${TEST_RUNNER}
         COMMENT "Move ${RUNNER_STEM} to ${TEST_BINARY_DIR}"
     )
-    target_sources(${UT_NAME} PRIVATE ${TEST_RUNNER})
-    target_include_directories(${UT_NAME} PRIVATE ${TEST_BINARY_DIR}/${CMOCK_MOCK_SUBDIR})
+    target_sources(${ARG_NAME} PRIVATE ${TEST_RUNNER})
+    target_include_directories(${ARG_NAME} PRIVATE ${TEST_BINARY_DIR}/${CMOCK_MOCK_SUBDIR})
 
     # =========================================================================
     # Auto-detect mocks from test file includes
     # =========================================================================
     # Parse test file to find #include "mock_*.h" directives
-    _Ceedling_ParseMockIncludes("${UT_UNIT_TEST}" DETECTED_MOCK_NAMES)
+    _Ceedling_ParseMockIncludes(TEST_SOURCE "${ARG_UNIT_TEST}" OUTPUT_VAR DETECTED_MOCK_NAMES)
 
     # Resolve detected mock names to actual header paths
     set(DETECTED_MOCK_HEADERS "")
     if(DETECTED_MOCK_NAMES)
         # Get include directories from target and its dependencies
-        _Ceedling_GetTargetIncludeDirs(${UT_TARGET} TARGET_INCLUDE_DIRS)
+        _Ceedling_GetTargetIncludeDirs(TARGET ${ARG_TARGET} OUTPUT_VAR TARGET_INCLUDE_DIRS)
 
         # Also add common locations
         list(APPEND TARGET_INCLUDE_DIRS
@@ -398,11 +441,11 @@ function(Ceedling_AddUnitTest)
         )
 
         foreach(mock_name IN LISTS DETECTED_MOCK_NAMES)
-            _Ceedling_ResolveHeader("${mock_name}" "${TARGET_INCLUDE_DIRS}" RESOLVED_HEADER)
+            _Ceedling_ResolveHeader(HEADER_BASE_NAME "${mock_name}" INCLUDE_DIRS ${TARGET_INCLUDE_DIRS} OUTPUT_VAR RESOLVED_HEADER)
             list(APPEND DETECTED_MOCK_HEADERS "${RESOLVED_HEADER}")
         endforeach()
 
-        message(STATUS "${CMAKE_CURRENT_FUNCTION}: Auto-detected mocks from ${UT_NAME}: ${DETECTED_MOCK_NAMES}")
+        message(STATUS "${CMAKE_CURRENT_FUNCTION}: Auto-detected mocks from ${ARG_NAME}: ${DETECTED_MOCK_NAMES}")
     endif()
 
     # Generate mocks for all auto-detected headers
@@ -415,28 +458,28 @@ function(Ceedling_AddUnitTest)
             MOCK_SOURCE_VAR MOCK_SOURCE
             MOCK_HEADER_VAR MOCK_HEADER
         )
-        target_sources(${UT_NAME} PRIVATE ${MOCK_SOURCE})
+        target_sources(${ARG_NAME} PRIVATE ${MOCK_SOURCE})
     endforeach()
 
     # Add coverage instrumentation
     if(CEEDLING_ENABLE_GCOV)
-        Gcov_AddToTarget(${UT_TARGET} PUBLIC)
+        Gcov_AddToTarget(${ARG_TARGET} PUBLIC)
     endif()
 
     # Add sanitizer instrumentation
     if(
         CEEDLING_ENABLE_SANITIZER
         AND (
-            (CEEDLING_SANITIZER_DEFAULT AND NOT UT_DISABLE_SANITIZER)
-            OR (NOT CEEDLING_SANITIZER_DEFAULT AND UT_ENABLE_SANITIZER)
+            (CEEDLING_SANITIZER_DEFAULT AND NOT ARG_DISABLE_SANITIZER)
+            OR (NOT CEEDLING_SANITIZER_DEFAULT AND ARG_ENABLE_SANITIZER)
         )
     )
-        Sanitizer_AddToTarget(${UT_TARGET} PUBLIC)
+        Sanitizer_AddToTarget(TARGET ${ARG_TARGET} SCOPE PUBLIC)
     endif()
 
     # Disable linting for test targets
     set_target_properties(
-        ${UT_NAME}
+        ${ARG_NAME}
         PROPERTIES
             C_CLANG_TIDY ""
             CXX_CLANG_TIDY ""
@@ -446,17 +489,17 @@ function(Ceedling_AddUnitTest)
     # Test discovery or single test
     if(CEEDLING_EXTRACT_FUNCTIONS)
         # Discover individual test functions and add as separate CTest tests
-        set(TB_UNITY_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${UT_NAME}_tests.cmake")
+        set(TB_UNITY_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}_tests.cmake")
 
         add_custom_command(
-            TARGET ${UT_NAME}
+            TARGET ${ARG_NAME}
             POST_BUILD
             BYPRODUCTS "${TB_UNITY_TEST_FILE}"
             COMMAND
                 "${CMAKE_COMMAND}"
-                -D "TEST_EXECUTABLE=$<TARGET_FILE:${UT_NAME}>"
+                -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>"
                 -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-                -D "TEST_SUITE=$<TARGET_FILE_NAME:${UT_NAME}>"
+                -D "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>"
                 -D "TEST_FILE=${TB_UNITY_TEST_FILE}"
                 -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
@@ -469,7 +512,7 @@ function(Ceedling_AddUnitTest)
         )
     else()
         # Add the whole file as a single test
-        add_test(NAME ${UT_NAME} COMMAND ${UT_NAME})
+        add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
     endif()
 endfunction()
 
