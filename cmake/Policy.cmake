@@ -274,6 +274,15 @@ function(Policy_Version)
     if(ARG_MAXIMUM)
         set(max_version "${ARG_MAXIMUM}")
         set(do_max 1)
+        
+        # Validate that MAXIMUM >= MINIMUM
+        _policy_version_compare_gte("${min_version}" "${max_version}" _min_gte_max)
+        if(_min_gte_max)
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: MAXIMUM (${max_version}) must be greater than or equal to MINIMUM (${min_version})"
+            )
+        endif()
     endif()
 
     _policy_registry_get(_policy_registry)

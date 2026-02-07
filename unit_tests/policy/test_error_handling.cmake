@@ -127,6 +127,11 @@ function(test_policy_version_errors)
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Version()"
     )
     
+    test_command_fails(
+        "policy_version with MAXIMUM < MINIMUM"
+        "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Register(NAME TEST DESCRIPTION \"test\" DEFAULT OLD INTRODUCED_VERSION 1.0); Policy_Version(MINIMUM 4.0 MAXIMUM 3.5)"
+    )
+    
     message(STATUS "  ✓ All policy_version error conditions handled correctly")
 endfunction()
 
