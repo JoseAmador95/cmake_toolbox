@@ -244,12 +244,23 @@ endfunction()
 # Mimics CMake's cmake_policy(VERSION) behavior.
 #
 # Parameters:
-#   MINIMUM - Minimum version for policy range
-#   MAXIMUM (optional) - Maximum version for policy range
+#   MINIMUM - Version threshold for policy setting
+#   MAXIMUM (optional) - Upper bound for policy range
+#
+# Boundary Behavior:
+#   Without MAXIMUM:
+#   - Sets all policies introduced at versions <= MINIMUM to NEW
+#   - Mimics cmake_policy(VERSION X): enables all policies up to version X
+#
+#   With MAXIMUM:
+#   - Sets policies in range [MINIMUM, MAXIMUM] to NEW
+#   - Sets policies introduced after MAXIMUM to OLD
+#   - Both bounds are inclusive
+#   - MINIMUM == MAXIMUM is valid: only policies at exactly that version are NEW
 #
 # Example:
-#   Policy_Version(MINIMUM 3.0 MAXIMUM 3.15)
-#   Policy_Version(MINIMUM 3.0)
+#   Policy_Version(MINIMUM 3.0 MAXIMUM 3.15)  # Set policies 3.0-3.15 to NEW
+#   Policy_Version(MINIMUM 3.0)                # Set all policies <= 3.0 to NEW
 #
 function(Policy_Version)
     set(options)
@@ -274,8 +285,8 @@ function(Policy_Version)
         set(do_max 1)
         
         # Validate that MAXIMUM >= MINIMUM
-        _policy_version_compare_gte("${min_version}" "${max_version}" _min_gte_max)
-        if(_min_gte_max)
+        _policy_version_compare_gte("${max_version}" "${min_version}" _max_gte_min)
+        if(NOT _max_gte_min)
             message(
                 FATAL_ERROR
                 "${CMAKE_CURRENT_FUNCTION}: MAXIMUM (${max_version}) must be greater than or equal to MINIMUM (${min_version})"
@@ -293,14 +304,25 @@ function(Policy_Version)
             endif()
             list(GET _fields 0 pname)
             list(GET _fields 3 introver)
-            _policy_version_compare_gte("${min_version}" "${introver}" _gte)
-            if(_gte)
-                Policy_Set("${pname}" NEW)
-            endif()
+            
             if(do_max)
-                _policy_version_compare_gte("${introver}" "${max_version}" _overmax)
-                if(_overmax)
-                    Policy_Set("${pname}" OLD)
+                # With MAXIMUM: set to NEW if min <= introver <= max (range semantics)
+                _policy_version_compare_gte("${introver}" "${min_version}" _intro_gte_min)
+                _policy_version_compare_gte("${max_version}" "${introver}" _max_gte_intro)
+                if(_intro_gte_min AND _max_gte_intro)
+                    Policy_Set("${pname}" NEW)
+                else()
+                    # Explicitly set to OLD if outside range
+                    _policy_version_compare_gte("${introver}" "${max_version}" _intro_gte_max)
+                    if(_intro_gte_max)
+                        Policy_Set("${pname}" OLD)
+                    endif()
+                endif()
+            else()
+                # Without MAXIMUM: set to NEW if introver <= min (all policies up to MINIMUM)
+                _policy_version_compare_gte("${min_version}" "${introver}" _min_gte_intro)
+                if(_min_gte_intro)
+                    Policy_Set("${pname}" NEW)
                 endif()
             endif()
         endif()
