@@ -76,3 +76,27 @@ endforeach()
 # 1. External dependencies (defeating the purpose of unit tests)
 # 2. Complex mocking that doesn't test real behavior
 # 3. Running in project mode (not true unit testing)
+
+# ==============================================================================
+# Sanitizer Module Integration Tests
+# ==============================================================================
+
+# Test that Sanitizer module correctly applies compile and link options
+add_test(
+    NAME sanitizer_integration
+    COMMAND ${CMAKE_COMMAND}
+        -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/sanitizer
+        -B ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_test
+)
+
+# ==============================================================================
+# Gcov Module Integration Tests
+# ==============================================================================
+
+# Test that Gcov module correctly applies compile and link options
+add_test(
+    NAME gcov_integration
+    COMMAND ${CMAKE_COMMAND}
+        -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov
+        -B ${CMAKE_CURRENT_BINARY_DIR}/gcov_test
+)
