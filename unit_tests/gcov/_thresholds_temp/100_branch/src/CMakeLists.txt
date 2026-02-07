@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(GcovThresholdsTest)
+list(APPEND CMAKE_MODULE_PATH "/home/jose/Repositories/cmake_toolbox/cmake")
+set(GCOVR_FAIL_UNDER_BRANCH "100" CACHE STRING "" FORCE)
+set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL "" FORCE)
+include(Gcov)
