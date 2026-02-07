@@ -208,6 +208,10 @@ function(run_all_tests)
         message(STATUS "✗ ${ERROR_COUNT} test(s) failed")
     endif()
     message(STATUS "")
+    
+    if(ERROR_COUNT GREATER 0)
+        message(FATAL_ERROR "${ERROR_COUNT} test(s) failed")
+    endif()
 endfunction()
 
 if(CMAKE_SCRIPT_MODE_FILE)

@@ -117,3 +117,7 @@ if(ERROR_COUNT EQUAL 0)
 else()
     message(STATUS "${TEST_NAME}: FAILED (${ERROR_COUNT} errors)")
 endif()
+
+if(ERROR_COUNT GREATER 0)
+    message(FATAL_ERROR "${ERROR_COUNT} test(s) failed")
+endif()

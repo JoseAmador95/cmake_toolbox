@@ -247,6 +247,10 @@ function(run_all_tests)
         message(STATUS "✗ ${ERROR_COUNT} test(s) failed in ${TEST_NAME}")
     endif()
     message(STATUS "")
+    
+    if(ERROR_COUNT GREATER 0)
+        message(FATAL_ERROR "${ERROR_COUNT} test(s) failed")
+    endif()
 endfunction()
 
 # Run tests if this file is executed directly
