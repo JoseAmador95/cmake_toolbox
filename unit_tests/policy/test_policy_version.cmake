@@ -7,22 +7,22 @@ set(ERROR_COUNT 0)
 
 function(setup_test_environment)
     # Register test policies for version testing
-    policy_register(NAME VER001 DESCRIPTION "Use new behavior for XYZ" DEFAULT OLD INTRODUCED_VERSION 1.0)
-    policy_register(NAME VER002 DESCRIPTION "Enable advanced optimization" DEFAULT OLD INTRODUCED_VERSION 2.0)
-    policy_register(NAME VER003 DESCRIPTION "New parser syntax" DEFAULT OLD INTRODUCED_VERSION 3.1)
-    policy_register(NAME VER004 DESCRIPTION "Future feature" DEFAULT OLD INTRODUCED_VERSION 5.0)
+    Policy_Register(NAME VER001 DESCRIPTION "Use new behavior for XYZ" DEFAULT OLD INTRODUCED_VERSION 1.0)
+    Policy_Register(NAME VER002 DESCRIPTION "Enable advanced optimization" DEFAULT OLD INTRODUCED_VERSION 2.0)
+    Policy_Register(NAME VER003 DESCRIPTION "New parser syntax" DEFAULT OLD INTRODUCED_VERSION 3.1)
+    Policy_Register(NAME VER004 DESCRIPTION "Future feature" DEFAULT OLD INTRODUCED_VERSION 5.0)
     message(STATUS "Setting up policy version test environment")
 endfunction()
 
 function(test_version_minimum_2_5)
     message(STATUS "Test 1: Testing policy_version MINIMUM 2.5")
     
-    policy_version(MINIMUM 2.5)
+    Policy_Version(MINIMUM 2.5)
 
-    policy_get(POLICY VER001 OUTVAR v1)
-    policy_get(POLICY VER002 OUTVAR v2)
-    policy_get(POLICY VER003 OUTVAR v3)
-    policy_get(POLICY VER004 OUTVAR v4)
+    Policy_Get(VER001 v1)
+    Policy_Get(VER002 v2)
+    Policy_Get(VER003 v3)
+    Policy_Get(VER004 v4)
 
     # Verify expected values
     if(NOT v1 STREQUAL "NEW")
@@ -55,12 +55,12 @@ endfunction()
 function(test_version_minimum_3_2)
     message(STATUS "Test 2: Testing policy_version MINIMUM 3.2")
     
-    policy_version(MINIMUM 3.2)
+    Policy_Version(MINIMUM 3.2)
 
-    policy_get(POLICY VER001 OUTVAR v1)
-    policy_get(POLICY VER002 OUTVAR v2)
-    policy_get(POLICY VER003 OUTVAR v3)
-    policy_get(POLICY VER004 OUTVAR v4)
+    Policy_Get(VER001 v1)
+    Policy_Get(VER002 v2)
+    Policy_Get(VER003 v3)
+    Policy_Get(VER004 v4)
 
     # Verify expected values
     if(NOT v1 STREQUAL "NEW")
@@ -93,12 +93,12 @@ endfunction()
 function(test_version_range)
     message(STATUS "Test 3: Testing policy_version MINIMUM 1.0 MAXIMUM 2.5")
     
-    policy_version(MINIMUM 1.0 MAXIMUM 2.5)
+    Policy_Version(MINIMUM 1.0 MAXIMUM 2.5)
 
-    policy_get(POLICY VER001 OUTVAR v1)
-    policy_get(POLICY VER002 OUTVAR v2)
-    policy_get(POLICY VER003 OUTVAR v3)
-    policy_get(POLICY VER004 OUTVAR v4)
+    Policy_Get(VER001 v1)
+    Policy_Get(VER002 v2)
+    Policy_Get(VER003 v3)
+    Policy_Get(VER004 v4)
 
     # Verify expected values
     if(NOT v1 STREQUAL "NEW")

@@ -7,7 +7,7 @@ set(ERROR_COUNT 0)
 
 function(setup_test_environment)
     # Register test policies
-    policy_register(NAME INFO001 
+    Policy_Register(NAME INFO001 
                     DESCRIPTION "Policy for info testing" 
                     DEFAULT OLD 
                     INTRODUCED_VERSION 1.0.0 
@@ -15,7 +15,7 @@ function(setup_test_environment)
 Line 2 with | pipe
 Line 3")
 
-    policy_register(NAME INFO002 
+    Policy_Register(NAME INFO002 
                     DESCRIPTION "Policy without warning" 
                     DEFAULT NEW 
                     INTRODUCED_VERSION 2.1.0)
@@ -27,12 +27,12 @@ function(test_policy_info_basic)
     message(STATUS "Test 1: Testing basic policy_info functionality")
     
     # Test that policy_info executes without crashing
-    policy_info(POLICY INFO001)
-    policy_info(POLICY INFO002)
+    Policy_Info(INFO001)
+    Policy_Info(INFO002)
     
     # Verify the policies are accessible and have correct data
-    policy_get_fields(POLICY INFO001 PREFIX VERIFY1)
-    policy_get_fields(POLICY INFO002 PREFIX VERIFY2)
+    Policy_GetFields(INFO001 VERIFY1)
+    Policy_GetFields(INFO002 VERIFY2)
     
     if(NOT VERIFY1_NAME STREQUAL "INFO001")
         message(SEND_ERROR "INFO001 policy data not accessible")
@@ -53,11 +53,11 @@ function(test_policy_info_with_set_value)
     message(STATUS "Test 2: Testing policy_info with explicitly set value")
     
     # Set a policy value and check info still works
-    policy_set(POLICY INFO001 VALUE NEW)
-    policy_info(POLICY INFO001)
+    Policy_Set(INFO001 NEW)
+    Policy_Info(INFO001)
     
     # Verify the value was actually set
-    policy_get(POLICY INFO001 OUTVAR current_value)
+    Policy_Get(INFO001 current_value)
     if(NOT current_value STREQUAL "NEW")
         message(SEND_ERROR "Policy value not set correctly")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1" PARENT_SCOPE)
@@ -71,7 +71,7 @@ function(test_policy_info_warning_handling)
     message(STATUS "Test 3: Testing policy_info warning handling")
     
     # Test policy with warning
-    policy_get_fields(POLICY INFO001 PREFIX WITH_WARNING)
+    Policy_GetFields(INFO001 WITH_WARNING)
     if(WITH_WARNING_WARNING STREQUAL "")
         message(SEND_ERROR "INFO001 should have a warning message")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1" PARENT_SCOPE)
@@ -79,7 +79,7 @@ function(test_policy_info_warning_handling)
     endif()
     
     # Test policy without warning
-    policy_get_fields(POLICY INFO002 PREFIX NO_WARNING)
+    Policy_GetFields(INFO002 NO_WARNING)
     if(NOT NO_WARNING_WARNING STREQUAL "")
         message(SEND_ERROR "INFO002 should have empty warning")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1" PARENT_SCOPE)
@@ -87,8 +87,8 @@ function(test_policy_info_warning_handling)
     endif()
     
     # Ensure both work with policy_info
-    policy_info(POLICY INFO001)
-    policy_info(POLICY INFO002)
+    Policy_Info(INFO001)
+    Policy_Info(INFO002)
     
     message(STATUS "  ✓ Policy info handles warnings correctly")
 endfunction()
@@ -100,7 +100,7 @@ function(test_policy_info_error_handling)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -P -c "
             include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            policy_info(POLICY NONEXISTENT)
+            Policy_Info(NONEXISTENT)
         "
         RESULT_VARIABLE unreg_result
         OUTPUT_VARIABLE unreg_output

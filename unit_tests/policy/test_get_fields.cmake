@@ -10,13 +10,13 @@ function(setup_test_environment)
     message(STATUS "Setting up policy get fields test environment")
     
     # Register policies for testing
-    policy_register(NAME FIELDS001 
+    Policy_Register(NAME FIELDS001 
                     DESCRIPTION "Policy for fields testing" 
                     DEFAULT OLD 
                     INTRODUCED_VERSION 1.2.3 
                     WARNING "Test warning with | pipe")
 
-    policy_register(NAME FIELDS002 
+    Policy_Register(NAME FIELDS002 
                     DESCRIPTION "Policy without warning" 
                     DEFAULT NEW 
                     INTRODUCED_VERSION 2.0.0)
@@ -25,7 +25,7 @@ endfunction()
 function(test_get_fields_with_warning)
     message(STATUS "Test 1: Getting fields for policy with warning (default state)")
     
-    policy_get_fields(POLICY FIELDS001 PREFIX TEST1)
+    Policy_GetFields(FIELDS001 TEST1)
 
     # Verify all fields
     if(NOT TEST1_NAME STREQUAL "FIELDS001")
@@ -83,8 +83,8 @@ endfunction()
 function(test_is_default_changes)
     message(STATUS "Test 2: Setting policy and verifying IS_DEFAULT changes")
     
-    policy_set(POLICY FIELDS001 VALUE NEW)
-    policy_get_fields(POLICY FIELDS001 PREFIX TEST1_SET)
+    Policy_Set(FIELDS001 NEW)
+    Policy_GetFields(FIELDS001 TEST1_SET)
 
     if(NOT TEST1_SET_CURRENT_VALUE STREQUAL "NEW")
         message(STATUS "  ✗ TEST1_SET_CURRENT_VALUE should be 'NEW', got: '${TEST1_SET_CURRENT_VALUE}'")
@@ -106,7 +106,7 @@ endfunction()
 function(test_policy_without_warning)
     message(STATUS "Test 3: Getting fields for policy without warning")
     
-    policy_get_fields(POLICY FIELDS002 PREFIX TEST2)
+    Policy_GetFields(FIELDS002 TEST2)
 
     if(NOT TEST2_WARNING STREQUAL "")
         message(STATUS "  ✗ TEST2_WARNING should be empty, got: '${TEST2_WARNING}'")
@@ -135,8 +135,8 @@ endfunction()
 function(test_multiple_prefixes)
     message(STATUS "Test 4: Testing multiple prefixes don't interfere")
     
-    policy_get_fields(POLICY FIELDS001 PREFIX PREFIX_A)
-    policy_get_fields(POLICY FIELDS002 PREFIX PREFIX_B)
+    Policy_GetFields(FIELDS001 PREFIX_A)
+    Policy_GetFields(FIELDS002 PREFIX_B)
 
     if(NOT PREFIX_A_NAME STREQUAL "FIELDS001")
         message(STATUS "  ✗ PREFIX_A_NAME should be 'FIELDS001', got: '${PREFIX_A_NAME}'")
@@ -161,7 +161,7 @@ function(test_error_handling)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -P -c "
             include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            policy_get_fields(POLICY NONEXISTENT PREFIX TEST)
+            Policy_GetFields(NONEXISTENT TEST)
         "
         RESULT_VARIABLE unreg_result
         OUTPUT_VARIABLE unreg_output

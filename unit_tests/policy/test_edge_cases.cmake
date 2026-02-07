@@ -13,12 +13,12 @@ message(STATUS "Test 1: Very long policy names and descriptions")
 set(LONG_NAME "EXTREMELY_LONG_POLICY_NAME_THAT_TESTS_THE_LIMITS_OF_THE_POLICY_SYSTEM_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")
 set(LONG_DESC "This is an extremely long description that tests how the policy system handles very long text fields. It includes multiple sentences and should test the robustness of the string handling mechanisms in the policy system.")
 
-policy_register(NAME ${LONG_NAME}
+Policy_Register(NAME ${LONG_NAME}
                 DESCRIPTION "${LONG_DESC}"
                 DEFAULT OLD
                 INTRODUCED_VERSION 1.0.0)
 
-policy_get_fields(POLICY ${LONG_NAME} PREFIX LONG)
+Policy_GetFields(${LONG_NAME} LONG)
 if(NOT LONG_NAME STREQUAL "${LONG_NAME}")
     message(SEND_ERROR "Long name not preserved correctly")
     math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -31,14 +31,14 @@ endif()
 
 # Test 2: Complex version numbers
 message(STATUS "Test 2: Complex version numbers")
-policy_register(NAME VER_COMPLEX_001 DESCRIPTION "Complex version 1" DEFAULT OLD INTRODUCED_VERSION 10.20.30)
-policy_register(NAME VER_COMPLEX_002 DESCRIPTION "Complex version 2" DEFAULT OLD INTRODUCED_VERSION 1.0)
-policy_register(NAME VER_COMPLEX_003 DESCRIPTION "Complex version 3" DEFAULT OLD INTRODUCED_VERSION 0.1.0)
+Policy_Register(NAME VER_COMPLEX_001 DESCRIPTION "Complex version 1" DEFAULT OLD INTRODUCED_VERSION 10.20.30)
+Policy_Register(NAME VER_COMPLEX_002 DESCRIPTION "Complex version 2" DEFAULT OLD INTRODUCED_VERSION 1.0)
+Policy_Register(NAME VER_COMPLEX_003 DESCRIPTION "Complex version 3" DEFAULT OLD INTRODUCED_VERSION 0.1.0)
 
-policy_version(MINIMUM 5.0.0)
-policy_get(POLICY VER_COMPLEX_001 OUTVAR complex1)
-policy_get(POLICY VER_COMPLEX_002 OUTVAR complex2)
-policy_get(POLICY VER_COMPLEX_003 OUTVAR complex3)
+Policy_Version(MINIMUM 5.0.0)
+Policy_Get(VER_COMPLEX_001 complex1)
+Policy_Get(VER_COMPLEX_002 complex2)
+Policy_Get(VER_COMPLEX_003 complex3)
 
 if(NOT complex1 STREQUAL "OLD")
     message(SEND_ERROR "VER_COMPLEX_001 should be OLD (10.20.30 > 5.0.0, so not set to NEW), got: ${complex1}")
@@ -57,7 +57,7 @@ endif()
 
 # Test 3: Multiple warnings with complex escaping
 message(STATUS "Test 3: Complex warning messages with various special characters")
-policy_register(NAME COMPLEX_WARNING
+Policy_Register(NAME COMPLEX_WARNING
                 DESCRIPTION "Policy with complex warning"
                 DEFAULT OLD
                 INTRODUCED_VERSION 2.0
@@ -67,7 +67,7 @@ policy_register(NAME COMPLEX_WARNING
                         Unicode: αβγδε and emojis if supported
                         Tabs	and multiple    spaces")
 
-policy_get_fields(POLICY COMPLEX_WARNING PREFIX COMPLEX)
+Policy_GetFields(COMPLEX_WARNING COMPLEX)
 # Test that the warning is preserved (the system should handle the escaping)
 if(COMPLEX_WARNING STREQUAL "")
     message(SEND_ERROR "Complex warning should not be empty")
@@ -77,19 +77,19 @@ endif()
 # Test 4: Stress test - many policies
 message(STATUS "Test 4: Stress test with many policies")
 foreach(i RANGE 1 20)
-    policy_register(NAME STRESS_${i}
+    Policy_Register(NAME STRESS_${i}
                     DESCRIPTION "Stress test policy ${i}"
                     DEFAULT OLD
                     INTRODUCED_VERSION ${i}.0)
 endforeach()
 
 # Set some policies and verify
-policy_set(POLICY STRESS_5 VALUE NEW)
-policy_set(POLICY STRESS_15 VALUE NEW)
+Policy_Set(STRESS_5 NEW)
+Policy_Set(STRESS_15 NEW)
 
-policy_get(POLICY STRESS_5 OUTVAR stress5)
-policy_get(POLICY STRESS_15 OUTVAR stress15)
-policy_get(POLICY STRESS_10 OUTVAR stress10)
+Policy_Get(STRESS_5 stress5)
+Policy_Get(STRESS_15 stress15)
+Policy_Get(STRESS_10 stress10)
 
 if(NOT stress5 STREQUAL "NEW")
     message(SEND_ERROR "STRESS_5 should be NEW, got: ${stress5}")
@@ -108,13 +108,13 @@ endif()
 
 # Test 5: Version range testing with many policies
 message(STATUS "Test 5: Version range testing")
-policy_version(MINIMUM 10.0 MAXIMUM 15.0)
+Policy_Version(MINIMUM 10.0 MAXIMUM 15.0)
 
 # Let's debug what actually happens
-message(STATUS "Debugging policy states after policy_version(MINIMUM 10.0 MAXIMUM 15.0):")
+message(STATUS "Debugging policy states after Policy_Version(MINIMUM 10.0 MAXIMUM 15.0):")
 set(actual_new_count 0)
 foreach(i RANGE 1 20)
-    policy_get(POLICY STRESS_${i} OUTVAR stress_val)
+    Policy_Get(STRESS_${i} stress_val)
     message(STATUS "STRESS_${i} (introduced ${i}.0): ${stress_val}")
     if(stress_val STREQUAL "NEW")
         math(EXPR actual_new_count "${actual_new_count} + 1")
@@ -137,13 +137,13 @@ endif()
 
 # Test 6: Testing policy_info and policy_get_fields consistency
 message(STATUS "Test 6: Consistency between policy_info and policy_get_fields")
-policy_register(NAME CONSISTENCY_TEST
+Policy_Register(NAME CONSISTENCY_TEST
                 DESCRIPTION "Testing consistency"
                 DEFAULT NEW
                 INTRODUCED_VERSION 3.1.4
                 WARNING "Consistency warning message")
 
-policy_get_fields(POLICY CONSISTENCY_TEST PREFIX CONS)
+Policy_GetFields(CONSISTENCY_TEST CONS)
 
 # These should be consistent with what policy_info would show
 if(NOT CONS_NAME STREQUAL "CONSISTENCY_TEST")
@@ -173,13 +173,13 @@ endif()
 
 # Test 7: Edge cases with minimal valid content
 message(STATUS "Test 7: Minimal valid content edge cases")
-policy_register(NAME MINIMAL_TEST
+Policy_Register(NAME MINIMAL_TEST
                 DESCRIPTION "M"
                 DEFAULT OLD
                 INTRODUCED_VERSION 1.0
                 WARNING "")
 
-policy_get_fields(POLICY MINIMAL_TEST PREFIX MINIMAL)
+Policy_GetFields(MINIMAL_TEST MINIMAL)
 if(NOT MINIMAL_DESCRIPTION STREQUAL "M")
     message(SEND_ERROR "Minimal description not handled correctly")
     math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")

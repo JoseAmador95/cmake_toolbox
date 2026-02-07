@@ -14,18 +14,18 @@ function(test_basic_policy_registration)
     message(STATUS "Test 1: Basic policy registration and verification")
     
     # Register the policies
-    policy_register(NAME BASIC001 
+    Policy_Register(NAME BASIC001 
                     DESCRIPTION "Basic test policy" 
                     DEFAULT OLD 
                     INTRODUCED_VERSION 1.0)
     
-    policy_register(NAME BASIC002 
+    Policy_Register(NAME BASIC002 
                     DESCRIPTION "Policy with warning" 
                     DEFAULT NEW 
                     INTRODUCED_VERSION 2.0 
                     WARNING "This is a test warning")
     
-    policy_register(NAME BASIC003 
+    Policy_Register(NAME BASIC003 
                     DESCRIPTION "Policy with complex warning" 
                     DEFAULT OLD 
                     INTRODUCED_VERSION 1.5 
@@ -34,7 +34,7 @@ Line 2 with | pipe character
 Line 3 with multiple | pipes | here")
     
     # Verify BASIC001 registration
-    policy_get_fields(POLICY BASIC001 PREFIX B1)
+    Policy_GetFields(BASIC001 B1)
     if(NOT B1_NAME STREQUAL "BASIC001")
         message(STATUS "  ✗ BASIC001 name should be 'BASIC001', got: '${B1_NAME}'")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -64,7 +64,7 @@ Line 3 with multiple | pipes | here")
     endif()
     
     # Verify BASIC002 registration (with warning)
-    policy_get_fields(POLICY BASIC002 PREFIX B2)
+    Policy_GetFields(BASIC002 B2)
     if(NOT B2_WARNING STREQUAL "This is a test warning")
         message(STATUS "  ✗ BASIC002 warning mismatch, got: '${B2_WARNING}'")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -80,7 +80,7 @@ Line 3 with multiple | pipes | here")
     endif()
     
     # Verify BASIC003 registration (complex warning with pipes)
-    policy_get_fields(POLICY BASIC003 PREFIX B3)
+    Policy_GetFields(BASIC003 B3)
     set(expected_warning "Line 1 of warning
 Line 2 with | pipe character
 Line 3 with multiple | pipes | here")
@@ -99,7 +99,7 @@ endfunction()
 function(test_default_policy_values)
     message(STATUS "Test 2: Getting default policy values")
     
-    policy_get(POLICY BASIC001 OUTVAR val1)
+    Policy_Get(BASIC001 val1)
     if(NOT val1 STREQUAL "OLD")
         message(STATUS "  ✗ BASIC001 should return OLD, got: ${val1}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -107,7 +107,7 @@ function(test_default_policy_values)
         return()
     endif()
 
-    policy_get(POLICY BASIC002 OUTVAR val2)
+    Policy_Get(BASIC002 val2)
     if(NOT val2 STREQUAL "NEW")
         message(STATUS "  ✗ BASIC002 should return NEW, got: ${val2}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -122,11 +122,11 @@ function(test_policy_setting)
     message(STATUS "Test 3: Setting and verifying policy values")
     
     # Set the values
-    policy_set(POLICY BASIC001 VALUE NEW)
-    policy_set(POLICY BASIC002 VALUE OLD)
+    Policy_Set(BASIC001 NEW)
+    Policy_Set(BASIC002 OLD)
     
     # Immediately verify they were set correctly
-    policy_get(POLICY BASIC001 OUTVAR val1_new)
+    Policy_Get(BASIC001 val1_new)
     if(NOT val1_new STREQUAL "NEW")
         message(STATUS "  ✗ BASIC001 should be NEW after setting, got: ${val1_new}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -134,7 +134,7 @@ function(test_policy_setting)
         return()
     endif()
     
-    policy_get(POLICY BASIC002 OUTVAR val2_old)
+    Policy_Get(BASIC002 val2_old)
     if(NOT val2_old STREQUAL "OLD")
         message(STATUS "  ✗ BASIC002 should be OLD after setting, got: ${val2_old}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -149,7 +149,7 @@ function(test_policy_value_persistence)
     message(STATUS "Test 4: Verifying policy values persist correctly")
     
     # Verify the values are still set from the previous test
-    policy_get(POLICY BASIC001 OUTVAR val1_check)
+    Policy_Get(BASIC001 val1_check)
     if(NOT val1_check STREQUAL "NEW")
         message(STATUS "  ✗ BASIC001 value should persist as NEW, got: ${val1_check}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -157,7 +157,7 @@ function(test_policy_value_persistence)
         return()
     endif()
 
-    policy_get(POLICY BASIC002 OUTVAR val2_check)
+    Policy_Get(BASIC002 val2_check)
     if(NOT val2_check STREQUAL "OLD")
         message(STATUS "  ✗ BASIC002 value should persist as OLD, got: ${val2_check}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -166,8 +166,8 @@ function(test_policy_value_persistence)
     endif()
     
     # Test setting the same value again (should not cause issues)
-    policy_set(POLICY BASIC001 VALUE NEW)
-    policy_get(POLICY BASIC001 OUTVAR val1_same)
+    Policy_Set(BASIC001 NEW)
+    Policy_Get(BASIC001 val1_same)
     if(NOT val1_same STREQUAL "NEW")
         message(STATUS "  ✗ BASIC001 should remain NEW after setting same value, got: ${val1_same}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -185,8 +185,8 @@ function(test_error_handling)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -P -c "
             include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            policy_register(NAME DUP_TEST DESCRIPTION \"First\" DEFAULT OLD INTRODUCED_VERSION 1.0)
-            policy_register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_VERSION 2.0)
+            Policy_Register(NAME DUP_TEST DESCRIPTION \"First\" DEFAULT OLD INTRODUCED_VERSION 1.0)
+            Policy_Register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_VERSION 2.0)
         "
         RESULT_VARIABLE dup_result
         OUTPUT_VARIABLE dup_output
@@ -203,7 +203,7 @@ function(test_error_handling)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -P -c "
             include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            policy_register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VERSION 1.0)
+            Policy_Register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VERSION 1.0)
         "
         RESULT_VARIABLE inv_result
         OUTPUT_VARIABLE inv_output
@@ -220,7 +220,7 @@ function(test_error_handling)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -P -c "
             include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            policy_get(POLICY NONEXISTENT OUTVAR result)
+            Policy_Get(NONEXISTENT result)
         "
         RESULT_VARIABLE unreg_result
         OUTPUT_VARIABLE unreg_output

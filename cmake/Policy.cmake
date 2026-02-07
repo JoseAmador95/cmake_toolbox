@@ -26,17 +26,17 @@
 #
 # USAGE EXAMPLE:
 #   # Register a policy
-#   policy_register(NAME CMP0001 
+#   Policy_Register(NAME CMP0001 
 #                   DESCRIPTION "Modern target_link_libraries usage"
 #                   DEFAULT OLD 
 #                   INTRODUCED_VERSION 3.0
 #                   WARNING "Use PUBLIC/PRIVATE/INTERFACE keywords")
 #   
 #   # Set policy value
-#   policy_set(POLICY CMP0001 VALUE NEW)
+#   Policy_Set(POLICY CMP0001 VALUE NEW)
 #   
 #   # Get policy value (with automatic warning if unset)
-#   policy_get(POLICY CMP0001 OUTVAR my_policy_value)
+#   Policy_Get(POLICY CMP0001 OUTVAR my_policy_value)
 #
 # ==============================================================================
 
@@ -45,65 +45,29 @@
 # ==============================================================================
 
 # ==============================================================================
-# policy_register
+# Policy_Register
 # ==============================================================================
 #
 # Register a new policy in the policy management system.
 #
-# SYNOPSIS:
-#   policy_register(NAME <policy_name>
-#                   DESCRIPTION <description>
-#                   DEFAULT <NEW|OLD>
-#                   INTRODUCED_VERSION <version>
-#                   [WARNING <warning_message>]
-#                   [DEPRECATED_VERSION <version>]
-#                   [REMOVED_VERSION <version>])
+# Parameters:
+#   NAME - The unique identifier for the policy (e.g., "CMP0001")
+#   DESCRIPTION - Human-readable description of what the policy controls
+#   DEFAULT - Default behavior when policy is not explicitly set: "NEW" or "OLD"
+#   INTRODUCED_VERSION - Version when the policy was first introduced (e.g., "3.0")
+#   WARNING (optional) - Warning message shown when policy is accessed but not explicitly set
+#   DEPRECATED_VERSION (optional) - Version when the policy was deprecated
+#   REMOVED_VERSION (optional) - Version when the policy was removed
 #
-# ARGUMENTS:
-#   NAME (required)
-#     The unique identifier for the policy (e.g., "CMP0001")
-#
-#   DESCRIPTION (required)
-#     Human-readable description of what the policy controls
-#
-#   DEFAULT (required)
-#     Default behavior when policy is not explicitly set: "NEW" or "OLD"
-#
-#   INTRODUCED_VERSION (required)
-#     Version when the policy was first introduced (e.g., "3.0")
-#
-#   WARNING (optional)
-#     Warning message shown when policy is accessed but not explicitly set
-#     If not provided, no warning is shown for current policies
-#
-#   DEPRECATED_VERSION (optional)
-#     Version when the policy was deprecated. If set, deprecation warnings
-#     will be shown when the policy is accessed
-#
-#   REMOVED_VERSION (optional)
-#     Version when the policy was removed. If set, removal warnings will be
-#     shown when the policy is accessed, taking precedence over deprecation
-#
-# BEHAVIOR:
-#   - Validates that policy name is unique
-#   - Validates that DEFAULT is either "NEW" or "OLD"
-#   - Stores policy information in internal registry
-#   - Escapes pipe characters in warning messages for safe storage
-#
-# ERRORS:
-#   - FATAL_ERROR if policy name already exists
-#   - FATAL_ERROR if required arguments are missing
-#   - FATAL_ERROR if DEFAULT is not "NEW" or "OLD"
-#
-# EXAMPLE:
-#   policy_register(NAME CMP0001
+# Example:
+#   Policy_Register(NAME CMP0001
 #                   DESCRIPTION "Use modern target_link_libraries syntax"
 #                   DEFAULT OLD
 #                   INTRODUCED_VERSION 3.0
 #                   WARNING "Consider using PUBLIC/PRIVATE/INTERFACE keywords"
 #                   DEPRECATED_VERSION 4.0)
 #
-function(policy_register)
+function(Policy_Register)
     set(options)
     set(oneValueArgs
         NAME
@@ -165,235 +129,131 @@ function(policy_register)
 endfunction()
 
 # ==============================================================================
-# policy_set
+# Policy_Set
 # ==============================================================================
 #
 # Set the value of a previously registered policy.
 #
-# SYNOPSIS:
-#   policy_set(POLICY <policy_name> VALUE <NEW|OLD>)
+# Parameters:
+#   POLICY - The name of the policy to set (must be previously registered)
+#   VALUE - The value to set: "NEW" or "OLD"
 #
-# ARGUMENTS:
-#   POLICY (required)
-#     The name of the policy to set (must be previously registered)
+# Example:
+#   Policy_Set(POLICY CMP0001 VALUE NEW)
 #
-#   VALUE (required)
-#     The value to set for the policy: "NEW" or "OLD"
-#     - "NEW": Enable the new behavior introduced by the policy
-#     - "OLD": Keep the legacy behavior that existed before the policy
-#
-# BEHAVIOR:
-#   - Validates that the policy has been registered
-#   - Validates that VALUE is either "NEW" or "OLD"
-#   - Stores the policy value in global properties
-#   - Clears warning flags to allow appropriate warnings if context changes
-#
-# SIDE EFFECTS:
-#   - Resets warning tracking flags for the policy
-#   - This allows warnings to be shown again if the policy is later unset
-#   - For deprecated/removed policies, new warnings may appear on next access
-#
-# ERRORS:
-#   - FATAL_ERROR if policy has not been registered
-#   - FATAL_ERROR if required arguments are missing
-#   - FATAL_ERROR if VALUE is not "NEW" or "OLD"
-#
-# EXAMPLE:
-#   policy_set(POLICY CMP0001 VALUE NEW)
-#
-function(policy_set)
-    set(options)
-    set(oneValueArgs
-        POLICY
-        VALUE
-    )
-    set(multiValueArgs)
-    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(NOT ARG_POLICY)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires POLICY <policy_name>")
+function(Policy_Set POLICY VALUE)
+    if(NOT POLICY)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: POLICY parameter is required")
     endif()
-    if(NOT ARG_VALUE)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires VALUE <NEW|OLD>")
+    if(NOT VALUE)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: VALUE parameter is required")
     endif()
 
-    _policy_find("${ARG_POLICY}" _idx)
+    _policy_find("${POLICY}" _idx)
     if(_idx LESS 0)
-        message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: ${POLICY} not registered")
     endif()
-    _policy_check_newold("${ARG_VALUE}")
-    _policy_write("${ARG_POLICY}" "${ARG_VALUE}")
+    _policy_check_newold("${VALUE}")
+    _policy_write("${POLICY}" "${VALUE}")
 
     # Clear warning flags since the policy state has changed
     # This allows appropriate warnings to be shown again if accessed
     set_property(
         GLOBAL
         PROPERTY
-            POLICY_WARNED_CURRENT_${ARG_POLICY}
+            POLICY_WARNED_CURRENT_${POLICY}
                 FALSE
     )
     set_property(
         GLOBAL
         PROPERTY
-            POLICY_WARNED_DEPRECATED_UNSET_${ARG_POLICY}
+            POLICY_WARNED_DEPRECATED_UNSET_${POLICY}
                 FALSE
     )
     set_property(
         GLOBAL
         PROPERTY
-            POLICY_WARNED_DEPRECATED_SET_${ARG_POLICY}
+            POLICY_WARNED_DEPRECATED_SET_${POLICY}
                 FALSE
     )
     # Note: REMOVED warnings are not cleared as they should always warn once regardless
 endfunction()
 
 # ==============================================================================
-# policy_get
+# Policy_Get
 # ==============================================================================
 #
 # Get the current value of a policy, with automatic warning generation.
 #
-# SYNOPSIS:
-#   policy_get(POLICY <policy_name> OUTVAR <output_variable>)
+# Parameters:
+#   POLICY - The name of the policy to retrieve (must be previously registered)
+#   OUTVAR - Variable name to store the policy value in parent scope
 #
-# ARGUMENTS:
-#   POLICY (required)
-#     The name of the policy to retrieve (must be previously registered)
-#
-#   OUTVAR (required)
-#     The name of the variable to store the policy value in parent scope
-#
-# BEHAVIOR:
-#   - Checks if policy has been explicitly set via policy_set()
-#   - If set: Returns the explicitly set value ("NEW" or "OLD")
-#   - If not set: Returns the default value and shows a notice
-#   - Automatically generates appropriate warnings based on policy status:
-#     * Current policies: Warn once if unset and has warning message
-#     * Deprecated policies: Warn once with deprecation notice
-#     * Removed policies: Warn once with removal notice
-#
-# RETURN VALUE:
-#   Sets the specified output variable to:
-#   - The explicitly set policy value ("NEW" or "OLD"), or
-#   - The default policy value if not explicitly set
-#
-# WARNING BEHAVIOR:
-#   - Warnings are shown only once per policy per CMake run
-#   - Different warning types are tracked separately (unset vs. set deprecated policies)
-#   - Warning content depends on policy lifecycle stage and current set status
-#
-# ERRORS:
-#   - FATAL_ERROR if policy has not been registered
-#   - FATAL_ERROR if required arguments are missing
-#   - FATAL_ERROR if policy registry is corrupted
-#
-# EXAMPLE:
-#   policy_get(POLICY CMP0001 OUTVAR my_policy_value)
+# Example:
+#   Policy_Get(POLICY CMP0001 OUTVAR my_policy_value)
 #   if(my_policy_value STREQUAL "NEW")
 #       # Use new behavior
-#   else()
-#       # Use old behavior
 #   endif()
 #
-function(policy_get)
-    set(options)
-    set(oneValueArgs
-        POLICY
-        OUTVAR
-    )
-    set(multiValueArgs)
-    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(NOT ARG_POLICY)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires POLICY <policy_name>")
+function(Policy_Get POLICY OUTVAR)
+    if(NOT POLICY)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: POLICY parameter is required")
     endif()
-    if(NOT ARG_OUTVAR)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires OUTVAR <output_variable>")
+    if(NOT OUTVAR)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTVAR parameter is required")
     endif()
 
-    _policy_find("${ARG_POLICY}" _idx)
+    _policy_find("${POLICY}" _idx)
     if(_idx LESS 0)
-        message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: ${POLICY} not registered")
     endif()
 
     # Check policy status and print warnings before getting value
-    _policy_check_and_warn("${ARG_POLICY}")
+    _policy_check_and_warn("${POLICY}")
 
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
-        message(FATAL_ERROR "POLICY: Registry is corrupted or empty for ${ARG_POLICY}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}")
     endif()
     _policy_record_unpack("${_entry}" _fields)
     if(NOT _fields)
-        message(FATAL_ERROR "POLICY: Policy entry malformed for ${ARG_POLICY}: ${_entry}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}")
     endif()
     list(LENGTH _fields _field_len)
     if(_field_len LESS 3)
         message(
             FATAL_ERROR
-            "POLICY: Policy registry entry too short for ${ARG_POLICY} (fields: ${_fields})"
+            "${CMAKE_CURRENT_FUNCTION}: Policy registry entry too short for ${POLICY} (fields: ${_fields})"
         )
     endif()
     list(GET _fields 2 _def)
-    _policy_read(${ARG_POLICY} _val)
+    _policy_read(${POLICY} _val)
     if(NOT _val STREQUAL "")
         _policy_check_newold("${_val}")
-        set(${ARG_OUTVAR} "${_val}" PARENT_SCOPE)
+        set(${OUTVAR} "${_val}" PARENT_SCOPE)
     else()
-        message(NOTICE "POLICY: '${ARG_POLICY}' not set, using default: ${_def}")
-        set(${ARG_OUTVAR} "${_def}" PARENT_SCOPE)
+        message(NOTICE "${CMAKE_CURRENT_FUNCTION}: '${POLICY}' not set, using default: ${_def}")
+        set(${OUTVAR} "${_def}" PARENT_SCOPE)
     endif()
 endfunction()
 
 # ==============================================================================
-# policy_version
+# Policy_Version
 # ==============================================================================
 #
 # Set multiple policies based on their introduction version range.
 # Mimics CMake's cmake_policy(VERSION) behavior.
 #
-# SYNOPSIS:
-#   policy_version(MINIMUM <min_version> [MAXIMUM <max_version>])
+# Parameters:
+#   MINIMUM - Minimum version for policy range
+#   MAXIMUM (optional) - Maximum version for policy range
 #
-# ARGUMENTS:
-#   MINIMUM (required)
-#     Minimum version for policy range. Policies introduced in this version
-#     or later (up to MAXIMUM) will be set to NEW
+# Example:
+#   Policy_Version(MINIMUM 3.0 MAXIMUM 3.15)
+#   Policy_Version(MINIMUM 3.0)
 #
-#   MAXIMUM (optional)
-#     Maximum version for policy range. Policies introduced after this
-#     version will be set to OLD. If not specified, no upper limit is applied
-#
-# BEHAVIOR:
-#   - Iterates through all registered policies
-#   - For each policy, compares its INTRODUCED_VERSION with the range
-#   - If policy version >= MINIMUM: sets policy to NEW
-#   - If MAXIMUM specified and policy version > MAXIMUM: sets policy to OLD
-#   - Uses semantic version comparison (major.minor.patch)
-#
-# VERSION COMPARISON:
-#   - Supports versions like "3.0", "3.15", "3.20.4"
-#   - Missing components are treated as 0 (e.g., "3" becomes "3.0.0")
-#   - Comparison is done numerically on each component
-#
-# SIDE EFFECTS:
-#   - Calls policy_set() for each affected policy
-#   - This may reset warning flags for those policies
-#   - Provides a convenient way to set multiple policies at once
-#
-# ERRORS:
-#   - FATAL_ERROR if MINIMUM is not provided
-#   - FATAL_ERROR if policy registry is corrupted
-#
-# EXAMPLE:
-#   # Set all policies introduced between 3.0 and 3.15 to NEW
-#   policy_version(MINIMUM 3.0 MAXIMUM 3.15)
-#   
-#   # Set all policies introduced in 3.0 or later to NEW
-#   policy_version(MINIMUM 3.0)
-#
-function(policy_version)
+function(Policy_Version)
     set(options)
     set(oneValueArgs
         MINIMUM
@@ -405,7 +265,7 @@ function(policy_version)
     if(NOT ARG_MINIMUM)
         message(
             FATAL_ERROR
-            "${CMAKE_CURRENT_FUNCTION}: requires MINIMUM <min_version> (usage: MINIMUM <ver> [MAXIMUM <ver>])"
+            "${CMAKE_CURRENT_FUNCTION}: MINIMUM parameter is required"
         )
     endif()
 
@@ -422,18 +282,18 @@ function(policy_version)
             _policy_record_unpack("${_entry}" _fields)
             list(LENGTH _fields _field_len)
             if(_field_len LESS 4)
-                message(FATAL_ERROR "POLICY: Registry entry too short (fields: ${_fields})")
+                message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry entry too short (fields: ${_fields})")
             endif()
             list(GET _fields 0 pname)
             list(GET _fields 3 introver)
             _policy_version_compare_gte("${min_version}" "${introver}" _gte)
             if(_gte)
-                policy_set(POLICY "${pname}" VALUE NEW)
+                Policy_Set("${pname}" NEW)
             endif()
             if(do_max)
                 _policy_version_compare_gte("${introver}" "${max_version}" _overmax)
                 if(_overmax)
-                    policy_set(POLICY "${pname}" VALUE OLD)
+                    Policy_Set("${pname}" OLD)
                 endif()
             endif()
         endif()
@@ -441,80 +301,40 @@ function(policy_version)
 endfunction()
 
 # ==============================================================================
-# policy_info
+# Policy_Info
 # ==============================================================================
 #
 # Display comprehensive information about a registered policy.
 #
-# SYNOPSIS:
-#   policy_info(POLICY <policy_name>)
+# Parameters:
+#   POLICY - The name of the policy to display information for
 #
-# ARGUMENTS:
-#   POLICY (required)
-#     The name of the policy to display information for
+# Example:
+#   Policy_Info(POLICY CMP0001)
 #
-# BEHAVIOR:
-#   - Retrieves all stored information about the specified policy
-#   - Displays formatted information using STATUS messages
-#   - Shows current value (either explicitly set or default)
-#   - Includes lifecycle information (deprecated/removed versions) if applicable
-#
-# OUTPUT INFORMATION:
-#   - Policy name
-#   - Description
-#   - Default value (NEW or OLD)
-#   - Version when introduced
-#   - Current value (with indication if it's the default)
-#   - Deprecated version (if applicable)
-#   - Removed version (if applicable)
-#   - Warning message (if defined)
-#
-# OUTPUT FORMAT:
-#   Policy Information for <POLICY_NAME>:
-#     Description: <description>
-#     Default: <NEW|OLD>
-#     Introduced in version: <version>
-#     Current value: <NEW|OLD> [(default)]
-#     [Deprecated in version: <version>]
-#     [Removed in version: <version>]
-#     [Warning: <warning_message>]
-#
-# ERRORS:
-#   - FATAL_ERROR if policy has not been registered
-#   - FATAL_ERROR if required arguments are missing
-#   - FATAL_ERROR if policy registry is corrupted
-#
-# EXAMPLE:
-#   policy_info(POLICY CMP0001)
-#
-function(policy_info)
-    set(options)
-    set(oneValueArgs POLICY)
-    set(multiValueArgs)
-    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(NOT ARG_POLICY)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires POLICY <policy_name>")
+function(Policy_Info POLICY)
+    if(NOT POLICY)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: POLICY parameter is required")
     endif()
 
-    _policy_find("${ARG_POLICY}" _idx)
+    _policy_find("${POLICY}" _idx)
     if(_idx LESS 0)
-        message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: ${POLICY} not registered")
     endif()
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
-        message(FATAL_ERROR "POLICY: Registry is corrupted or empty for ${ARG_POLICY}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}")
     endif()
     _policy_record_unpack("${_entry}" _fields)
     if(NOT _fields)
-        message(FATAL_ERROR "POLICY: Policy entry malformed for ${ARG_POLICY}: ${_entry}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}")
     endif()
     list(LENGTH _fields _field_len)
     if(_field_len LESS 4)
         message(
             FATAL_ERROR
-            "POLICY: Policy registry entry too short for ${ARG_POLICY} (fields: ${_fields})"
+            "${CMAKE_CURRENT_FUNCTION}: Policy registry entry too short for ${POLICY} (fields: ${_fields})"
         )
     endif()
 
@@ -539,12 +359,12 @@ function(policy_info)
     endif()
 
     # Get current value
-    _policy_read("${ARG_POLICY}" _current_value)
+    _policy_read("${POLICY}" _current_value)
     if(_current_value STREQUAL "")
         set(_current_value "${_default} (default)")
     endif()
 
-    message(STATUS "Policy Information for ${ARG_POLICY}:")
+    message(STATUS "Policy Information for ${POLICY}:")
     message(STATUS "  Description: ${_desc}")
     message(STATUS "  Default: ${_default}")
     message(STATUS "  Introduced in version: ${_version}")
@@ -562,87 +382,59 @@ function(policy_info)
 endfunction()
 
 # ==============================================================================
-# policy_get_fields
+# Policy_GetFields
 # ==============================================================================
 #
-# Extract all policy information into variables with a specified prefix.
-# Useful for programmatic access to policy data.
+# Get all fields of a policy as separate variables in parent scope.
 #
-# SYNOPSIS:
-#   policy_get_fields(POLICY <policy_name> PREFIX <variable_prefix>)
+# Parameters:
+#   POLICY - The name of the policy to retrieve fields for
+#   PREFIX - Prefix for output variables
 #
-# ARGUMENTS:
-#   POLICY (required)
-#     The name of the policy to extract information from
+# Output Variables:
+#   ${PREFIX}_NAME - Policy name
+#   ${PREFIX}_DESCRIPTION - Policy description
+#   ${PREFIX}_DEFAULT - Default value (NEW or OLD)
+#   ${PREFIX}_INTRODUCED_VERSION - Version when policy was introduced
+#   ${PREFIX}_WARNING - Warning message (empty string if none)
+#   ${PREFIX}_DEPRECATED_VERSION - Deprecated version (empty if not deprecated)
+#   ${PREFIX}_REMOVED_VERSION - Removed version (empty string if not removed)
+#   ${PREFIX}_CURRENT_VALUE - Current value (set or default)
+#   ${PREFIX}_IS_DEFAULT - TRUE if using default, FALSE if explicitly set
 #
-#   PREFIX (required)
-#     Prefix for the variable names that will be set in parent scope
-#
-# BEHAVIOR:
-#   - Retrieves all stored information about the specified policy
-#   - Sets variables in parent scope with the specified prefix
-#   - Handles optional fields gracefully (sets empty string if not present)
-#   - Determines current effective value and whether it's the default
-#
-# OUTPUT VARIABLES:
-#   The following variables are set in the parent scope:
-#   - ${PREFIX}_NAME: The policy name
-#   - ${PREFIX}_DESCRIPTION: Policy description
-#   - ${PREFIX}_DEFAULT: Default value (NEW or OLD)
-#   - ${PREFIX}_INTRODUCED_VERSION: Version when introduced
-#   - ${PREFIX}_WARNING: Warning message (empty if none)
-#   - ${PREFIX}_DEPRECATED_VERSION: Deprecated version (empty if not deprecated)
-#   - ${PREFIX}_REMOVED_VERSION: Removed version (empty if not removed)
-#   - ${PREFIX}_CURRENT_VALUE: Current effective value (NEW or OLD)
-#   - ${PREFIX}_IS_DEFAULT: TRUE if using default, FALSE if explicitly set
-#
-# ERRORS:
-#   - FATAL_ERROR if policy has not been registered
-#   - FATAL_ERROR if required arguments are missing
-#   - FATAL_ERROR if policy registry is corrupted
-#
-# EXAMPLE:
-#   policy_get_fields(POLICY CMP0001 PREFIX POLICY_INFO)
+# Example:
+#   Policy_GetFields(POLICY CMP0001 PREFIX POLICY_INFO)
 #   message(STATUS "Policy: ${POLICY_INFO_NAME}")
-#   message(STATUS "Current: ${POLICY_INFO_CURRENT_VALUE}")
 #   if(POLICY_INFO_IS_DEFAULT)
 #       message(STATUS "Using default value")
 #   endif()
 #
-function(policy_get_fields)
-    set(options)
-    set(oneValueArgs
-        POLICY
-        PREFIX
-    )
-    set(multiValueArgs)
-    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(NOT ARG_POLICY)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires POLICY <policy_name>")
+function(Policy_GetFields POLICY PREFIX)
+    if(NOT POLICY)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: POLICY parameter is required")
     endif()
-    if(NOT ARG_PREFIX)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires PREFIX <variable_prefix>")
+    if(NOT PREFIX)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: PREFIX parameter is required")
     endif()
 
-    _policy_find("${ARG_POLICY}" _idx)
+    _policy_find("${POLICY}" _idx)
     if(_idx LESS 0)
-        message(FATAL_ERROR "POLICY: ${ARG_POLICY} not registered")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: ${POLICY} not registered")
     endif()
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
-        message(FATAL_ERROR "POLICY: Registry is corrupted or empty for ${ARG_POLICY}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}")
     endif()
     _policy_record_unpack("${_entry}" _fields)
     if(NOT _fields)
-        message(FATAL_ERROR "POLICY: Policy entry malformed for ${ARG_POLICY}: ${_entry}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}")
     endif()
     list(LENGTH _fields _field_len)
     if(_field_len LESS 4)
         message(
             FATAL_ERROR
-            "POLICY: Policy registry entry too short for ${ARG_POLICY} (fields: ${_fields})"
+            "${CMAKE_CURRENT_FUNCTION}: Policy registry entry too short for ${POLICY} (fields: ${_fields})"
         )
     endif()
 
@@ -652,41 +444,41 @@ function(policy_get_fields)
     list(GET _fields 2 _default)
     list(GET _fields 3 _version)
 
-    set(${ARG_PREFIX}_NAME "${_name}" PARENT_SCOPE)
-    set(${ARG_PREFIX}_DESCRIPTION "${_desc}" PARENT_SCOPE)
-    set(${ARG_PREFIX}_DEFAULT "${_default}" PARENT_SCOPE)
-    set(${ARG_PREFIX}_INTRODUCED_VERSION "${_version}" PARENT_SCOPE)
+    set(${PREFIX}_NAME "${_name}" PARENT_SCOPE)
+    set(${PREFIX}_DESCRIPTION "${_desc}" PARENT_SCOPE)
+    set(${PREFIX}_DEFAULT "${_default}" PARENT_SCOPE)
+    set(${PREFIX}_INTRODUCED_VERSION "${_version}" PARENT_SCOPE)
 
     # Set optional fields
     if(_field_len GREATER 4)
         list(GET _fields 4 _warning)
-        set(${ARG_PREFIX}_WARNING "${_warning}" PARENT_SCOPE)
+        set(${PREFIX}_WARNING "${_warning}" PARENT_SCOPE)
     else()
-        set(${ARG_PREFIX}_WARNING "" PARENT_SCOPE)
+        set(${PREFIX}_WARNING "" PARENT_SCOPE)
     endif()
 
     if(_field_len GREATER 5)
         list(GET _fields 5 _deprecated_ver)
-        set(${ARG_PREFIX}_DEPRECATED_VERSION "${_deprecated_ver}" PARENT_SCOPE)
+        set(${PREFIX}_DEPRECATED_VERSION "${_deprecated_ver}" PARENT_SCOPE)
     else()
-        set(${ARG_PREFIX}_DEPRECATED_VERSION "" PARENT_SCOPE)
+        set(${PREFIX}_DEPRECATED_VERSION "" PARENT_SCOPE)
     endif()
 
     if(_field_len GREATER 6)
         list(GET _fields 6 _removed_ver)
-        set(${ARG_PREFIX}_REMOVED_VERSION "${_removed_ver}" PARENT_SCOPE)
+        set(${PREFIX}_REMOVED_VERSION "${_removed_ver}" PARENT_SCOPE)
     else()
-        set(${ARG_PREFIX}_REMOVED_VERSION "" PARENT_SCOPE)
+        set(${PREFIX}_REMOVED_VERSION "" PARENT_SCOPE)
     endif()
 
     # Get and set current value
-    _policy_read("${ARG_POLICY}" _current_value)
+    _policy_read("${POLICY}" _current_value)
     if(_current_value STREQUAL "")
-        set(${ARG_PREFIX}_CURRENT_VALUE "${_default}" PARENT_SCOPE)
-        set(${ARG_PREFIX}_IS_DEFAULT TRUE PARENT_SCOPE)
+        set(${PREFIX}_CURRENT_VALUE "${_default}" PARENT_SCOPE)
+        set(${PREFIX}_IS_DEFAULT TRUE PARENT_SCOPE)
     else()
-        set(${ARG_PREFIX}_CURRENT_VALUE "${_current_value}" PARENT_SCOPE)
-        set(${ARG_PREFIX}_IS_DEFAULT FALSE PARENT_SCOPE)
+        set(${PREFIX}_CURRENT_VALUE "${_current_value}" PARENT_SCOPE)
+        set(${PREFIX}_IS_DEFAULT FALSE PARENT_SCOPE)
     endif()
 endfunction()
 
