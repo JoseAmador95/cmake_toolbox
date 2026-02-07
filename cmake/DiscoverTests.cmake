@@ -72,15 +72,29 @@ function(DiscoverTests_Generate)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TEST_FILE must be specified")
     endif()
 
-    # Run the executable with -l flag to list tests
+    # NOTE: cmake_language(EVAL CODE ...) is required because this function is invoked
+    # via 'cmake -P' in the post-build step, after the test executable has been compiled.
+    # Without EVAL CODE, execute_process would be evaluated at CMake parse time (before
+    # the executable exists), causing a "chicken and egg" problem. EVAL CODE delays the
+    # evaluation until script runtime when the executable is ready to be queried.
+    # See: https://github.com/JoseAmador95/cmake_toolbox/pull/1#discussion_r2138703276
+
+    # Sanitize input: escape special characters that have meaning in cmake_language EVAL CODE
+    # Specifically escape dollar signs that could trigger variable expansion.
+    string(REPLACE "$" "\\$" safe_executable "${ARG_TEST_EXECUTABLE}")
+    string(REPLACE "$" "\\$" safe_workdir "${ARG_TEST_WORKING_DIR}")
+
     cmake_language(
-        EVAL CODE
-            "execute_process(
-                COMMAND ${ARG_TEST_EXECUTABLE} -l
-                WORKING_DIRECTORY [==[${ARG_TEST_WORKING_DIR}]==]
-                OUTPUT_VARIABLE output
-                RESULT_VARIABLE result
-            )"
+        EVAL CODE [==[
+set(exe_path "${safe_executable}")
+set(work_dir "${safe_workdir}")
+execute_process(
+    COMMAND ${exe_path} -l
+    WORKING_DIRECTORY ${work_dir}
+    OUTPUT_VARIABLE output
+    RESULT_VARIABLE result
+)
+]==]
     )
 
     if(NOT ${result} EQUAL 0)
