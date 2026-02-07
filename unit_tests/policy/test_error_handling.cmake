@@ -15,7 +15,8 @@ function(test_command_fails DESCRIPTION COMMAND_STRING)
     message(STATUS "  Testing: ${DESCRIPTION}")
     
     # Create a temporary script file
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_${CMAKE_CURRENT_FUNCTION_LIST_DIR}.cmake")
+    string(MD5 temp_script_id "${DESCRIPTION};${COMMAND_STRING}")
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_${temp_script_id}.cmake")
     file(WRITE "${temp_script}" "${COMMAND_STRING}")
     
     execute_process(

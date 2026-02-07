@@ -208,21 +208,39 @@ endfunction()
 
 function(test_version_invalid_range)
     message(STATUS "Test 6: Testing invalid range (MAXIMUM < MINIMUM should error)")
-    
-    # This should fail with an error
-    set(_error_occurred FALSE)
-    
-    # Try to execute and catch error
+
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_invalid_version_range.cmake")
+    file(WRITE "${temp_script}" "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+Policy_Register(NAME RANGE_ERR DESCRIPTION \"Range validation\" DEFAULT OLD INTRODUCED_VERSION 1.0)
+Policy_Version(MINIMUM 4.0 MAXIMUM 3.5)
+")
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E echo "Testing error handling"
-        OUTPUT_VARIABLE _output
-        ERROR_VARIABLE _error
-        RESULT_VARIABLE _result
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
+        RESULT_VARIABLE range_result
+        OUTPUT_VARIABLE range_output
+        ERROR_VARIABLE range_error
     )
-    
-    # Note: We can't easily test FATAL_ERROR in a function context
-    # This test documents the expected behavior
-    message(STATUS "  ✓ Invalid range validation documented (MAXIMUM < MINIMUM should error)")
+
+    file(REMOVE "${temp_script}")
+
+    if(range_result EQUAL 0)
+        message(SEND_ERROR "Policy_Version should fail when MAXIMUM < MINIMUM")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    string(FIND "${range_error}" "MAXIMUM (3.5) must be greater than or equal to MINIMUM" _err_match_main)
+    string(FIND "${range_error}" "(4.0)" _err_match_value)
+    if(_err_match_main EQUAL -1 OR _err_match_value EQUAL -1)
+        message(SEND_ERROR "Expected MAXIMUM/MINIMUM validation message not found. Error: ${range_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Invalid range correctly fails with clear validation error")
 endfunction()
 
 function(cleanup_test_environment)
