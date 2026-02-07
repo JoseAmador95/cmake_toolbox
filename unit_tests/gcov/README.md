@@ -21,6 +21,13 @@ Tests the Gcov module in a real CMake project context:
 - Queries target properties and validates they match expected values
 - Validates compiler-specific behavior
 
+### Threshold Toggle Test (test_thresholds.cmake)
+
+Validates gcovr fail-under emission based on enforcement toggle:
+
+- When `GCOVR_ENFORCE_THRESHOLDS=ON`, fail-under entries are written
+- When `GCOVR_ENFORCE_THRESHOLDS=OFF`, fail-under entries are omitted
+
 ## Running Tests
 
 From the build directory:
@@ -32,6 +39,9 @@ ctest -R "gcov" --verbose
 # Run manually
 cmake -S unit_tests/gcov -B build-gcov-test
 cmake --build build-gcov-test
+
+# Run thresholds test directly
+cmake -P unit_tests/gcov/test_thresholds.cmake
 ```
 
 ## Expected Behavior

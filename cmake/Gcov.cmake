@@ -65,6 +65,11 @@ See ``cmake/schemas/gcovr-<version>.cmake`` for the complete list.
 ``GCOVR_FAIL_UNDER_BRANCH``
   Minimum branch coverage percentage (0-100). Default: 0
 
+Note: Thresholds use the ``GCOVR_FAIL_UNDER_*`` naming. There are no ``GCOVR_MIN_*`` aliases.
+
+``GCOVR_ENFORCE_THRESHOLDS``
+    Enable enforcement of fail-under thresholds. Default: OFF
+
 ``GCOVR_HTML_HIGH_THRESHOLD``
   High coverage threshold for HTML reports. Default: 95
 
@@ -145,6 +150,7 @@ Example
   
   # Configure coverage thresholds via CMake (SCHEMA mode)
   set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING "" FORCE)
+  set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL "" FORCE)
   set(GCOVR_EXCLUDE "test;build" CACHE STRING "" FORCE)
   
   add_executable(my_test test.c)
@@ -309,6 +315,10 @@ function(Gcovr_Initialize)
         
         # Load schema defaults
         GcovrSchema_SetDefaults("${DETECTED_VERSION}")
+        GcovrSchema_Validate()
+        if(DEFINED GCOVR_SCHEMA_VALID AND NOT GCOVR_SCHEMA_VALID)
+            message(WARNING "Gcovr_Initialize: Some gcovr settings are invalid. Check earlier warnings.")
+        endif()
         
         message(STATUS "Gcovr_Initialize: Using SCHEMA mode with gcovr ${DETECTED_VERSION}")
     else()
@@ -459,8 +469,32 @@ if(_GCOVR_CONFIG_MODE STREQUAL "SCHEMA")
     set(_GCOVR_GENERATED_CONFIG_FILE "${GCOVR_OUTPUT_DIR}/gcovr_generated.cfg")
     GcovrSchema_GenerateConfigFile("${_GCOVR_GENERATED_CONFIG_FILE}")
     set(_GCOVR_ACTIVE_CONFIG_FILE "${_GCOVR_GENERATED_CONFIG_FILE}")
+
+    set(_gcovr_thresholds "")
+    foreach(var GCOVR_FAIL_UNDER_LINE GCOVR_FAIL_UNDER_BRANCH
+                GCOVR_FAIL_UNDER_FUNCTION GCOVR_FAIL_UNDER_DECISION)
+        if(DEFINED ${var} AND NOT "${${var}}" STREQUAL "0")
+            list(APPEND _gcovr_thresholds "${var}=${${var}}")
+        endif()
+    endforeach()
+
+    if(GCOVR_ENFORCE_THRESHOLDS)
+        if(_gcovr_thresholds)
+            list(JOIN _gcovr_thresholds ", " _gcovr_thresholds_str)
+            message(STATUS "Gcovr: Enforcing coverage thresholds (${_gcovr_thresholds_str}).")
+        else()
+            message(STATUS "Gcovr: Threshold enforcement enabled, but no thresholds are set.")
+        endif()
+    else()
+        if(_gcovr_thresholds)
+            message(STATUS "Gcovr: Thresholds configured but enforcement disabled (set GCOVR_ENFORCE_THRESHOLDS=ON to enforce).")
+        endif()
+    endif()
 else()
     set(_GCOVR_ACTIVE_CONFIG_FILE "${GCOVR_CONFIG_FILE}")
+    if(GCOVR_ENFORCE_THRESHOLDS)
+        message(WARNING "Gcovr: GCOVR_ENFORCE_THRESHOLDS is ignored in CONFIG_FILE mode. Use fail-under options in the config file.")
+    endif()
 endif()
 
 # ==============================================================================

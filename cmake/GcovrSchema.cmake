@@ -193,7 +193,8 @@ function(GcovrSchema_Validate)
     set(ERRORS "")
 
     # Validate threshold values are numbers between 0 and 100
-    foreach(var GCOVR_FAIL_UNDER_LINE GCOVR_FAIL_UNDER_BRANCH 
+    foreach(var GCOVR_FAIL_UNDER_LINE GCOVR_FAIL_UNDER_BRANCH
+                GCOVR_FAIL_UNDER_FUNCTION GCOVR_FAIL_UNDER_DECISION
                 GCOVR_HTML_HIGH_THRESHOLD GCOVR_HTML_MEDIUM_THRESHOLD)
         if(DEFINED ${var})
             if(NOT "${${var}}" MATCHES "^[0-9]+$")

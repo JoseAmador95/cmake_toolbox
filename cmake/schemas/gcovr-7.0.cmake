@@ -15,6 +15,12 @@
 # Coverage Thresholds
 # ------------------------------------------------------------------------------
 
+set(GCOVR_ENFORCE_THRESHOLDS
+    OFF
+    CACHE BOOL
+    "Enable fail-under thresholds for coverage metrics"
+)
+
 set(GCOVR_FAIL_UNDER_LINE
     "0"
     CACHE STRING
@@ -243,20 +249,22 @@ function(GcovrSchema_7_0_GenerateConfig CONFIG_FILE)
     endif()
 
     # Thresholds
-    if(NOT "${GCOVR_FAIL_UNDER_LINE}" STREQUAL "0")
-        _gcovr_append_config("fail-under-line" "${GCOVR_FAIL_UNDER_LINE}")
-    endif()
+    if(GCOVR_ENFORCE_THRESHOLDS)
+        if(NOT "${GCOVR_FAIL_UNDER_LINE}" STREQUAL "0")
+            _gcovr_append_config("fail-under-line" "${GCOVR_FAIL_UNDER_LINE}")
+        endif()
 
-    if(NOT "${GCOVR_FAIL_UNDER_BRANCH}" STREQUAL "0")
-        _gcovr_append_config("fail-under-branch" "${GCOVR_FAIL_UNDER_BRANCH}")
-    endif()
+        if(NOT "${GCOVR_FAIL_UNDER_BRANCH}" STREQUAL "0")
+            _gcovr_append_config("fail-under-branch" "${GCOVR_FAIL_UNDER_BRANCH}")
+        endif()
 
-    if(NOT "${GCOVR_FAIL_UNDER_FUNCTION}" STREQUAL "0")
-        _gcovr_append_config("fail-under-function" "${GCOVR_FAIL_UNDER_FUNCTION}")
-    endif()
+        if(NOT "${GCOVR_FAIL_UNDER_FUNCTION}" STREQUAL "0")
+            _gcovr_append_config("fail-under-function" "${GCOVR_FAIL_UNDER_FUNCTION}")
+        endif()
 
-    if(NOT "${GCOVR_FAIL_UNDER_DECISION}" STREQUAL "0")
-        _gcovr_append_config("fail-under-decision" "${GCOVR_FAIL_UNDER_DECISION}")
+        if(NOT "${GCOVR_FAIL_UNDER_DECISION}" STREQUAL "0")
+            _gcovr_append_config("fail-under-decision" "${GCOVR_FAIL_UNDER_DECISION}")
+        endif()
     endif()
 
     # HTML thresholds

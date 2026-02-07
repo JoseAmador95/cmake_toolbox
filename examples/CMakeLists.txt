@@ -115,3 +115,10 @@ add_test(
         -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov
         -B ${CMAKE_CURRENT_BINARY_DIR}/gcov_test
 )
+
+# Validate threshold enforcement toggle behavior
+add_test(
+    NAME gcov_thresholds
+    COMMAND ${CMAKE_COMMAND}
+        -P ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov/test_thresholds.cmake
+)
