@@ -7,7 +7,32 @@ Gcov
 CMake module for enabling code coverage instrumentation using gcov/gcovr.
 
 This module provides functions to add coverage instrumentation to CMake targets
-and custom targets to generate coverage reports.
+and custom targets to generate coverage reports. Compiler detection is automatic
+per language using generator expressions.
+
+**This module handles mixed-compiler scenarios** - for example, a project with
+C compiled by GCC and C++ compiled by Clang will receive ``--coverage`` for both,
+while C with GCC and C++ with MSVC will only instrument the C code.
+
+Supported Compilers
+^^^^^^^^^^^^^^^^^^^
+
+Flags are applied automatically per language (C/CXX) based on compiler:
+
+- **GNU (GCC)**: ``--coverage`` (compile and link)
+- **Clang**: ``--coverage`` (compile and link)
+- **AppleClang**: ``--coverage`` (compile and link)
+- **MSVC**: Not supported (gcov/gcovr are GCC-specific tools)
+- **Clang-cl**: Not supported (uses MSVC ABI, incompatible with gcov)
+
+**Note:** MSVC does not support gcov/gcovr. For coverage on MSVC, use:
+
+- **Visual Studio Code Coverage** (Enterprise edition)
+- **OpenCppCoverage** (free third-party tool for MSVC)
+
+Unsupported compilers trigger a warning at configuration time and are skipped (no flags applied).
+To override automatic detection or suppress warnings, set ``GCOV_COMPILE_FLAGS`` and
+``GCOV_LINK_FLAGS`` cache variables explicitly.
 
 Configuration Modes
 ^^^^^^^^^^^^^^^^^^^
@@ -72,12 +97,14 @@ Cache Variables (Both Modes)
   Default: ``${CMAKE_SOURCE_DIR}``
 
 ``GCOV_COMPILE_FLAGS``
-  Compiler flags for coverage instrumentation.
-  Default: ``--coverage``
+  Manual override for coverage compile flags.
+  When empty (default), uses automatic per-language detection (``--coverage`` for GNU/Clang).
+  Set this to provide custom flags for unsupported compilers or advanced scenarios.
 
-``GCOV_LINKER_FLAGS``
-  Linker flags for coverage instrumentation.
-  Default: ``--coverage``
+``GCOV_LINK_FLAGS``
+  Manual override for coverage link flags.
+  When empty (default), uses automatic detection (``--coverage`` for GNU/Clang).
+  Useful for advanced scenarios like static linking (``-static-libgcov``).
 
 Functions
 ^^^^^^^^^
@@ -133,6 +160,49 @@ Example
 include_guard(GLOBAL)
 
 # ==============================================================================
+# Compiler Flag Lookup Tables (LUT)
+# ==============================================================================
+# Map compiler IDs to appropriate coverage flags per language
+# Coverage (--coverage) is only supported by GNU/Clang compilers
+
+# C compiler flags
+if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+    set(_GCOV_C_COMPILE_FLAGS --coverage)
+    set(_GCOV_C_LINK_FLAGS --coverage)
+elseif((CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC") AND NOT GCOV_COMPILE_FLAGS)
+    message(WARNING "Gcov: C compiler '${CMAKE_C_COMPILER_ID}' does not support gcov/gcovr. "
+                    "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
+                    "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool.")
+    set(_GCOV_C_COMPILE_FLAGS "")
+    set(_GCOV_C_LINK_FLAGS "")
+else()
+    set(_GCOV_C_COMPILE_FLAGS "")
+    set(_GCOV_C_LINK_FLAGS "")
+endif()
+
+# CXX compiler flags
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+    set(_GCOV_CXX_COMPILE_FLAGS --coverage)
+    set(_GCOV_CXX_LINK_FLAGS --coverage)
+elseif((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC") AND NOT GCOV_COMPILE_FLAGS)
+    message(WARNING "Gcov: C++ compiler '${CMAKE_CXX_COMPILER_ID}' does not support gcov/gcovr. "
+                    "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
+                    "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool.")
+    set(_GCOV_CXX_COMPILE_FLAGS "")
+    set(_GCOV_CXX_LINK_FLAGS "")
+else()
+    set(_GCOV_CXX_COMPILE_FLAGS "")
+    set(_GCOV_CXX_LINK_FLAGS "")
+endif()
+
+# Link flags: Use --coverage if any compiler supports it
+if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$" OR CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+    set(_GCOV_LINK_FLAGS --coverage)
+else()
+    set(_GCOV_LINK_FLAGS "")
+endif()
+
+# ==============================================================================
 # Find Dependencies
 # ==============================================================================
 
@@ -183,17 +253,21 @@ set(GCOVR_ROOT_DIR
     "Root directory for coverage analysis"
 )
 
+# Manual overrides: If set, bypass automatic detection
 set(GCOV_COMPILE_FLAGS
-    --coverage
+    ""
     CACHE STRING
-    "Compiler flags for coverage instrumentation"
+    "Override coverage compile flags (if empty, uses compiler-specific defaults per language)"
 )
 
-set(GCOV_LINKER_FLAGS
-    --coverage
+set(GCOV_LINK_FLAGS
+    ""
     CACHE STRING
-    "Linker flags for coverage instrumentation"
+    "Override coverage link flags (if empty, uses automatic detection)"
 )
+
+# Mark internal LUT variables as advanced (not for user modification)
+mark_as_advanced(_GCOV_C_COMPILE_FLAGS _GCOV_C_LINK_FLAGS _GCOV_CXX_COMPILE_FLAGS _GCOV_CXX_LINK_FLAGS _GCOV_LINK_FLAGS)
 
 # Backward compatibility alias
 set(GCOV_OUTPUT_FILE
@@ -315,17 +389,50 @@ function(Gcov_AddToTarget TARGET SCOPE)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${TARGET}' does not exist")
     endif()
 
-    target_compile_options(
-        ${TARGET}
-        ${SCOPE}
-        ${GCOV_COMPILE_FLAGS}
-    )
+    # Apply compile options: manual override or automatic per-language detection
+    if(GCOV_COMPILE_FLAGS)
+        target_compile_options(
+            ${TARGET}
+            ${SCOPE}
+            ${GCOV_COMPILE_FLAGS}
+        )
+    else()
+        # Apply per-language flags using LUT-determined values and generator expressions
+        # This handles mixed compiler scenarios (e.g., GCC for C, Clang for CXX)
+        if(_GCOV_C_COMPILE_FLAGS)
+            target_compile_options(
+                ${TARGET}
+                ${SCOPE}
+                $<$<COMPILE_LANGUAGE:C>:${_GCOV_C_COMPILE_FLAGS}>
+            )
+        endif()
+        
+        if(_GCOV_CXX_COMPILE_FLAGS)
+            target_compile_options(
+                ${TARGET}
+                ${SCOPE}
+                $<$<COMPILE_LANGUAGE:CXX>:${_GCOV_CXX_COMPILE_FLAGS}>
+            )
+        endif()
+    endif()
 
-    target_link_libraries(
-        ${TARGET}
-        ${SCOPE}
-        ${GCOV_LINKER_FLAGS}
-    )
+    # Apply link options: manual override or automatic detection
+    if(GCOV_LINK_FLAGS)
+        target_link_options(
+            ${TARGET}
+            ${SCOPE}
+            ${GCOV_LINK_FLAGS}
+        )
+    else()
+        # Link options: Single set determined by LUT logic
+        if(_GCOV_LINK_FLAGS)
+            target_link_options(
+                ${TARGET}
+                ${SCOPE}
+                ${_GCOV_LINK_FLAGS}
+            )
+        endif()
+    endif()
 endfunction()
 
 # ==============================================================================
