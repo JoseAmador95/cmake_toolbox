@@ -13,12 +13,21 @@ endfunction()
 # Helper function to test that a command fails
 function(test_command_fails DESCRIPTION COMMAND_STRING)
     message(STATUS "  Testing: ${DESCRIPTION}")
+    
+    # Create a temporary script file
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_${CMAKE_CURRENT_FUNCTION_LIST_DIR}.cmake")
+    file(WRITE "${temp_script}" "${COMMAND_STRING}")
+    
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P -c "${COMMAND_STRING}"
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE cmd_result
         OUTPUT_VARIABLE cmd_output
         ERROR_VARIABLE cmd_error
     )
+    
+    # Clean up
+    file(REMOVE "${temp_script}")
+    
     if(cmd_result EQUAL 0)
         message(STATUS "    ✗ ${DESCRIPTION} - should have failed but succeeded")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1" PARENT_SCOPE)

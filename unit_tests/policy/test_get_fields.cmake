@@ -158,15 +158,21 @@ endfunction()
 function(test_error_handling)
     message(STATUS "Test 5: Testing error handling for unregistered policy")
     
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_get_fields_error.cmake")
+    file(WRITE "${temp_script}" "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+Policy_GetFields(NONEXISTENT TEST)
+")
+    
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P -c "
-            include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            Policy_GetFields(NONEXISTENT TEST)
-        "
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE unreg_result
         OUTPUT_VARIABLE unreg_output
         ERROR_VARIABLE unreg_error
     )
+    
+    # Clean up
+    file(REMOVE "${temp_script}")
+    
     if(unreg_result EQUAL 0)
         message(STATUS "  ✗ Getting fields for unregistered policy should have failed")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")

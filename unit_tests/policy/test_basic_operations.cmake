@@ -182,16 +182,22 @@ function(test_error_handling)
     message(STATUS "Test 5: Testing error handling")
     
     # Test duplicate registration
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_dup.cmake")
+    file(WRITE "${temp_script}" "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+Policy_Register(NAME DUP_TEST DESCRIPTION \"First\" DEFAULT OLD INTRODUCED_VERSION 1.0)
+Policy_Register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_VERSION 2.0)
+")
+    
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P -c "
-            include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            Policy_Register(NAME DUP_TEST DESCRIPTION \"First\" DEFAULT OLD INTRODUCED_VERSION 1.0)
-            Policy_Register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_VERSION 2.0)
-        "
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE dup_result
         OUTPUT_VARIABLE dup_output
         ERROR_VARIABLE dup_error
     )
+    
+    # Clean up
+    file(REMOVE "${temp_script}")
+    
     if(dup_result EQUAL 0)
         message(STATUS "  ✗ Duplicate policy registration should have failed")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -200,15 +206,21 @@ function(test_error_handling)
     endif()
 
     # Test invalid policy value
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_inv.cmake")
+    file(WRITE "${temp_script}" "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+Policy_Register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VERSION 1.0)
+")
+    
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P -c "
-            include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            Policy_Register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VERSION 1.0)
-        "
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE inv_result
         OUTPUT_VARIABLE inv_output
         ERROR_VARIABLE inv_error
     )
+    
+    # Clean up
+    file(REMOVE "${temp_script}")
+    
     if(inv_result EQUAL 0)
         message(STATUS "  ✗ Invalid policy value should have failed")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -217,15 +229,21 @@ function(test_error_handling)
     endif()
 
     # Test unregistered policy
+    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_unreg.cmake")
+    file(WRITE "${temp_script}" "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+Policy_Get(NONEXISTENT result)
+")
+    
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P -c "
-            include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
-            Policy_Get(NONEXISTENT result)
-        "
+        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE unreg_result
         OUTPUT_VARIABLE unreg_output
         ERROR_VARIABLE unreg_error
     )
+    
+    # Clean up
+    file(REMOVE "${temp_script}")
+    
     if(unreg_result EQUAL 0)
         message(STATUS "  ✗ Getting unregistered policy should have failed")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
