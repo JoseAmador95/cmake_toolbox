@@ -72,14 +72,15 @@ function(Policy_Register)
     set(options)
     set(oneValueArgs
         NAME
-        DESCRIPTION
         DEFAULT
         INTRODUCED_VERSION
-        WARNING
         DEPRECATED_VERSION
         REMOVED_VERSION
     )
-    set(multiValueArgs)
+    set(multiValueArgs
+        DESCRIPTION
+        WARNING
+    )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT ARG_NAME)
@@ -95,9 +96,13 @@ function(Policy_Register)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: requires INTRODUCED_VERSION <version>")
     endif()
 
+    list(JOIN ARG_DESCRIPTION ";" ARG_DESCRIPTION)
+
     # WARNING is optional, default to empty string
     if(NOT ARG_WARNING)
         set(ARG_WARNING "")
+    else()
+        list(JOIN ARG_WARNING ";" ARG_WARNING)
     endif()
 
     # DEPRECATED_VERSION and REMOVED_VERSION are optional
@@ -108,8 +113,13 @@ function(Policy_Register)
         set(ARG_REMOVED_VERSION "")
     endif()
 
-    # Escape pipe characters in warning message to avoid conflicts with field separator
-    string(REPLACE "|" "\\|" _escaped_warning "${ARG_WARNING}")
+    _policy_field_encode(ARG_NAME _encoded_name)
+    _policy_field_encode(ARG_DESCRIPTION _encoded_description)
+    _policy_field_encode(ARG_DEFAULT _encoded_default)
+    _policy_field_encode(ARG_INTRODUCED_VERSION _encoded_introduced_version)
+    _policy_field_encode(ARG_WARNING _encoded_warning)
+    _policy_field_encode(ARG_DEPRECATED_VERSION _encoded_deprecated_version)
+    _policy_field_encode(ARG_REMOVED_VERSION _encoded_removed_version)
 
     _policy_check_newold("${ARG_DEFAULT}")
     _policy_registry_get(_policy_registry)
@@ -123,7 +133,7 @@ function(Policy_Register)
         endif()
     endforeach()
     _policy_registry_append(
-        "'${ARG_NAME}'|'${ARG_DESCRIPTION}'|'${ARG_DEFAULT}'|'${ARG_INTRODUCED_VERSION}'|'${_escaped_warning}'|'${ARG_DEPRECATED_VERSION}'|'${ARG_REMOVED_VERSION}'"
+        "${_encoded_name}|${_encoded_description}|${_encoded_default}|${_encoded_introduced_version}|${_encoded_warning}|${_encoded_deprecated_version}|${_encoded_removed_version}"
     )
 endfunction()
 
@@ -593,18 +603,33 @@ function(_policy_registry_append RECORD)
     _policy_registry_write("${_policy_registry}")
 endfunction()
 
+function(_policy_field_encode INPUT_VAR OUTVAR)
+    set(_encoded "${${INPUT_VAR}}")
+    string(REPLACE "%" "%25" _encoded "${_encoded}")
+    string(REPLACE "|" "%7C" _encoded "${_encoded}")
+    string(REPLACE ";" "%3B" _encoded "${_encoded}")
+    set(${OUTVAR} "${_encoded}" PARENT_SCOPE)
+endfunction()
+
+function(_policy_field_decode INPUT OUTVAR)
+    set(_decoded "${INPUT}")
+    string(REPLACE "%3B" ";" _decoded "${_decoded}")
+    string(REPLACE "%7C" "|" _decoded "${_decoded}")
+    string(REPLACE "%25" "%" _decoded "${_decoded}")
+    set(${OUTVAR} "${_decoded}" PARENT_SCOPE)
+endfunction()
+
 function(_policy_record_unpack RECORD OUTVAR)
-    # First, temporarily replace escaped pipes with a placeholder
-    string(REPLACE "\\|" "___ESCAPED_PIPE___" RECORD "${RECORD}")
-    # Then split on pipes to get fields
+    # Split on pipes to get fields in encoded form
     string(REPLACE "|" ";" _fields "${RECORD}")
-    # Restore escaped pipes and strip quotes from each field
     set(_restored_fields "")
     foreach(_field ${_fields})
-        string(REPLACE "___ESCAPED_PIPE___" "|" _field "${_field}")
-        # Strip leading and trailing single quotes
-        string(REPLACE "'" "" _field "${_field}")
-        list(APPEND _restored_fields "${_field}")
+        if(_field MATCHES "^'(.*)'$")
+            set(_field "${CMAKE_MATCH_1}")
+        endif()
+        _policy_field_decode("${_field}" _decoded_field)
+        string(REPLACE ";" "\\;" _decoded_field "${_decoded_field}")
+        list(APPEND _restored_fields "${_decoded_field}")
     endforeach()
     set(${OUTVAR} "${_restored_fields}" PARENT_SCOPE)
 endfunction()
