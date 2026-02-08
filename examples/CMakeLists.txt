@@ -198,7 +198,8 @@ add_test(
 add_test(
     NAME gcov_thresholds
     COMMAND
-        ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov/test_thresholds.cmake
+        ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT=${CMAKE_CURRENT_BINARY_DIR}/test_artifacts
+        -P ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov/test_thresholds.cmake
 )
 
 # Gcov Module Unit Tests (script mode)
