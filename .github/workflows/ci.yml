@@ -7,9 +7,112 @@ on:
       - main
 
 jobs:
-  test-linux:
-    name: test-linux
-    runs-on: ubuntu-latest
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Linux ────────────────────────────────────────────────────────
+          - name: linux-baseline
+            os: ubuntu-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang-format gcovr
+
+          - name: linux-gcov
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCEEDLING_ENABLE_GCOV=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang-format gcovr
+
+          - name: linux-sanitizer
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCEEDLING_ENABLE_SANITIZER=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang-format gcovr
+
+          - name: linux-gcov-sanitizer
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCEEDLING_ENABLE_GCOV=ON
+              -DCEEDLING_ENABLE_SANITIZER=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang-format gcovr
+
+          # ── macOS ────────────────────────────────────────────────────────
+          - name: macos-baseline
+            os: macos-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: |
+              brew install jq clang-format
+              if ! command -v gcovr >/dev/null 2>&1; then
+                brew install pipx
+                pipx ensurepath
+                pipx install gcovr
+                echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+              fi
+
+          - name: macos-sanitizer
+            os: macos-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCEEDLING_ENABLE_SANITIZER=ON
+            install_deps: |
+              brew install jq clang-format
+              if ! command -v gcovr >/dev/null 2>&1; then
+                brew install pipx
+                pipx ensurepath
+                pipx install gcovr
+                echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+              fi
+
+          # ── Windows MSVC ─────────────────────────────────────────────────
+          - name: windows-msvc-baseline
+            os: windows-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: choco install jq -y
+
+          - name: windows-msvc-sanitizer
+            os: windows-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCEEDLING_ENABLE_SANITIZER=ON
+            install_deps: choco install jq -y
+
+          # ── Windows MinGW ────────────────────────────────────────────────
+          - name: windows-mingw-baseline
+            os: windows-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -G "MinGW Makefiles"
+              -DCMAKE_C_COMPILER=gcc
+              -DCMAKE_CXX_COMPILER=g++
+            install_deps: |
+              choco install jq -y
+              pip install gcovr
+
+          - name: windows-mingw-gcov
+            os: windows-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -G "MinGW Makefiles"
+              -DCMAKE_C_COMPILER=gcc
+              -DCMAKE_CXX_COMPILER=g++
+              -DCEEDLING_ENABLE_GCOV=ON
+            install_deps: |
+              choco install jq -y
+              pip install gcovr
 
     steps:
       - name: Checkout
@@ -18,12 +121,10 @@ jobs:
           submodules: recursive
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq clang-format gcovr
+        run: ${{ matrix.install_deps }}
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+        run: cmake -S . -B build ${{ matrix.cmake_flags }}
 
       - name: Build
         run: cmake --build build
@@ -32,68 +133,20 @@ jobs:
         run: ctest --test-dir build --output-on-failure
 
       - name: Verify tests do not mutate source tree
+        shell: pwsh
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
+          $dirty = git status --porcelain
+          if ($dirty) {
             git status --short
             git diff
             exit 1
-          fi
+          }
 
       - name: Upload CTest log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ctest-linux-log
-          path: build/Testing/Temporary/LastTest.log
-          if-no-files-found: ignore
-
-  test-macos:
-    name: test-macos
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install dependencies
-        run: |
-          brew install jq clang-format
-          if ! brew list gcovr >/dev/null 2>&1; then
-            brew install gcovr || true
-          fi
-          if ! command -v gcovr >/dev/null 2>&1; then
-            brew install pipx
-            pipx ensurepath
-            pipx install gcovr
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          fi
-
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-
-      - name: Build
-        run: cmake --build build
-
-      - name: Run core tests
-        run: |
-          ctest --test-dir build --output-on-failure \
-            -R "policy_|clangformat_|compilecommands_|discover_tests_|gcov_|integration_"
-
-      - name: Verify tests do not mutate source tree
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git status --short
-            git diff
-            exit 1
-          fi
-
-      - name: Upload CTest log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ctest-macos-log
+          name: ctest-${{ matrix.name }}-log
           path: build/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
 

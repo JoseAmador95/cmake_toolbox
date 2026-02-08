@@ -39,10 +39,20 @@ ctest --test-dir build --output-on-failure -R "integration_gcov"
 
 ## CI Enforcement
 
-GitHub Actions runs on every pull request and push to `main`:
+GitHub Actions runs on every pull request and push to `main` with the following matrix:
 
-- `test-linux`: configure, build, full `ctest` execution
-- `test-macos`: configure, build, core test matrix execution
-- `lint-basic`: install/configuration sanity checks
+| Job | OS | Features |
+|-----|----|----------|
+| `linux-baseline` | Ubuntu | defaults |
+| `linux-gcov` | Ubuntu | `CEEDLING_ENABLE_GCOV` |
+| `linux-sanitizer` | Ubuntu | `CEEDLING_ENABLE_SANITIZER` |
+| `linux-gcov-sanitizer` | Ubuntu | both |
+| `macos-baseline` | macOS | defaults |
+| `macos-sanitizer` | macOS | `CEEDLING_ENABLE_SANITIZER` |
+| `windows-msvc-baseline` | Windows (MSVC) | defaults |
+| `windows-msvc-sanitizer` | Windows (MSVC) | `CEEDLING_ENABLE_SANITIZER` |
+| `windows-mingw-baseline` | Windows (MinGW) | defaults |
+| `windows-mingw-gcov` | Windows (MinGW) | `CEEDLING_ENABLE_GCOV` |
+| `lint-basic` | Ubuntu | install/configuration sanity checks |
 
 Failed test jobs upload CTest logs as artifacts for debugging.
