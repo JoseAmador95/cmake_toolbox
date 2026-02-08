@@ -40,12 +40,12 @@ If using the VS Code dev container, pre-commit hooks are installed automatically
 
 #### How It Works
 
-- **Automatic on commit**: When you run `git commit`, the pre-commit hook checks all staged CMake files
-- **Blocks bad commits**: If formatting is needed, the commit is blocked and files are automatically reformatted
-- **Fix and retry**: After formatting, simply stage the changes and commit again:
+- **Automatic formatting on commit**: When you run `git commit`, the pre-commit hook automatically formats all staged CMake files
+- **Files are reformatted automatically**: Gersemi fixes formatting issues and stages the corrected files
+- **Commit after auto-format**: Simply run `git commit` again to complete the commit with formatted files:
   ```bash
-  git add .
-  git commit -m "Your message"
+  git commit -m "Your message"  # First attempt - files get formatted
+  git commit -m "Your message"  # Second attempt - commit succeeds
   ```
 
 #### Manual Formatting
