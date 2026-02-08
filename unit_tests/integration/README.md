@@ -18,8 +18,12 @@ integration/
 │   └── test_configuration.cmake       # Global/per-target config, tool missing
 ├── clangformat/
 │   └── test_configuration.cmake       # Basic config, exclusions, tool missing
-└── compilecommands/
-    └── test_trim.cmake                # jq trim, jq missing scenarios
+├── compilecommands/
+│   └── test_trim.cmake                # jq trim, jq missing scenarios
+└── consumption/
+    ├── test_add_subdirectory.cmake    # Consume toolbox as vendored source
+    ├── test_fetchcontent.cmake        # Consume toolbox via FetchContent
+    └── test_find_package.cmake        # Consume installed package via find_package
 ```
 
 ## Running Integration Tests
@@ -31,6 +35,7 @@ ctest -R "integration_" --output-on-failure
 # Run specific module tests
 ctest -R "integration_gcov" --output-on-failure
 ctest -R "integration_sanitizer" --output-on-failure
+ctest -R "integration_consumption" --output-on-failure
 ```
 
 ## Test Coverage Matrix
@@ -42,6 +47,7 @@ ctest -R "integration_sanitizer" --output-on-failure
 | ClangTidy | ✓ | ✓ | ✓ | Global/Per-target |
 | ClangFormat | ✓ | ✓ | ✓ | Exclusions |
 | CompileCommands | - | - | ✓ (jq) | Trim |
+| Consumption | ✓ | ✓ | N/A | add_subdirectory / FetchContent / find_package |
 
 ## Notes
 

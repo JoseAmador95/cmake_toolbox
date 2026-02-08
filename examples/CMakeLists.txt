@@ -295,3 +295,18 @@ foreach(test_file ${COMPILECOMMANDS_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -P ${test_file}
     )
 endforeach()
+
+# Consumption Integration Tests
+file(
+    GLOB CONSUMPTION_INTEGRATION_TESTS
+    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/consumption/test_*.cmake"
+)
+foreach(test_file ${CONSUMPTION_INTEGRATION_TESTS})
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    add_test(
+        NAME integration_consumption_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -P ${test_file}
+    )
+endforeach()
