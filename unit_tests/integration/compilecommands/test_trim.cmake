@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_compilecommands")
@@ -64,9 +65,10 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -150,9 +152,10 @@ add_library(mylib STATIC lib.c)
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error

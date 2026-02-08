@@ -11,6 +11,8 @@ endif()
 # Integration Test: cmake_toolbox consumption via FetchContent
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_consumption_fetchcontent")
@@ -63,9 +65,10 @@ include(ClangFormat)
         "int consumer_lib_value(void); int main(void) { return consumer_lib_value() == 11 ? 0 : 1; }"
     )
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error

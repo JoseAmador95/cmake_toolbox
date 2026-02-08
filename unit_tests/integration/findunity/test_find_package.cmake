@@ -11,6 +11,8 @@ endif()
 # Integration Test: FindUnity behavior via real find_package(Unity)
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_findunity_find_package")
@@ -94,9 +96,10 @@ function(run_configure_case name expect_success)
     set(multiValueArgs args)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${TEST_PROJECT_SOURCE_DIR}" -B "${ARG_work_dir}" ${ARG_args}
+            ${CMAKE_COMMAND} -S "${TEST_PROJECT_SOURCE_DIR}" -B "${ARG_work_dir}" ${configure_args} ${ARG_args}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error

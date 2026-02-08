@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_gcov_compiler")
@@ -66,9 +67,10 @@ target_link_libraries(mytest PRIVATE mylib)
     )
 
     # Configure with GCC
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" -DCMAKE_C_COMPILER=${GCC_C_COMPILER}
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args} -DCMAKE_C_COMPILER=${GCC_C_COMPILER}
         RESULT_VARIABLE config_result
         OUTPUT_VARIABLE config_output
         ERROR_VARIABLE config_error
@@ -158,10 +160,11 @@ target_link_libraries(mytest PRIVATE mylib)
     )
 
     # Configure with Clang
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
-            -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
+            ${configure_args} -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
         RESULT_VARIABLE config_result
         OUTPUT_VARIABLE config_output
         ERROR_VARIABLE config_error

@@ -11,6 +11,8 @@ endif()
 # Integration Test: installed package consumption via find_package
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_consumption_find_package")
@@ -58,9 +60,11 @@ include(ClangFormat)
         "int consumer_lib_value(void); int main(void) { return consumer_lib_value() == 13 ? 0 : 1; }"
     )
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} -S "${REPO_ROOT}" -B "${toolbox_build_dir}"
+            ${configure_args}
             -DCMAKE_TOOLBOX_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_LIBDIR=lib
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
@@ -128,6 +132,7 @@ include(ClangFormat)
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} -S "${consumer_src_dir}" -B "${consumer_build_dir}"
+            ${configure_args}
             -DCMAKE_PREFIX_PATH=${toolbox_install_prefix}
         RESULT_VARIABLE consumer_result
         OUTPUT_VARIABLE consumer_output

@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_gcov_thresholds")
@@ -57,9 +58,10 @@ message(STATUS \"Thresholds enforcement ON test configured\")
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -169,9 +171,10 @@ Gcov_AddToTarget(mylib PUBLIC)
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -235,9 +238,10 @@ Gcov_AddToTarget(mylib PUBLIC)
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error

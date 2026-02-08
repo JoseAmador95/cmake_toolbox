@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_clangformat")
@@ -102,9 +103,10 @@ add_library(mylib STATIC lib/lib.c)
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -201,9 +203,10 @@ add_library(mylib STATIC lib/lib.c generated/gen.c)
     file(WRITE "${src_dir}/generated/gen.c" "int gen_func(void){return 1;}")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -262,9 +265,10 @@ add_library(mylib STATIC lib/lib.c)
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -345,9 +349,10 @@ add_library(mylib STATIC lib/lib.c)
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -446,9 +451,10 @@ add_library(mylib STATIC lib/lib.c)
     file(WRITE "${src_dir}/inc/lib.h" "int lib_func(void);\n")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
