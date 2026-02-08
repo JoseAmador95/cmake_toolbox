@@ -472,25 +472,21 @@ function(Sanitizer_ApplyEnvironmentToTests)
                 set(_SANITIZER_MERGED_ENV "${_SANITIZER_TEST_ENV}")
             endif()
 
-            string(REPLACE ";" "\\;" _SANITIZER_MERGED_ENV_ESCAPED "${_SANITIZER_MERGED_ENV}")
-
             set_property(
                 TEST
                     ${test_name}
                 PROPERTY
                     ENVIRONMENT
-                        "${_SANITIZER_MERGED_ENV_ESCAPED}"
+                        "${_SANITIZER_MERGED_ENV}"
             )
         endforeach()
     else()
-        string(REPLACE ";" "\\;" _SANITIZER_TEST_ENV_ESCAPED "${_SANITIZER_TEST_ENV}")
-
         set_property(
             TEST
                 ${ARG_TESTS}
             PROPERTY
                 ENVIRONMENT
-                    "${_SANITIZER_TEST_ENV_ESCAPED}"
+                    "${_SANITIZER_TEST_ENV}"
         )
     endif()
 endfunction()
