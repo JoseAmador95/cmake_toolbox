@@ -168,6 +168,9 @@ add_test(
     COMMAND
         ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/sanitizer -B
         ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_test
+        -G "${CMAKE_GENERATOR}"
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 )
 
 # Sanitizer Module Unit Tests (script mode)
@@ -192,6 +195,9 @@ add_test(
     COMMAND
         ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov -B
         ${CMAKE_CURRENT_BINARY_DIR}/gcov_test
+        -G "${CMAKE_GENERATOR}"
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 )
 
 # Validate threshold enforcement toggle behavior
@@ -233,7 +239,12 @@ foreach(test_file ${GCOV_INTEGRATION_TESTS})
     add_test(
         NAME integration_gcov_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
 
@@ -248,7 +259,12 @@ foreach(test_file ${SANITIZER_INTEGRATION_TESTS})
     add_test(
         NAME integration_sanitizer_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
 
@@ -263,7 +279,12 @@ foreach(test_file ${CLANGTIDY_INTEGRATION_TESTS})
     add_test(
         NAME integration_clangtidy_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
 
@@ -278,7 +299,12 @@ foreach(test_file ${CLANGFORMAT_INTEGRATION_TESTS})
     add_test(
         NAME integration_clangformat_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
 
@@ -293,7 +319,12 @@ foreach(test_file ${COMPILECOMMANDS_INTEGRATION_TESTS})
     add_test(
         NAME integration_compilecommands_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
 
@@ -308,7 +339,12 @@ foreach(test_file ${CONSUMPTION_INTEGRATION_TESTS})
     add_test(
         NAME integration_consumption_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
 
@@ -323,6 +359,11 @@ foreach(test_file ${FINDUNITY_INTEGRATION_TESTS})
     add_test(
         NAME integration_findunity_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
+            ${CMAKE_COMMAND}
+            -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -P ${test_file}
     )
 endforeach()
