@@ -50,6 +50,51 @@ jobs:
               sudo apt-get update
               sudo apt-get install -y jq clang-format gcovr
 
+          # ── Linux + Clang ─────────────────────────────────────────────────
+          - name: linux-clang-baseline
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_CXX_COMPILER=clang++
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang clang-format gcovr
+
+          - name: linux-clang-gcov
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCEEDLING_ENABLE_GCOV=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang clang-format gcovr llvm
+
+          - name: linux-clang-sanitizer
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCEEDLING_ENABLE_SANITIZER=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang clang-format gcovr
+
+          - name: linux-clang-gcov-sanitizer
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCEEDLING_ENABLE_GCOV=ON
+              -DCEEDLING_ENABLE_SANITIZER=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y jq clang clang-format gcovr llvm
+
           # ── macOS ────────────────────────────────────────────────────────
           - name: macos-baseline
             os: macos-latest

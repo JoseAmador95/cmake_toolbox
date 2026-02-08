@@ -43,10 +43,14 @@ GitHub Actions runs on every pull request and push to `main` with the following 
 
 | Job | OS | Features |
 |-----|----|----------|
-| `linux-baseline` | Ubuntu | defaults |
-| `linux-gcov` | Ubuntu | `CEEDLING_ENABLE_GCOV` |
-| `linux-sanitizer` | Ubuntu | `CEEDLING_ENABLE_SANITIZER` |
-| `linux-gcov-sanitizer` | Ubuntu | both |
+| `linux-baseline` | Ubuntu (GCC) | defaults |
+| `linux-gcov` | Ubuntu (GCC) | `CEEDLING_ENABLE_GCOV` |
+| `linux-sanitizer` | Ubuntu (GCC) | `CEEDLING_ENABLE_SANITIZER` |
+| `linux-gcov-sanitizer` | Ubuntu (GCC) | both |
+| `linux-clang-baseline` | Ubuntu (Clang) | defaults |
+| `linux-clang-gcov` | Ubuntu (Clang) | `CEEDLING_ENABLE_GCOV` |
+| `linux-clang-sanitizer` | Ubuntu (Clang) | `CEEDLING_ENABLE_SANITIZER` |
+| `linux-clang-gcov-sanitizer` | Ubuntu (Clang) | both |
 | `macos-baseline` | macOS | defaults |
 | `macos-sanitizer` | macOS | `CEEDLING_ENABLE_SANITIZER` |
 | `windows-msvc-baseline` | Windows (MSVC) | defaults |
