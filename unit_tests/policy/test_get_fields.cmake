@@ -35,6 +35,14 @@ function(setup_test_environment)
         DEFAULT NEW
         INTRODUCED_VERSION 2.0.0
     )
+
+    Policy_Register(
+        NAME FIELDS003
+        DESCRIPTION "Description with ; semicolon and | pipe"
+        DEFAULT OLD
+        INTRODUCED_VERSION 3.0.0
+        WARNING "Warning with ; and | and 100% roundtrip"
+    )
 endfunction()
 
 function(test_get_fields_with_warning)
@@ -159,8 +167,30 @@ function(test_policy_without_warning)
     message(STATUS "  ✓ Fields retrieved correctly for policy without warning")
 endfunction()
 
+function(test_semicolon_and_pipe_roundtrip)
+    message(STATUS "Test 4: Testing semicolon and pipe roundtrip")
+
+    Policy_GetFields(FIELDS003 SPECIAL)
+
+    if(NOT SPECIAL_DESCRIPTION STREQUAL "Description with ; semicolon and | pipe")
+        message(STATUS "  ✗ SPECIAL_DESCRIPTION should preserve ';' and '|', got: '${SPECIAL_DESCRIPTION}'")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    if(NOT SPECIAL_WARNING STREQUAL "Warning with ; and | and 100% roundtrip")
+        message(STATUS "  ✗ SPECIAL_WARNING should preserve ';', '|', and '%', got: '${SPECIAL_WARNING}'")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Semicolon and pipe metadata roundtrip preserved")
+endfunction()
+
 function(test_multiple_prefixes)
-    message(STATUS "Test 4: Testing multiple prefixes don't interfere")
+    message(STATUS "Test 5: Testing multiple prefixes don't interfere")
 
     Policy_GetFields(FIELDS001 PREFIX_A)
     Policy_GetFields(FIELDS002 PREFIX_B)
@@ -183,7 +213,7 @@ function(test_multiple_prefixes)
 endfunction()
 
 function(test_error_handling)
-    message(STATUS "Test 5: Testing error handling for unregistered policy")
+    message(STATUS "Test 6: Testing error handling for unregistered policy")
 
     set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_get_fields_error.cmake")
     file(
@@ -226,6 +256,7 @@ function(run_all_tests)
     test_get_fields_with_warning()
     test_is_default_changes()
     test_policy_without_warning()
+    test_semicolon_and_pipe_roundtrip()
     test_multiple_prefixes()
     test_error_handling()
     cleanup_test_environment()
