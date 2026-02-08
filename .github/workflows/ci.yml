@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -44,11 +46,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install dependencies
         run: |
           brew install jq clang-format
-          python3 -m pip install --upgrade pip gcovr
+          if ! brew list gcovr >/dev/null 2>&1; then
+            brew install gcovr || true
+          fi
+          if ! command -v gcovr >/dev/null 2>&1; then
+            brew install pipx
+            pipx ensurepath
+            pipx install gcovr
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          fi
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
@@ -76,6 +88,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Configure install-only project
         run: cmake -S . -B build-lint -DCMAKE_TOOLBOX_BUILD_EXAMPLES=OFF

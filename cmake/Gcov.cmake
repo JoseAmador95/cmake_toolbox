@@ -564,7 +564,12 @@ if(NOT TARGET gcovr)
     set(_gcovr_outputs "")
 
     # HTML output
-    if("html" IN_LIST GCOVR_OUTPUT_FORMATS)
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "html"
+        _fmt_html_idx
+    )
+    if(NOT _fmt_html_idx EQUAL -1)
         set(_gcovr_html_output "${GCOVR_OUTPUT_DIR}/coverage.html")
         if(GCOVR_HTML_NESTED)
             list(
@@ -589,7 +594,17 @@ if(NOT TARGET gcovr)
     endif()
 
     # XML/Cobertura output
-    if("xml" IN_LIST GCOVR_OUTPUT_FORMATS OR "cobertura" IN_LIST GCOVR_OUTPUT_FORMATS)
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "xml"
+        _fmt_xml_idx
+    )
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "cobertura"
+        _fmt_cobertura_idx
+    )
+    if(NOT _fmt_xml_idx EQUAL -1 OR NOT _fmt_cobertura_idx EQUAL -1)
         list(
             APPEND _gcovr_args
             --xml
@@ -599,7 +614,12 @@ if(NOT TARGET gcovr)
     endif()
 
     # JSON output
-    if("json" IN_LIST GCOVR_OUTPUT_FORMATS)
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "json"
+        _fmt_json_idx
+    )
+    if(NOT _fmt_json_idx EQUAL -1)
         list(
             APPEND _gcovr_args
             --json
@@ -609,7 +629,12 @@ if(NOT TARGET gcovr)
     endif()
 
     # LCOV output
-    if("lcov" IN_LIST GCOVR_OUTPUT_FORMATS)
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "lcov"
+        _fmt_lcov_idx
+    )
+    if(NOT _fmt_lcov_idx EQUAL -1)
         list(
             APPEND _gcovr_args
             --lcov
@@ -619,7 +644,12 @@ if(NOT TARGET gcovr)
     endif()
 
     # CSV output
-    if("csv" IN_LIST GCOVR_OUTPUT_FORMATS)
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "csv"
+        _fmt_csv_idx
+    )
+    if(NOT _fmt_csv_idx EQUAL -1)
         list(
             APPEND _gcovr_args
             --csv
@@ -629,7 +659,12 @@ if(NOT TARGET gcovr)
     endif()
 
     # Coveralls output
-    if("coveralls" IN_LIST GCOVR_OUTPUT_FORMATS)
+    list(
+        FIND GCOVR_OUTPUT_FORMATS
+        "coveralls"
+        _fmt_coveralls_idx
+    )
+    if(NOT _fmt_coveralls_idx EQUAL -1)
         list(
             APPEND _gcovr_args
             --coveralls

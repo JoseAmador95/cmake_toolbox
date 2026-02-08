@@ -15,6 +15,7 @@ This directory contains both script-mode unit tests and project-mode integration
 - Gate tool-dependent checks (`jq`, `clang-format`, compiler-specific coverage support) with clear skip messages instead of silent pass-through
 - Use integration tests when functionality relies on CMake project context (`add_custom_command`, `add_custom_target`, target properties, generated build artifacts)
 - Script and integration tests write temporary artifacts under `${CMAKE_BINARY_DIR}/test_artifacts` to keep repository roots clean
+- In script-mode tests, prefer `list(FIND ...)` over `IN_LIST` to avoid dependence on CMP0057 policy state
 
 ## Unity Module Note
 

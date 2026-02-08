@@ -32,7 +32,12 @@ function(test_contains_expected_version)
 
     GcovrSchema_GetSupportedVersions(versions)
 
-    if(NOT "7.0" IN_LIST versions)
+    list(
+        FIND versions
+        "7.0"
+        version_index
+    )
+    if(version_index EQUAL -1)
         message(STATUS "  ✗ Version 7.0 not found in: ${versions}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)

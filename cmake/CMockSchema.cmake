@@ -93,7 +93,14 @@ function(CMockSchema_DetectVersion CMOCK_EXE TAG OUTPUT_VAR)
     # Check if detected version is supported
     if(DETECTED_VERSION)
         CMockSchema_GetSupportedVersions(SUPPORTED_VERSIONS)
-        if(DETECTED_VERSION IN_LIST SUPPORTED_VERSIONS)
+        # Use list(FIND) instead of IN_LIST to keep script-mode compatibility
+        # without relying on CMP0057 policy state.
+        list(
+            FIND SUPPORTED_VERSIONS
+            "${DETECTED_VERSION}"
+            _detected_version_index
+        )
+        if(NOT _detected_version_index EQUAL -1)
             set(${OUTPUT_VAR} "${DETECTED_VERSION}" PARENT_SCOPE)
             message(
                 STATUS

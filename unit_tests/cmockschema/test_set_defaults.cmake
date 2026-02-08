@@ -233,11 +233,13 @@ include(CMockSchema)
 
 CMockSchema_SetDefaults(\"2.6\")
 
-if(NOT \"ignore\" IN_LIST CMOCK_PLUGINS)
+list(FIND CMOCK_PLUGINS \"ignore\" ignore_plugin_idx)
+if(ignore_plugin_idx EQUAL -1)
     message(FATAL_ERROR \"CMOCK_PLUGINS should include 'ignore'\")
 endif()
 
-if(NOT \"callback\" IN_LIST CMOCK_PLUGINS)
+list(FIND CMOCK_PLUGINS \"callback\" callback_plugin_idx)
+if(callback_plugin_idx EQUAL -1)
     message(FATAL_ERROR \"CMOCK_PLUGINS should include 'callback'\")
 endif()
 "

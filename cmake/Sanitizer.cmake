@@ -165,15 +165,30 @@ endif()
 function(_sanitizer_build_flags SUPPORTED_LIST PREFIX IS_MSVC OUTPUT_VAR)
     set(_FLAGS "")
 
-    if(ENABLE_SANITIZER_ADDRESS AND "address" IN_LIST SUPPORTED_LIST)
+    list(
+        FIND SUPPORTED_LIST
+        "address"
+        _address_idx
+    )
+    if(ENABLE_SANITIZER_ADDRESS AND NOT _address_idx EQUAL -1)
         string(APPEND _FLAGS "${${PREFIX}_ADDRESS_ARG},")
     endif()
 
-    if(ENABLE_SANITIZER_UNDEFINED AND "undefined" IN_LIST SUPPORTED_LIST)
+    list(
+        FIND SUPPORTED_LIST
+        "undefined"
+        _undefined_idx
+    )
+    if(ENABLE_SANITIZER_UNDEFINED AND NOT _undefined_idx EQUAL -1)
         string(APPEND _FLAGS "${${PREFIX}_UNDEFINED_ARG},")
     endif()
 
-    if(ENABLE_SANITIZER_LEAK AND "leak" IN_LIST SUPPORTED_LIST)
+    list(
+        FIND SUPPORTED_LIST
+        "leak"
+        _leak_idx
+    )
+    if(ENABLE_SANITIZER_LEAK AND NOT _leak_idx EQUAL -1)
         string(APPEND _FLAGS "${${PREFIX}_LEAK_ARG},")
     endif()
 
@@ -225,7 +240,12 @@ _sanitizer_build_flags(
 # Link flags: Merge supported sanitizers from both languages
 set(_SUPPORTED_LINK_SANITIZERS "")
 foreach(_SANITIZER IN LISTS _SUPPORTED_C_SANITIZERS _SUPPORTED_CXX_SANITIZERS)
-    if(NOT _SANITIZER IN_LIST _SUPPORTED_LINK_SANITIZERS)
+    list(
+        FIND _SUPPORTED_LINK_SANITIZERS
+        "${_SANITIZER}"
+        _link_sanitizer_idx
+    )
+    if(_link_sanitizer_idx EQUAL -1)
         list(APPEND _SUPPORTED_LINK_SANITIZERS "${_SANITIZER}")
     endif()
 endforeach()
@@ -237,13 +257,28 @@ if(_C_IS_MSVC AND _CXX_IS_MSVC)
 endif()
 
 set(_LINK_FLAGS "")
-if(ENABLE_SANITIZER_ADDRESS AND "address" IN_LIST _SUPPORTED_LINK_SANITIZERS)
+list(
+    FIND _SUPPORTED_LINK_SANITIZERS
+    "address"
+    _link_address_idx
+)
+if(ENABLE_SANITIZER_ADDRESS AND NOT _link_address_idx EQUAL -1)
     string(APPEND _LINK_FLAGS "address,")
 endif()
-if(ENABLE_SANITIZER_UNDEFINED AND "undefined" IN_LIST _SUPPORTED_LINK_SANITIZERS)
+list(
+    FIND _SUPPORTED_LINK_SANITIZERS
+    "undefined"
+    _link_undefined_idx
+)
+if(ENABLE_SANITIZER_UNDEFINED AND NOT _link_undefined_idx EQUAL -1)
     string(APPEND _LINK_FLAGS "undefined,")
 endif()
-if(ENABLE_SANITIZER_LEAK AND "leak" IN_LIST _SUPPORTED_LINK_SANITIZERS)
+list(
+    FIND _SUPPORTED_LINK_SANITIZERS
+    "leak"
+    _link_leak_idx
+)
+if(ENABLE_SANITIZER_LEAK AND NOT _link_leak_idx EQUAL -1)
     string(APPEND _LINK_FLAGS "leak,")
 endif()
 

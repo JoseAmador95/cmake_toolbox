@@ -77,8 +77,14 @@ function(GcovrSchema_DetectVersion GCOVR_EXE OUTPUT_VAR)
     if(DETECTED_VERSION)
         GcovrSchema_GetSupportedVersions(SUPPORTED_VERSIONS)
 
-        # Check for exact match first
-        if(DETECTED_VERSION IN_LIST SUPPORTED_VERSIONS)
+        # Use list(FIND) instead of IN_LIST to keep script-mode compatibility
+        # without relying on CMP0057 policy state.
+        list(
+            FIND SUPPORTED_VERSIONS
+            "${DETECTED_VERSION}"
+            _detected_version_index
+        )
+        if(NOT _detected_version_index EQUAL -1)
             set(${OUTPUT_VAR} "${DETECTED_VERSION}" PARENT_SCOPE)
             message(
                 STATUS
@@ -225,7 +231,12 @@ function(GcovrSchema_Validate)
             "txt"
         )
         foreach(format IN LISTS GCOVR_OUTPUT_FORMATS)
-            if(NOT format IN_LIST VALID_FORMATS)
+            list(
+                FIND VALID_FORMATS
+                "${format}"
+                _format_index
+            )
+            if(_format_index EQUAL -1)
                 set(IS_VALID FALSE)
                 list(
                     APPEND ERRORS

@@ -233,7 +233,12 @@ function(_Ceedling_GetTargetIncludeDirs)
         list(POP_FRONT worklist current_target)
 
         # Skip if already processed or not a target
-        if(current_target IN_LIST processed_targets)
+        list(
+            FIND processed_targets
+            "${current_target}"
+            _processed_target_idx
+        )
+        if(NOT _processed_target_idx EQUAL -1)
             continue()
         endif()
         if(NOT TARGET ${current_target})
@@ -256,7 +261,12 @@ function(_Ceedling_GetTargetIncludeDirs)
         get_target_property(link_libs ${current_target} LINK_LIBRARIES)
         if(link_libs)
             foreach(lib IN LISTS link_libs)
-                if(TARGET ${lib} AND NOT lib IN_LIST processed_targets)
+                list(
+                    FIND processed_targets
+                    "${lib}"
+                    _processed_lib_idx
+                )
+                if(TARGET ${lib} AND _processed_lib_idx EQUAL -1)
                     list(APPEND worklist ${lib})
                 endif()
             endforeach()
@@ -265,7 +275,12 @@ function(_Ceedling_GetTargetIncludeDirs)
         get_target_property(iface_link_libs ${current_target} INTERFACE_LINK_LIBRARIES)
         if(iface_link_libs)
             foreach(lib IN LISTS iface_link_libs)
-                if(TARGET ${lib} AND NOT lib IN_LIST processed_targets)
+                list(
+                    FIND processed_targets
+                    "${lib}"
+                    _processed_iface_lib_idx
+                )
+                if(TARGET ${lib} AND _processed_iface_lib_idx EQUAL -1)
                     list(APPEND worklist ${lib})
                 endif()
             endforeach()

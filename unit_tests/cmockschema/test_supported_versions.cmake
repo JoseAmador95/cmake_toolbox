@@ -32,7 +32,12 @@ function(test_contains_expected_version)
 
     CMockSchema_GetSupportedVersions(versions)
 
-    if(NOT "2.6" IN_LIST versions)
+    list(
+        FIND versions
+        "2.6"
+        version_index
+    )
+    if(version_index EQUAL -1)
         message(STATUS "  ✗ Version 2.6 not found in: ${versions}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
