@@ -20,23 +20,31 @@ function(setup_test_environment)
 endfunction()
 
 function(write_fake_clang_tidy DIR NAME VERSION)
-    set(path "${DIR}/${NAME}")
-    file(
-        WRITE "${path}"
-        "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then\n  echo \"Ubuntu LLVM version ${VERSION}\"\nelse\n  echo \"fake ${NAME}\"\nfi\n"
-    )
-    file(
-        CHMOD
-        "${path}"
-        PERMISSIONS
-            OWNER_READ
-            OWNER_WRITE
-            OWNER_EXECUTE
-            GROUP_READ
-            GROUP_EXECUTE
-            WORLD_READ
-            WORLD_EXECUTE
-    )
+    if(WIN32)
+        set(path "${DIR}/${NAME}.bat")
+        file(
+            WRITE "${path}"
+            "@echo off\nif \"%1\"==\"--version\" (\n  echo Ubuntu LLVM version ${VERSION}\n) else (\n  echo fake ${NAME}\n)\n"
+        )
+    else()
+        set(path "${DIR}/${NAME}")
+        file(
+            WRITE "${path}"
+            "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then\n  echo \"Ubuntu LLVM version ${VERSION}\"\nelse\n  echo \"fake ${NAME}\"\nfi\n"
+        )
+        file(
+            CHMOD
+            "${path}"
+            PERMISSIONS
+                OWNER_READ
+                OWNER_WRITE
+                OWNER_EXECUTE
+                GROUP_READ
+                GROUP_EXECUTE
+                WORLD_READ
+                WORLD_EXECUTE
+        )
+    endif()
 endfunction()
 
 function(
@@ -61,7 +69,7 @@ if(${EXPECT_FOUND})
         message(FATAL_ERROR \"${CASE_NAME}: expected ClangTidy_FOUND=TRUE\")
     endif()
 
-    get_filename_component(found_name \"\${ClangTidy_EXECUTABLE}\" NAME)
+    get_filename_component(found_name \"\${ClangTidy_EXECUTABLE}\" NAME_WE)
     if(NOT found_name STREQUAL \"${EXPECT_EXEC}\")
         message(FATAL_ERROR \"${CASE_NAME}: expected executable '${EXPECT_EXEC}', got '\${found_name}'\")
     endif()
