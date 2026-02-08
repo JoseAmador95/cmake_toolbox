@@ -1,13 +1,3 @@
-if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
-    if(DEFINED CMAKE_BINARY_DIR AND NOT CMAKE_BINARY_DIR STREQUAL "")
-        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
-    elseif(DEFINED CMAKE_CURRENT_BINARY_DIR AND NOT CMAKE_CURRENT_BINARY_DIR STREQUAL "")
-        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_CURRENT_BINARY_DIR}/test_artifacts")
-    else()
-        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_CURRENT_LIST_DIR}/test_artifacts")
-    endif()
-endif()
-
 # Test: Gcovr Threshold Enforcement
 # ==============================================================================
 #
@@ -29,12 +19,32 @@ endif()
 #
 # ==============================================================================
 
-set(ERROR_COUNT 0)
-set(REPO_ROOT "")
-set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_thresholds")
-
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(MODULE_DIR "${REPO_ROOT}/cmake")
+
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    if(
+        DEFINED CMAKE_CURRENT_BINARY_DIR
+        AND NOT CMAKE_CURRENT_BINARY_DIR STREQUAL ""
+        AND NOT CMAKE_CURRENT_BINARY_DIR MATCHES "^${REPO_ROOT}(/|$)"
+    )
+        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_CURRENT_BINARY_DIR}/test_artifacts")
+    elseif(
+        DEFINED CMAKE_BINARY_DIR
+        AND NOT CMAKE_BINARY_DIR STREQUAL ""
+        AND NOT CMAKE_BINARY_DIR MATCHES "^${REPO_ROOT}(/|$)"
+    )
+        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+    else()
+        message(
+            FATAL_ERROR
+            "CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT must be set to a build-tree path when running gcov threshold tests from the source tree"
+        )
+    endif()
+endif()
+
+set(ERROR_COUNT 0)
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_thresholds")
 
 # ==============================================================================
 # Test Case: Basic LINE/BRANCH thresholds (existing)
