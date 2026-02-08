@@ -12,6 +12,7 @@ endif()
 # Tests policy_register, policy_set, policy_get functions
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+get_filename_component(POLICY_MODULE "${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake" ABSOLUTE)
 
 set(ERROR_COUNT 0)
 file(MAKE_DIRECTORY "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}")
@@ -171,7 +172,7 @@ function(test_policy_set_get_roundtrip)
     set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_set_get_roundtrip.cmake")
     file(
         WRITE "${temp_script}"
-        "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+        "include(\"${POLICY_MODULE}\")
 Policy_Register(NAME ROUND001 DESCRIPTION \"Roundtrip policy\" DEFAULT OLD INTRODUCED_VERSION 1.0)
 Policy_Set(ROUND001 NEW)
 Policy_Get(ROUND001 round_val)
@@ -248,7 +249,7 @@ function(test_error_handling)
     set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_dup.cmake")
     file(
         WRITE "${temp_script}"
-        "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+        "include(\"${POLICY_MODULE}\")
 Policy_Register(NAME DUP_TEST DESCRIPTION \"First\" DEFAULT OLD INTRODUCED_VERSION 1.0)
 Policy_Register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_VERSION 2.0)
 "
@@ -276,7 +277,7 @@ Policy_Register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_V
     set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_inv.cmake")
     file(
         WRITE "${temp_script}"
-        "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+        "include(\"${POLICY_MODULE}\")
 Policy_Register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VERSION 1.0)
 "
     )
@@ -303,7 +304,7 @@ Policy_Register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VE
     set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_unreg.cmake")
     file(
         WRITE "${temp_script}"
-        "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+        "include(\"${POLICY_MODULE}\")
 Policy_Get(NONEXISTENT result)
 "
     )
