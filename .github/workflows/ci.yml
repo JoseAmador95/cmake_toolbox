@@ -17,10 +17,32 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Validate checkout and submodules
+        run: |
+          git rev-parse --is-inside-work-tree
+          git submodule status --recursive
+
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y jq clang-format gcovr
+
+      - name: Verify required tools
+        run: |
+          for tool in cmake ctest jq clang-format gcovr; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "Missing required tool: $tool" >&2
+              exit 1
+            fi
+          done
+
+      - name: Print tool versions
+        run: |
+          cmake --version
+          ctest --version
+          jq --version
+          clang-format --version
+          gcovr --version
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
@@ -49,11 +71,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Validate checkout and submodules
+        run: |
+          git rev-parse --is-inside-work-tree
+          git submodule status --recursive
+
       - name: Install dependencies
         run: |
           brew install jq clang-format
           if ! brew list gcovr >/dev/null 2>&1; then
-            brew install gcovr || true
+            brew install gcovr
           fi
           if ! command -v gcovr >/dev/null 2>&1; then
             brew install pipx
@@ -61,6 +88,27 @@ jobs:
             pipx install gcovr
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           fi
+          if ! command -v gcovr >/dev/null 2>&1; then
+            echo "Failed to install required tool: gcovr" >&2
+            exit 1
+          fi
+
+      - name: Verify required tools
+        run: |
+          for tool in cmake ctest jq clang-format gcovr; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "Missing required tool: $tool" >&2
+              exit 1
+            fi
+          done
+
+      - name: Print tool versions
+        run: |
+          cmake --version
+          ctest --version
+          jq --version
+          clang-format --version
+          gcovr --version
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
