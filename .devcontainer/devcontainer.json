@@ -18,5 +18,6 @@
                 "ms-vscode.cpptools"
             ]
         }
-    }
+    },
+    "postCreateCommand": "/root/.local/bin/pre-commit install"
 }
