@@ -43,7 +43,7 @@ Functions
 
   ``CONFIG_FILE``
     Path to .clang-format configuration file.
-    Default: ``${CMAKE_SOURCE_DIR}/.clang-format``
+    Default: ``${CMAKE_CURRENT_SOURCE_DIR}/.clang-format``
 
   ``ADDITIONAL_ARGS``
     Additional arguments to pass to clang-format executable.
@@ -120,6 +120,17 @@ set(CLANGFORMAT_DEFAULT_PATTERNS
     "*.h++"
 )
 
+# Function to get caller base directory for path resolution
+function(_ClangFormat_GetBaseDir ARG_OUTPUT_VAR)
+    if(CMAKE_SCRIPT_MODE_FILE)
+        set(_CLANGFORMAT_BASE_DIR "${CMAKE_SOURCE_DIR}")
+    else()
+        set(_CLANGFORMAT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
+
+    set(${ARG_OUTPUT_VAR} "${_CLANGFORMAT_BASE_DIR}" PARENT_SCOPE)
+endfunction()
+
 # Function to validate clang-format configuration file
 function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
     # Handle empty string
@@ -130,7 +141,8 @@ function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
 
     # Convert relative paths to absolute paths
     if(NOT IS_ABSOLUTE "${ARG_CONFIG_FILE}")
-        set(ABSOLUTE_CONFIG_FILE "${CMAKE_SOURCE_DIR}/${ARG_CONFIG_FILE}")
+        _ClangFormat_GetBaseDir(_CLANGFORMAT_BASE_DIR)
+        set(ABSOLUTE_CONFIG_FILE "${_CLANGFORMAT_BASE_DIR}/${ARG_CONFIG_FILE}")
     else()
         set(ABSOLUTE_CONFIG_FILE "${ARG_CONFIG_FILE}")
     endif()
@@ -163,9 +175,10 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    # Check that SOURCE_DIRS was provided
+    # Set default source directory if not provided
     if(NOT ARG_SOURCE_DIRS)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: SOURCE_DIRS must be provided")
+        _ClangFormat_GetBaseDir(_CLANGFORMAT_BASE_DIR)
+        set(ARG_SOURCE_DIRS "${_CLANGFORMAT_BASE_DIR}")
     endif()
 
     # Set default patterns if not provided
@@ -176,7 +189,13 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
     # Collect source files from specified directories
     set(ALL_FILES "")
     foreach(SOURCE_DIR IN LISTS ARG_SOURCE_DIRS)
-        set(FULL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/${SOURCE_DIR}")
+        if(IS_ABSOLUTE "${SOURCE_DIR}")
+            set(FULL_SOURCE_DIR "${SOURCE_DIR}")
+        else()
+            _ClangFormat_GetBaseDir(_CLANGFORMAT_BASE_DIR)
+            set(FULL_SOURCE_DIR "${_CLANGFORMAT_BASE_DIR}/${SOURCE_DIR}")
+        endif()
+
         if(IS_DIRECTORY "${FULL_SOURCE_DIR}")
             foreach(PATTERN IN LISTS ARG_PATTERNS)
                 file(GLOB_RECURSE FOUND_FILES "${FULL_SOURCE_DIR}/${PATTERN}")
@@ -198,7 +217,8 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
         foreach(source_file IN LISTS ALL_FILES)
             set(EXCLUDE_FILE FALSE)
             foreach(pattern IN LISTS ARG_EXCLUDE_PATTERNS)
-                file(RELATIVE_PATH relative_path "${CMAKE_SOURCE_DIR}" "${source_file}")
+                _ClangFormat_GetBaseDir(_CLANGFORMAT_BASE_DIR)
+                file(RELATIVE_PATH relative_path "${_CLANGFORMAT_BASE_DIR}" "${source_file}")
                 if(relative_path MATCHES "${pattern}")
                     set(EXCLUDE_FILE TRUE)
                     break()
@@ -278,7 +298,7 @@ endfunction()
 #   SOURCE_DIRS              - Directories to scan for source files
 #   EXTENSIONS               - File patterns to match (default: *.c, *.h, *.cpp, etc.)
 #   EXCLUDE_PATTERNS         - Regex patterns to exclude files
-#   CONFIG_FILE              - Path to .clang-format config (default: ${CMAKE_SOURCE_DIR}/.clang-format)
+#   CONFIG_FILE              - Path to .clang-format config (default: ${CMAKE_CURRENT_SOURCE_DIR}/.clang-format)
 #   ADDITIONAL_ARGS          - Additional clang-format arguments
 #
 # Generated Targets:
@@ -318,7 +338,7 @@ function(ClangFormat_AddTargets)
 
     # Set default config file if not provided
     if(NOT ARG_CONFIG_FILE)
-        set(ARG_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-format")
+        set(ARG_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
     endif()
 
     # Validate configuration file and get style argument for clang-format
@@ -340,9 +360,14 @@ function(ClangFormat_AddTargets)
     )
 
     if(NOT ALL_SOURCE_FILES)
+        set(_CLANGFORMAT_SOURCE_DIRS_DISPLAY "${ARG_SOURCE_DIRS}")
+        if(NOT _CLANGFORMAT_SOURCE_DIRS_DISPLAY)
+            set(_CLANGFORMAT_SOURCE_DIRS_DISPLAY "${CMAKE_CURRENT_SOURCE_DIR}")
+        endif()
+
         message(
             WARNING
-            "${CMAKE_CURRENT_FUNCTION}: No source files found for ${ARG_TARGET_PREFIX} clang-format in directories: ${ARG_SOURCE_DIRS}"
+            "${CMAKE_CURRENT_FUNCTION}: No source files found for ${ARG_TARGET_PREFIX} clang-format in directories: ${_CLANGFORMAT_SOURCE_DIRS_DISPLAY}"
         )
         return()
     endif()

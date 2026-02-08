@@ -27,6 +27,9 @@ It requires the following variables to be defined:
 ``TEST_FILE``
   Path where the generated CTest script will be written.
 
+``TEST_ENVIRONMENT``
+  Optional test environment list to apply to each discovered test.
+
 Internal Function
 ^^^^^^^^^^^^^^^^^
 
@@ -57,6 +60,7 @@ function(DiscoverTests_Generate)
         TEST_WORKING_DIR
         TEST_SUITE
         TEST_FILE
+        TEST_ENVIRONMENT
     )
     set(multiValueArgs "")
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${options}" "${oneValueArgs}" "${multiValueArgs}")
@@ -120,6 +124,12 @@ execute_process(
                 APPEND script
                 "add_test(\"${ARG_TEST_SUITE}/${test_name}\" ${ARG_TEST_SUITE} -f ${test_name})\n"
             )
+            if(ARG_TEST_ENVIRONMENT)
+                string(
+                    APPEND script
+                    "set_tests_properties(\"${ARG_TEST_SUITE}/${test_name}\" PROPERTIES ENVIRONMENT \"${ARG_TEST_ENVIRONMENT}\")\n"
+                )
+            endif()
         endif()
     endforeach()
 
@@ -139,5 +149,6 @@ if(CMAKE_SCRIPT_MODE_FILE)
         TEST_WORKING_DIR ${TEST_WORKING_DIR}
         TEST_SUITE ${TEST_SUITE}
         TEST_FILE ${TEST_FILE}
+        TEST_ENVIRONMENT "${TEST_ENVIRONMENT}"
     )
 endif()

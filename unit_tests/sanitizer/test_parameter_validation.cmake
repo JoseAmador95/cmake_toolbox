@@ -259,8 +259,71 @@ message(STATUS \"Sanitizer_AddToTarget with SCOPE INTERFACE succeeded\")
     message(STATUS "  ✓ SCOPE INTERFACE works correctly")
 endfunction()
 
+function(test_apply_environment_to_tests)
+    message(STATUS "Test 8: Sanitizer_ApplyEnvironmentToTests applies test env")
+
+    set(test_script
+        "
+cmake_minimum_required(VERSION 3.22)
+project(SanitizerTest LANGUAGES C)
+set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+include(CTest)
+include(Sanitizer)
+
+set(SANITIZER_ENV_VARS \"ASAN_OPTIONS=abort_on_error=1;UBSAN_OPTIONS=print_stacktrace=1\" CACHE STRING \"\" FORCE)
+
+add_executable(mytest dummy.c)
+add_test(NAME sanitizer_env_test COMMAND mytest)
+
+Sanitizer_ApplyEnvironmentToTests(TESTS sanitizer_env_test)
+get_test_property(sanitizer_env_test ENVIRONMENT configured_env)
+string(REPLACE \"\\;\" \";\" configured_env_normalized \"\${configured_env}\")
+
+if(NOT \"\${configured_env_normalized}\" STREQUAL \"\${SANITIZER_ENV_VARS}\")
+    message(FATAL_ERROR \"Unexpected ENVIRONMENT for sanitizer_env_test: '\${configured_env}'\")
+endif()
+
+Sanitizer_ApplyEnvironmentToTests(
+    TESTS sanitizer_env_test
+    ENVIRONMENT \"LSAN_OPTIONS=verbosity=1\"
+    APPEND
+)
+get_test_property(sanitizer_env_test ENVIRONMENT appended_env)
+string(FIND \"\${appended_env}\" \"LSAN_OPTIONS=verbosity=1\" has_lsan)
+if(has_lsan EQUAL -1)
+    message(FATAL_ERROR \"APPEND did not add LSAN_OPTIONS. Got: '\${appended_env}'\")
+endif()
+
+message(STATUS \"Sanitizer_ApplyEnvironmentToTests works\")
+"
+    )
+
+    set(src_dir "${TEST_ROOT}/apply_test_env/src")
+    set(build_dir "${TEST_ROOT}/apply_test_env/build")
+    file(MAKE_DIRECTORY "${src_dir}")
+    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
+    file(WRITE "${src_dir}/dummy.c" "int main(void) { return 0; }")
+
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        RESULT_VARIABLE result
+        OUTPUT_VARIABLE output
+        ERROR_VARIABLE error
+    )
+
+    if(NOT result EQUAL 0)
+        message(STATUS "  ✗ Sanitizer_ApplyEnvironmentToTests failed unexpectedly: ${error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Sanitizer_ApplyEnvironmentToTests works correctly")
+endfunction()
+
 function(test_deprecated_function)
-    message(STATUS "Test 8: Deprecated target_add_sanitizer function works")
+    message(STATUS "Test 9: Deprecated target_add_sanitizer function works")
 
     set(test_script
         "
@@ -325,6 +388,7 @@ function(run_all_tests)
     test_valid_scope_public()
     test_valid_scope_private()
     test_valid_scope_interface()
+    test_apply_environment_to_tests()
     test_deprecated_function()
 
     message(STATUS "")

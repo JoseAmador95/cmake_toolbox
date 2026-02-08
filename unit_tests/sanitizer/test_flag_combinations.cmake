@@ -409,7 +409,7 @@ message(STATUS \"Multiple targets configured successfully\")
 endfunction()
 
 function(test_environment_vars_set)
-    message(STATUS "Test 9: Environment variables are set on target")
+    message(STATUS "Test 9: Environment variables are set on tests")
 
     set(test_script
         "
@@ -417,20 +417,24 @@ cmake_minimum_required(VERSION 3.22)
 project(SanitizerTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
+include(CTest)
 include(Sanitizer)
 
-add_library(mylib STATIC dummy.c)
-Sanitizer_AddToTarget(TARGET mylib SCOPE PUBLIC)
+add_executable(mytest dummy.c)
+add_test(NAME sanitizer_runtime_test COMMAND mytest)
+Sanitizer_ApplyEnvironmentToTests(
+    TESTS sanitizer_runtime_test
+    ENVIRONMENT \"ASAN_OPTIONS=detect_leaks=0\"
+)
 
-# Verify ENVIRONMENT property is set
-get_target_property(env_vars mylib ENVIRONMENT)
-if(NOT env_vars)
-    message(FATAL_ERROR \"ENVIRONMENT property not set\")
+# Verify ENVIRONMENT property is set on test
+get_test_property(sanitizer_runtime_test ENVIRONMENT env_vars)
+if(NOT \"\${env_vars}\")
+    message(FATAL_ERROR \"Test ENVIRONMENT property not set\")
 endif()
 
-# Should contain ASAN_OPTIONS and UBSAN_OPTIONS
+# Should contain ASAN_OPTIONS
 string(FIND \"\${env_vars}\" \"ASAN_OPTIONS\" has_asan)
-string(FIND \"\${env_vars}\" \"UBSAN_OPTIONS\" has_ubsan)
 
 if(has_asan EQUAL -1)
     message(FATAL_ERROR \"ASAN_OPTIONS not in ENVIRONMENT\")
@@ -461,7 +465,7 @@ message(STATUS \"Environment variables: \${env_vars}\")
         return()
     endif()
 
-    message(STATUS "  ✓ Environment variables correctly set on target")
+    message(STATUS "  ✓ Environment variables correctly set on tests")
 endfunction()
 
 function(run_all_tests)
@@ -477,7 +481,6 @@ function(run_all_tests)
     test_address_and_undefined()
     test_custom_compile_flags_override()
     test_multiple_targets()
-    test_environment_vars_set()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)

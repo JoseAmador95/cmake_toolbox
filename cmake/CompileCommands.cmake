@@ -97,19 +97,20 @@ function(CompileCommands_Trim)
     set(HELPER_SCRIPT ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/internal/TrimCompileCommandsHelper.cmake)
 
     cmake_path(GET ARG_OUTPUT PARENT_PATH output_dir)
-    file(MAKE_DIRECTORY ${output_dir})
+    file(MAKE_DIRECTORY "${output_dir}")
 
     add_custom_command(
         OUTPUT
             ${ARG_OUTPUT}
         COMMAND
-            ${CMAKE_COMMAND} -P ${HELPER_SCRIPT} -DJQ_EXECUTABLE=${Jq_EXECUTABLE}
-            -DINPUT_FILE=${ARG_INPUT} -DOUTPUT_FILE=${ARG_OUTPUT} -DJQ_SCRIPT=${JQ_SCRIPT}
+            ${CMAKE_COMMAND} -DJQ_EXECUTABLE=${Jq_EXECUTABLE} -DINPUT_FILE=${ARG_INPUT}
+            -DOUTPUT_FILE=${ARG_OUTPUT} -DJQ_SCRIPT=${JQ_SCRIPT} -P ${HELPER_SCRIPT}
         DEPENDS
             ${ARG_INPUT}
             ${JQ_SCRIPT}
             ${HELPER_SCRIPT}
         COMMENT "Trimming compile commands: ${ARG_INPUT} -> ${ARG_OUTPUT}"
+        VERBATIM
     )
 endfunction()
 

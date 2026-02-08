@@ -508,9 +508,10 @@ function(Ceedling_AddUnitTest)
     # Add coverage instrumentation
     if(CEEDLING_ENABLE_GCOV)
         Gcov_AddToTarget(${ARG_TARGET} PUBLIC)
+        Gcov_AddToTarget(${ARG_NAME} PRIVATE)
     endif()
 
-    # Add sanitizer instrumentation
+    set(_tb_enable_sanitizer_for_test OFF)
     if(
         CEEDLING_ENABLE_SANITIZER
         AND (
@@ -524,7 +525,18 @@ function(Ceedling_AddUnitTest)
             )
         )
     )
+        set(_tb_enable_sanitizer_for_test ON)
+    endif()
+
+    # Add sanitizer instrumentation
+    if(_tb_enable_sanitizer_for_test)
+        Sanitizer_AddToTarget(TARGET ${ARG_NAME} SCOPE PRIVATE)
         Sanitizer_AddToTarget(TARGET ${ARG_TARGET} SCOPE PUBLIC)
+    endif()
+
+    set(_tb_sanitizer_test_environment "")
+    if(_tb_enable_sanitizer_for_test)
+        set(_tb_sanitizer_test_environment "${SANITIZER_ENV_VARS}")
     endif()
 
     # Disable linting for test targets
@@ -552,7 +564,8 @@ function(Ceedling_AddUnitTest)
             COMMAND
                 "${CMAKE_COMMAND}" -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>" -D
                 "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -D
-                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${TB_UNITY_TEST_FILE}" -P
+                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${TB_UNITY_TEST_FILE}" -D
+                "TEST_ENVIRONMENT=${_tb_sanitizer_test_environment}" -P
                 "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
         )
@@ -567,6 +580,9 @@ function(Ceedling_AddUnitTest)
     else()
         # Add the whole file as a single test
         add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
+        if(_tb_sanitizer_test_environment)
+            Sanitizer_ApplyEnvironmentToTests(TESTS ${ARG_NAME})
+        endif()
     endif()
 endfunction()
 

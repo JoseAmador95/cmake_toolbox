@@ -62,6 +62,7 @@ Cache Variables
 ``SANITIZER_ENV_VARS``
   Environment variables for sanitizer runtime configuration.
   Default: ``ASAN_OPTIONS=detect_leaks=1:abort_on_error=1;UBSAN_OPTIONS=print_stacktrace=1``
+  Use with ``Sanitizer_ApplyEnvironmentToTests()``.
 
 Functions
 ^^^^^^^^^
@@ -80,6 +81,25 @@ Functions
 
   ``SCOPE``
     The scope for compile options and link libraries (PUBLIC, PRIVATE, INTERFACE).
+
+.. command:: Sanitizer_ApplyEnvironmentToTests
+
+  Apply sanitizer runtime environment variables to CTest tests::
+
+    Sanitizer_ApplyEnvironmentToTests(
+      TESTS <test1> [<test2> ...]
+      [ENVIRONMENT <env_var1> [<env_var2> ...]]
+      [APPEND]
+    )
+
+  ``TESTS``
+    Test names created with ``add_test()``.
+
+  ``ENVIRONMENT``
+    Optional environment list. Defaults to ``SANITIZER_ENV_VARS``.
+
+  ``APPEND``
+    Append to existing test environment instead of replacing it.
 
 Example
 ^^^^^^^
@@ -354,13 +374,78 @@ function(Sanitizer_AddToTarget)
             )
         endif()
     endif()
+endfunction()
 
-    set_target_properties(
-        ${ARG_TARGET}
-        PROPERTIES
-            ENVIRONMENT
-                "${SANITIZER_ENV_VARS}"
+# ==============================================================================
+# Sanitizer_ApplyEnvironmentToTests
+# ==============================================================================
+#
+# Apply sanitizer runtime environment variables to CTest tests.
+#
+# Parameters:
+#   TESTS       - CTest names to update
+#   ENVIRONMENT - Optional env list (defaults to SANITIZER_ENV_VARS)
+#   APPEND      - Append env values instead of replacing existing values
+#
+function(Sanitizer_ApplyEnvironmentToTests)
+    set(options APPEND)
+    set(oneValueArgs "")
+    set(multiValueArgs
+        TESTS
+        ENVIRONMENT
     )
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_TESTS)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TESTS must be specified")
+    endif()
+
+    foreach(test_name IN LISTS ARG_TESTS)
+        if(NOT TEST "${test_name}")
+            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Test '${test_name}' does not exist")
+        endif()
+    endforeach()
+
+    set(_SANITIZER_TEST_ENV "${SANITIZER_ENV_VARS}")
+    if(ARG_ENVIRONMENT)
+        set(_SANITIZER_TEST_ENV "${ARG_ENVIRONMENT}")
+    endif()
+
+    if(ARG_APPEND)
+        foreach(test_name IN LISTS ARG_TESTS)
+            get_test_property(${test_name} ENVIRONMENT _SANITIZER_CURRENT_ENV)
+            if(_SANITIZER_CURRENT_ENV STREQUAL "_SANITIZER_CURRENT_ENV-NOTFOUND")
+                set(_SANITIZER_CURRENT_ENV "")
+            endif()
+
+            set(_SANITIZER_MERGED_ENV "${_SANITIZER_CURRENT_ENV}")
+            if(_SANITIZER_MERGED_ENV)
+                list(APPEND _SANITIZER_MERGED_ENV ${_SANITIZER_TEST_ENV})
+            else()
+                set(_SANITIZER_MERGED_ENV "${_SANITIZER_TEST_ENV}")
+            endif()
+
+            string(REPLACE ";" "\\;" _SANITIZER_MERGED_ENV_ESCAPED "${_SANITIZER_MERGED_ENV}")
+
+            set_property(
+                TEST
+                    ${test_name}
+                PROPERTY
+                    ENVIRONMENT
+                        "${_SANITIZER_MERGED_ENV_ESCAPED}"
+            )
+        endforeach()
+    else()
+        string(REPLACE ";" "\\;" _SANITIZER_TEST_ENV_ESCAPED "${_SANITIZER_TEST_ENV}")
+
+        set_property(
+            TEST
+                ${ARG_TESTS}
+            PROPERTY
+                ENVIRONMENT
+                    "${_SANITIZER_TEST_ENV_ESCAPED}"
+        )
+    endif()
 endfunction()
 
 # ==============================================================================

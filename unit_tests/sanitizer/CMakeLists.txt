@@ -14,6 +14,10 @@ include(Sanitizer)
 # Create a dummy library to test sanitizer instrumentation
 add_library(test_dummy_lib STATIC dummy.c)
 
+include(CTest)
+add_executable(test_dummy_exe dummy.c)
+add_test(NAME sanitizer_runtime_env_test COMMAND test_dummy_exe)
+
 # Apply sanitizer to the library with PUBLIC scope
 Sanitizer_AddToTarget(TARGET test_dummy_lib SCOPE PUBLIC)
 
@@ -29,8 +33,9 @@ get_target_property(INTERFACE_COMPILE_OPTIONS test_dummy_lib INTERFACE_COMPILE_O
 get_target_property(LINK_OPTIONS test_dummy_lib LINK_OPTIONS)
 get_target_property(INTERFACE_LINK_OPTIONS test_dummy_lib INTERFACE_LINK_OPTIONS)
 
-# Get environment property
-get_target_property(ENVIRONMENT test_dummy_lib ENVIRONMENT)
+# Get test environment property (runtime settings belong to CTest tests)
+Sanitizer_ApplyEnvironmentToTests(TESTS sanitizer_runtime_env_test)
+get_test_property(sanitizer_runtime_env_test ENVIRONMENT TEST_ENVIRONMENT)
 
 message(STATUS "=== Sanitizer Module Test Results ===")
 message(STATUS "Compiler C: ${CMAKE_C_COMPILER_ID}")
@@ -40,7 +45,7 @@ message(STATUS "COMPILE_OPTIONS (with genex): ${COMPILE_OPTIONS}")
 message(STATUS "INTERFACE_COMPILE_OPTIONS: ${INTERFACE_COMPILE_OPTIONS}")
 message(STATUS "LINK_OPTIONS (with genex): ${LINK_OPTIONS}")
 message(STATUS "INTERFACE_LINK_OPTIONS: ${INTERFACE_LINK_OPTIONS}")
-message(STATUS "ENVIRONMENT: ${ENVIRONMENT}")
+message(STATUS "TEST_ENVIRONMENT: ${TEST_ENVIRONMENT}")
 
 # ==============================================================================
 # Assertions
@@ -70,9 +75,9 @@ if(NOT INTERFACE_LINK_OPTIONS)
     set(TEST_FAILED TRUE)
 endif()
 
-# Check environment is set
-if(NOT ENVIRONMENT)
-    message(SEND_ERROR "ENVIRONMENT property not set")
+# Check runtime test environment is set
+if(NOT TEST_ENVIRONMENT)
+    message(SEND_ERROR "TEST_ENVIRONMENT property not set")
     set(TEST_FAILED TRUE)
 endif()
 

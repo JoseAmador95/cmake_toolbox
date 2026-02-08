@@ -46,7 +46,15 @@ foreach(FILE IN LISTS CLANG_FORMAT_FILES)
             ${FORMAT_COMMAND}
         OUTPUT_FILE "${TEMP_FILE}"
         RESULT_VARIABLE FORMAT_RESULT
+        ERROR_VARIABLE FORMAT_ERROR
     )
+
+    if(NOT FORMAT_RESULT EQUAL 0)
+        message(
+            FATAL_ERROR
+            "clang-format failed for '${REL_FILE}' with exit code ${FORMAT_RESULT}: ${FORMAT_ERROR}"
+        )
+    endif()
 
     # Check if files are different using CMake
     file(READ "${FILE}" ORIGINAL_CONTENT)

@@ -202,6 +202,66 @@ message(STATUS \"ClangFormat gracefully handled missing tool\")
     message(STATUS "  ✓ ClangFormat gracefully handles missing tool")
 endfunction()
 
+function(test_default_source_dirs)
+    message(STATUS "Test 4: ClangFormat defaults SOURCE_DIRS to current directory")
+
+    set(src_dir "${TEST_ROOT}/default_source_dirs/src")
+    set(build_dir "${TEST_ROOT}/default_source_dirs/build")
+    file(MAKE_DIRECTORY "${src_dir}/lib")
+
+    set(test_script
+        "
+cmake_minimum_required(VERSION 3.22)
+project(ClangFormatDefaultSourceDirsTest LANGUAGES C)
+set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+find_package(ClangFormat QUIET)
+
+if(ClangFormat_FOUND)
+    include(ClangFormat)
+
+    ClangFormat_AddTargets(
+        TARGET_PREFIX default_dirs
+    )
+
+    if(NOT TARGET default_dirs_format)
+        message(FATAL_ERROR \"default_dirs_format target not created\")
+    endif()
+    if(NOT TARGET default_dirs_check)
+        message(FATAL_ERROR \"default_dirs_check target not created\")
+    endif()
+
+    message(STATUS \"ClangFormat default SOURCE_DIRS works\")
+else()
+    message(STATUS \"clang-format not found, skipping test\")
+endif()
+
+add_library(mylib STATIC lib/lib.c)
+"
+    )
+
+    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
+    file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
+    file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
+
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        RESULT_VARIABLE result
+        OUTPUT_VARIABLE output
+        ERROR_VARIABLE error
+    )
+
+    if(NOT result EQUAL 0)
+        message(STATUS "  ✗ Default SOURCE_DIRS test failed: ${error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ ClangFormat default SOURCE_DIRS works")
+endfunction()
+
 function(run_all_tests)
     message(STATUS "=== ClangFormat Integration Tests ===")
 
@@ -210,6 +270,7 @@ function(run_all_tests)
     test_basic_configuration()
     test_exclude_patterns()
     test_tool_not_found()
+    test_default_source_dirs()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
