@@ -1,5 +1,5 @@
 # Integration Test: ClangFormat configuration
-# Verifies ClangFormat target generation and exclusion patterns
+# Verifies target generation and discovered file sets
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 set(CMAKE_MODULE_PATH
@@ -17,7 +17,7 @@ function(setup_test_environment)
 endfunction()
 
 function(test_basic_configuration)
-    message(STATUS "Test 1: Basic ClangFormat configuration with SOURCE_DIRS")
+    message(STATUS "Test 1: Basic SOURCE_DIRS creates targets and expected file set")
 
     set(src_dir "${TEST_ROOT}/basic/src")
     set(build_dir "${TEST_ROOT}/basic/build")
@@ -33,23 +33,55 @@ find_package(ClangFormat QUIET)
 
 if(ClangFormat_FOUND)
     include(ClangFormat)
-    
+
+    ClangFormat_CollectFiles(
+        collected_files
+        SOURCE_DIRS lib
+    )
+    list(LENGTH collected_files collected_count)
+    if(NOT collected_count EQUAL 1)
+        message(FATAL_ERROR "
+        Expected
+        exactly
+        1
+        discovered
+        file
+        in
+        lib/,
+        got
+        \${collected_count}")
+    endif()
+    list(GET collected_files 0 only_file)
+    if(NOT only_file MATCHES "lib/lib.c$")
+        message(FATAL_ERROR "Unexpected
+        discovered
+        file:
+        \${only_file}")
+    endif()
+
     ClangFormat_AddTargets(
         TARGET_PREFIX myproject
         SOURCE_DIRS lib
     )
-    
-    # Verify targets were created
+
     if(NOT TARGET myproject_format)
-        message(FATAL_ERROR \"myproject_format target not created\")
+        message(FATAL_ERROR "myproject_format
+        target
+        not
+        created")
     endif()
     if(NOT TARGET myproject_check)
-        message(FATAL_ERROR \"myproject_check target not created\")
+        message(FATAL_ERROR "myproject_check
+        target
+        not
+        created")
     endif()
-    
-    message(STATUS \"ClangFormat targets created successfully\")
 else()
-    message(STATUS \"clang-format not found, skipping test\")
+    message(STATUS "clang-format
+        not
+        found,
+        skipping
+        test")
 endif()
 
 add_library(mylib STATIC lib/lib.c)
@@ -69,17 +101,17 @@ add_library(mylib STATIC lib/lib.c)
     )
 
     if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Basic configuration failed: ${error}")
+        message(STATUS "  - Basic configuration failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  ✓ Basic ClangFormat configuration works")
+    message(STATUS "  - Basic ClangFormat configuration assertions passed")
 endfunction()
 
 function(test_exclude_patterns)
-    message(STATUS "Test 2: ClangFormat with EXCLUDE_PATTERNS")
+    message(STATUS "Test 2: EXCLUDE_PATTERNS excludes generated files")
 
     set(src_dir "${TEST_ROOT}/exclude/src")
     set(build_dir "${TEST_ROOT}/exclude/build")
@@ -96,19 +128,58 @@ find_package(ClangFormat QUIET)
 
 if(ClangFormat_FOUND)
     include(ClangFormat)
-    
-    ClangFormat_AddTargets(
-        TARGET_PREFIX myproject
-        SOURCE_DIRS 
+
+    ClangFormat_CollectFiles(
+        collected_files
+        SOURCE_DIRS
             \${CMAKE_CURRENT_SOURCE_DIR}/lib
             \${CMAKE_CURRENT_SOURCE_DIR}/generated
-        EXCLUDE_PATTERNS
-            \"generated/.*\"
+        EXCLUDE_PATTERNS "
+        generated/.*"
     )
-    
-    message(STATUS \"ClangFormat configured with exclusions\")
+
+    list(LENGTH collected_files collected_count)
+    if(NOT collected_count EQUAL 1)
+        message(FATAL_ERROR "Expected
+        1
+        file
+        after
+        exclusion,
+        got
+        \${collected_count}")
+    endif()
+    list(GET collected_files 0 included_file)
+    if(NOT included_file MATCHES "lib/lib.c$")
+        message(FATAL_ERROR "Unexpected
+        included
+        file
+        after
+        exclusion:
+        \${included_file}")
+    endif()
+
+    ClangFormat_AddTargets(
+        TARGET_PREFIX myproject
+        SOURCE_DIRS
+            \${CMAKE_CURRENT_SOURCE_DIR}/lib
+            \${CMAKE_CURRENT_SOURCE_DIR}/generated
+        EXCLUDE_PATTERNS "generated/.*"
+    )
+
+    if(NOT TARGET myproject_check OR NOT TARGET myproject_format)
+        message(FATAL_ERROR "Expected
+        format/check
+        targets
+        were
+        not
+        created")
+    endif()
 else()
-    message(STATUS \"clang-format not found, skipping test\")
+    message(STATUS "clang-format
+        not
+        found,
+        skipping
+        test")
 endif()
 
 add_library(mylib STATIC lib/lib.c generated/gen.c)
@@ -117,7 +188,7 @@ add_library(mylib STATIC lib/lib.c generated/gen.c)
 
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
-    file(WRITE "${src_dir}/generated/gen.c" "// Generated file\nint gen_func(void){return 1;}")
+    file(WRITE "${src_dir}/generated/gen.c" "int gen_func(void){return 1;}")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
 
     execute_process(
@@ -129,17 +200,17 @@ add_library(mylib STATIC lib/lib.c generated/gen.c)
     )
 
     if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Exclude patterns test failed: ${error}")
+        message(STATUS "  - Exclude patterns test failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  ✓ ClangFormat EXCLUDE_PATTERNS works")
+    message(STATUS "  - Exclusion and target assertions passed")
 endfunction()
 
 function(test_tool_not_found)
-    message(STATUS "Test 3: ClangFormat gracefully handles missing tool")
+    message(STATUS "Test 3: Missing clang-format does not create targets")
 
     set(src_dir "${TEST_ROOT}/no_tool/src")
     set(build_dir "${TEST_ROOT}/no_tool/build")
@@ -151,25 +222,30 @@ cmake_minimum_required(VERSION 3.22)
 project(ClangFormatNoToolTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-# Force tool to not be found
 set(ClangFormat_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
 set(ClangFormat_FOUND FALSE CACHE BOOL \"\" FORCE)
 
 include(ClangFormat)
 
-# This should emit warning but not fail
 ClangFormat_AddTargets(
     TARGET_PREFIX myproject
     SOURCE_DIRS \${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
 
-# Verify targets are NOT created when tool missing
-if(TARGET myproject_format)
-    message(FATAL_ERROR \"Targets should not be created when clang-format missing\")
+if(TARGET myproject_format OR TARGET myproject_check)
+    message(FATAL_ERROR "
+        Targets
+        should
+        not
+        be
+        created
+        when
+        clang-format
+        is
+        missing")
 endif()
 
 add_library(mylib STATIC lib/lib.c)
-message(STATUS \"ClangFormat gracefully handled missing tool\")
 "
     )
 
@@ -185,25 +261,17 @@ message(STATUS \"ClangFormat gracefully handled missing tool\")
     )
 
     if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Should not fail when clang-format missing: ${error}")
+        message(STATUS "  - Missing tool test should not fail: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    # Check for warning in output
-    string(
-        FIND "${output}${error}"
-        "clang-format"
-        has_warning
-    )
-    # Warning is optional - main thing is it didn't fail
-
-    message(STATUS "  ✓ ClangFormat gracefully handles missing tool")
+    message(STATUS "  - Missing tool behavior validated")
 endfunction()
 
 function(test_default_source_dirs)
-    message(STATUS "Test 4: ClangFormat defaults SOURCE_DIRS to current directory")
+    message(STATUS "Test 4: Default SOURCE_DIRS discovers current source files")
 
     set(src_dir "${TEST_ROOT}/default_source_dirs/src")
     set(build_dir "${TEST_ROOT}/default_source_dirs/build")
@@ -220,20 +288,43 @@ find_package(ClangFormat QUIET)
 if(ClangFormat_FOUND)
     include(ClangFormat)
 
+    ClangFormat_CollectFiles(default_collected)
+    list(LENGTH default_collected default_count)
+    if(default_count LESS 1)
+        message(FATAL_ERROR "
+        Default
+        SOURCE_DIRS
+        should
+        discover
+        files
+        in
+        current
+        source
+        dir")
+    endif()
+
     ClangFormat_AddTargets(
         TARGET_PREFIX default_dirs
     )
 
     if(NOT TARGET default_dirs_format)
-        message(FATAL_ERROR \"default_dirs_format target not created\")
+        message(FATAL_ERROR "default_dirs_format
+        target
+        not
+        created")
     endif()
     if(NOT TARGET default_dirs_check)
-        message(FATAL_ERROR \"default_dirs_check target not created\")
+        message(FATAL_ERROR "default_dirs_check
+        target
+        not
+        created")
     endif()
-
-    message(STATUS \"ClangFormat default SOURCE_DIRS works\")
 else()
-    message(STATUS \"clang-format not found, skipping test\")
+    message(STATUS "clang-format
+        not
+        found,
+        skipping
+        test")
 endif()
 
 add_library(mylib STATIC lib/lib.c)
@@ -253,13 +344,114 @@ add_library(mylib STATIC lib/lib.c)
     )
 
     if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Default SOURCE_DIRS test failed: ${error}")
+        message(STATUS "  - Default SOURCE_DIRS test failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  ✓ ClangFormat default SOURCE_DIRS works")
+    message(STATUS "  - Default SOURCE_DIRS behavior validated")
+endfunction()
+
+function(test_relative_and_absolute_source_dirs)
+    message(STATUS "Test 5: Relative and absolute SOURCE_DIRS discover the same files")
+
+    set(src_dir "${TEST_ROOT}/relative_absolute/src")
+    set(build_dir "${TEST_ROOT}/relative_absolute/build")
+    file(MAKE_DIRECTORY "${src_dir}/lib")
+    file(MAKE_DIRECTORY "${src_dir}/inc")
+
+    set(test_script
+        "
+cmake_minimum_required(VERSION 3.22)
+project(ClangFormatRelativeAbsolute LANGUAGES C)
+set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+find_package(ClangFormat QUIET)
+
+if(ClangFormat_FOUND)
+    include(ClangFormat)
+
+    ClangFormat_CollectFiles(relative_files SOURCE_DIRS lib inc)
+    ClangFormat_CollectFiles(
+        absolute_files
+        SOURCE_DIRS
+            \${CMAKE_CURRENT_SOURCE_DIR}/lib
+            \${CMAKE_CURRENT_SOURCE_DIR}/inc
+    )
+
+    list(SORT relative_files)
+    list(SORT absolute_files)
+    if(NOT \"\${relative_files}\" STREQUAL \"\${absolute_files}\")
+        message(FATAL_ERROR "
+        Relative
+        and
+        absolute
+        SOURCE_DIRS
+        produced
+        different
+        file
+        sets")
+    endif()
+
+    list(LENGTH relative_files files_count)
+    if(NOT files_count EQUAL 2)
+        message(FATAL_ERROR "Expected
+        exactly
+        2
+        files
+        from
+        SOURCE_DIRS,
+        got
+        \${files_count}")
+    endif()
+
+    ClangFormat_AddTargets(
+        TARGET_PREFIX relabs
+        SOURCE_DIRS lib inc
+    )
+
+    if(NOT TARGET relabs_check OR NOT TARGET relabs_format)
+        message(FATAL_ERROR "Expected
+        relabs
+        targets
+        were
+        not
+        created")
+    endif()
+else()
+    message(STATUS "clang-format
+        not
+        found,
+        skipping
+        test")
+endif()
+
+add_library(mylib STATIC lib/lib.c)
+"
+    )
+
+    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
+    file(WRITE "${src_dir}/lib/lib.c" "#include \"lib.h\"\nint lib_func(void) { return 42; }\n")
+    file(WRITE "${src_dir}/inc/lib.h" "int lib_func(void);\n")
+    file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
+
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        RESULT_VARIABLE result
+        OUTPUT_VARIABLE output
+        ERROR_VARIABLE error
+    )
+
+    if(NOT result EQUAL 0)
+        message(STATUS "  - Relative/absolute SOURCE_DIRS test failed: ${error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  - Relative and absolute SOURCE_DIRS behave consistently")
 endfunction()
 
 function(run_all_tests)
@@ -271,6 +463,7 @@ function(run_all_tests)
     test_exclude_patterns()
     test_tool_not_found()
     test_default_source_dirs()
+    test_relative_and_absolute_source_dirs()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)

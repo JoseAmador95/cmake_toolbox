@@ -1,53 +1,46 @@
-# Unit Tests
+# Test Suites
 
-This directory contains unit tests for the CMake modules in this toolbox.
+This directory contains both script-mode unit tests and project-mode integration tests for `cmake_toolbox` modules.
 
-## Structure
+## Directory Layout
 
-- **`policy/`** - Unit tests for the Policy.cmake module
-- **`clangformat/`** - Unit tests for the ClangFormat.cmake module
-- **`findunity/`** - Unit tests for FindUnity.cmake hint variable handling (Issue #10)
+- `policy/`, `clangformat/`, `clangtidy/`, `compilecommands/`, `gcov/`, `gcovrschema/`, `cmockschema/`, `findunity/`, `sanitizer/`: module-focused unit tests (mostly `cmake -P` script mode)
+- `discover_tests/`: script-level verification for `DiscoverTests.cmake`, including paths with spaces and special characters
+- `integration/clangformat/`, `integration/compilecommands/`, `integration/gcov/`, `integration/sanitizer/`, `integration/clangtidy/`, `integration/consumption/`: project-mode integration tests that configure/build mini CMake projects and assert observable outputs
 
-## Why No Unity Tests?
+## Testing Strategy
 
-Unity module testing is **not included** in unit tests because:
+- Prefer behavior assertions over configure-only checks (for example, build custom targets, verify generated artifacts, inspect transformed output files)
+- Keep failures deterministic and actionable (tests should fail with explicit missing artifact/output messages)
+- Gate tool-dependent checks (`jq`, `clang-format`, compiler-specific coverage support) with clear skip messages instead of silent pass-through
+- Use integration tests when functionality relies on CMake project context (`add_custom_command`, `add_custom_target`, target properties, generated build artifacts)
 
-- **`Unity_Initialize()`** requires FetchContent (external dependencies)
-- **`Unity_GenerateMock()`**, **`Unity_GenerateRunner()`**, **`Unity_CreateTestTarget()`** all use `add_custom_command`/`add_executable` which don't work in script mode (`cmake -P`)
+## Unity Module Note
 
-### FindUnity.cmake Testing Limitation
+`Unity_Initialize()`, `Unity_GenerateMock()`, `Unity_GenerateRunner()`, and `Unity_CreateTestTarget()` are not fully unit-testable in pure script mode because they depend on project-mode operations and external tooling.
 
-**FindUnity.cmake** (the Find module) also cannot be tested in script mode because:
-- `find_package()` command requires a real CMake project context
-- Find module logic depends on CMake search paths and system introspection
-- Testing would require mocking the entire CMake find system
+`FindUnity.cmake` also requires real `find_package()` behavior and environment-dependent lookup logic, so script-mode coverage is intentionally limited.
 
-**Note:** Bug fixes in FindUnity.cmake (e.g., issue #10 - unsafe if() expansion for hints) must be verified manually by using `find_package(Unity)` in a real CMake project with various hint variable states (undefined, empty, valid paths).
-
-These functions are designed for use in real CMake projects where:
-- FetchContent can download dependencies  
-- `add_custom_command` can generate mocks and runners
-- `add_executable` can create test targets
-- Ruby executable is available (Unity uses `find_program(Ruby_EXECUTABLE ruby REQUIRED)` for simplicity)
-
-## Testing Philosophy
-
-Unit tests in this project:
-- ✅ **Run in script mode** using `cmake -P` (no external dependencies)
-- ✅ **Test pure logic** that can be isolated from CMake project context  
-- ✅ **Validate parameter parsing** and error conditions
-- ❌ **Don't test integration** with external tools or CMake project commands
-
-Integration testing of Unity.cmake should be done within actual CMake projects that can handle the external dependencies and project-mode commands.
-
-## Running Tests
+## Local Reproduction
 
 ```bash
-# Run all unit tests
-ctest -R "policy|clangformat|findunity"
+# Full configure/build/test cycle (matches CI baseline)
+cmake -S . -B build -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
 
-# Run specific module tests  
-ctest -R "policy"
-ctest -R "clangformat"
-ctest -R "findunity"
+# Run focused suites
+ctest --test-dir build --output-on-failure -R "compilecommands|integration_compilecommands"
+ctest --test-dir build --output-on-failure -R "integration_clangformat"
+ctest --test-dir build --output-on-failure -R "integration_gcov"
 ```
+
+## CI Enforcement
+
+GitHub Actions runs on every pull request and push to `main`:
+
+- `test-linux`: configure, build, full `ctest` execution
+- `test-macos`: configure, build, core test matrix execution
+- `lint-basic`: install/configuration sanity checks
+
+Failed test jobs upload CTest logs as artifacts for debugging.

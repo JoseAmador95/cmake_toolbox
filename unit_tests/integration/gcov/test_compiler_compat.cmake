@@ -98,6 +98,13 @@ target_link_libraries(mytest PRIVATE mylib)
         return()
     endif()
 
+    if(NOT EXISTS "${build_dir}/mytest")
+        message(STATUS "  ✗ Expected test executable not found: ${build_dir}/mytest")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
     message(STATUS "  ✓ GCC build with coverage succeeded (${gcno_count} .gcno files)")
 endfunction()
 
@@ -187,8 +194,21 @@ target_link_libraries(mytest PRIVATE mylib)
     file(GLOB_RECURSE gcno_files "${build_dir}/*.gcno")
     list(LENGTH gcno_files gcno_count)
 
-    # Note: Clang might produce different artifacts depending on version
-    message(STATUS "  ✓ Clang build with coverage succeeded")
+    if(gcno_count EQUAL 0)
+        message(STATUS "  ✗ No .gcno files created for Clang build")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    if(NOT EXISTS "${build_dir}/mytest")
+        message(STATUS "  ✗ Expected Clang test executable not found: ${build_dir}/mytest")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Clang build with coverage succeeded (${gcno_count} .gcno files)")
 endfunction()
 
 function(run_all_tests)

@@ -1,5 +1,5 @@
 # Integration Test: CompileCommands_Trim
-# Verifies compile_commands.json trimming with jq
+# Verifies trim behavior using generated compile_commands.json
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 set(CMAKE_MODULE_PATH
@@ -17,7 +17,7 @@ function(setup_test_environment)
 endfunction()
 
 function(test_trim_with_jq)
-    message(STATUS "Test 1: CompileCommands_Trim with jq available")
+    message(STATUS "Test 1: Build executes trim target and validates transformed output")
 
     # Check if jq is available
     find_program(JQ_EXE jq)
@@ -29,40 +29,25 @@ function(test_trim_with_jq)
     set(src_dir "${TEST_ROOT}/trim_jq/src")
     set(build_dir "${TEST_ROOT}/trim_jq/build")
     file(MAKE_DIRECTORY "${src_dir}")
-    file(MAKE_DIRECTORY "${build_dir}")
-
-    # Create a sample compile_commands.json
-    file(
-        WRITE "${build_dir}/compile_commands.json"
-        "[
-  {
-    \"directory\": \"/build\",
-    \"command\": \"gcc -I/include -DFOO=1 -o lib.o -c lib.c\",
-    \"file\": \"lib.c\"
-  }
-]"
-    )
 
     set(test_script
         "
 cmake_minimum_required(VERSION 3.22)
 project(CompileCommandsTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(CompileCommands)
+
+add_library(mylib STATIC lib.c)
+target_compile_options(mylib PRIVATE -DFROM_INTEGRATION=1 -O2)
 
 CompileCommands_Trim(
     INPUT \${CMAKE_BINARY_DIR}/compile_commands.json
     OUTPUT \${CMAKE_BINARY_DIR}/trimmed/compile_commands.json
 )
 
-# Verify output directory was created
-if(NOT EXISTS \"\${CMAKE_BINARY_DIR}/trimmed\")
-    message(FATAL_ERROR \"Output directory not created\")
-endif()
-
-message(STATUS \"CompileCommands_Trim completed\")
-add_library(mylib STATIC lib.c)
+add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands.json)
 "
     )
 
@@ -84,7 +69,41 @@ add_library(mylib STATIC lib.c)
         return()
     endif()
 
-    message(STATUS "  ✓ CompileCommands_Trim with jq works")
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} --build "${build_dir}" --target run_trim
+        RESULT_VARIABLE build_result
+        OUTPUT_VARIABLE build_output
+        ERROR_VARIABLE build_error
+    )
+
+    if(NOT build_result EQUAL 0)
+        message(STATUS "  ✗ Building run_trim failed: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    set(trimmed_file "${build_dir}/trimmed/compile_commands.json")
+    if(NOT EXISTS "${trimmed_file}")
+        message(STATUS "  ✗ Trimmed output file not generated")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    file(READ "${trimmed_file}" trimmed_content)
+    if(NOT trimmed_content MATCHES "-DFROM_INTEGRATION=1")
+        message(STATUS "  ✗ Expected define flag missing from trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+    if(trimmed_content MATCHES "-O2")
+        message(STATUS "  ✗ Optimization flag should have been removed")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    message(STATUS "  ✓ CompileCommands_Trim executes real trim path and validates output")
 endfunction()
 
 function(test_trim_jq_not_found)
@@ -95,17 +114,16 @@ function(test_trim_jq_not_found)
     file(MAKE_DIRECTORY "${src_dir}")
     file(MAKE_DIRECTORY "${build_dir}")
 
-    file(WRITE "${build_dir}/compile_commands.json" "[]")
-
     set(test_script
         "
 cmake_minimum_required(VERSION 3.22)
 project(CompileCommandsNoJqTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Force jq to not be found
-set(JQ_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
-set(JQ_FOUND FALSE CACHE BOOL \"\" FORCE)
+set(Jq_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
+set(Jq_FOUND FALSE CACHE BOOL \"\" FORCE)
 
 include(CompileCommands)
 
@@ -116,7 +134,6 @@ CompileCommands_Trim(
 )
 
 add_library(mylib STATIC lib.c)
-message(STATUS \"CompileCommands handled missing jq gracefully\")
 "
     )
 
@@ -145,7 +162,10 @@ message(STATUS \"CompileCommands handled missing jq gracefully\")
         has_jq_mention
     )
     if(has_jq_mention EQUAL -1)
-        message(STATUS "  ⚠ Expected mention of jq in output")
+        message(STATUS "  ✗ Expected mention of jq in output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
     endif()
 
     message(STATUS "  ✓ CompileCommands handles missing jq gracefully")

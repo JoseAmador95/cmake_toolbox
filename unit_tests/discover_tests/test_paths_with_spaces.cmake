@@ -14,12 +14,33 @@ function(reset_test_root)
     file(MAKE_DIRECTORY "${TEST_ROOT}")
 endfunction()
 
-function(create_mock_test_executable exe_path)
+function(create_mock_test_executable base_path out_executable_var)
+    if(WIN32)
+        set(exe_path "${base_path}.bat")
+    else()
+        set(exe_path "${base_path}.sh")
+    endif()
+
     get_filename_component(exe_dir "${exe_path}" DIRECTORY)
     file(MAKE_DIRECTORY "${exe_dir}")
-    file(
-        WRITE "${exe_path}"
-        "#!/bin/sh
+
+    if(WIN32)
+        file(
+            WRITE "${exe_path}"
+            "@echo off
+if \"%1\"==\"-l\" (
+  echo suite
+  echo test_one
+  echo test_two
+  exit /b 0
+)
+exit /b 1
+"
+        )
+    else()
+        file(
+            WRITE "${exe_path}"
+            "#!/bin/sh
 if [ \"$1\" = \"-l\" ]; then
   echo \"suite\"
   echo \"test_one\"
@@ -28,15 +49,18 @@ if [ \"$1\" = \"-l\" ]; then
 fi
 exit 1
 "
-    )
-    execute_process(
-        COMMAND
-            chmod +x "${exe_path}"
-        RESULT_VARIABLE chmod_result
-    )
-    if(NOT chmod_result EQUAL 0)
-        message(FATAL_ERROR "Failed to make executable: ${exe_path}")
+        )
+        execute_process(
+            COMMAND
+                chmod +x "${exe_path}"
+            RESULT_VARIABLE chmod_result
+        )
+        if(NOT chmod_result EQUAL 0)
+            message(FATAL_ERROR "Failed to make executable: ${exe_path}")
+        endif()
     endif()
+
+    set(${out_executable_var} "${exe_path}" PARENT_SCOPE)
 endfunction()
 
 function(run_discover exe_path work_dir out_file)
@@ -79,8 +103,8 @@ function(test_normal_path)
     set(work_dir "${TEST_ROOT}/normal")
     set(out_file "${TEST_ROOT}/normal/tests.cmake")
 
-    create_mock_test_executable("${exe_path}")
-    run_discover("${exe_path}" "${work_dir}" "${out_file}")
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}")
 
     if(NOT DISCOVER_RESULT EQUAL 0)
         fail("DiscoverTests failed for normal path: ${DISCOVER_ERROR}")
@@ -97,8 +121,8 @@ function(test_executable_with_spaces)
     set(work_dir "${TEST_ROOT}/path with spaces")
     set(out_file "${TEST_ROOT}/path with spaces/tests.cmake")
 
-    create_mock_test_executable("${exe_path}")
-    run_discover("${exe_path}" "${work_dir}" "${out_file}")
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}")
 
     if(NOT DISCOVER_RESULT EQUAL 0)
         fail("DiscoverTests failed for exec path with spaces: ${DISCOVER_ERROR}")
@@ -115,8 +139,8 @@ function(test_workdir_with_spaces)
     set(exe_path "${work_dir}/test_app")
     set(out_file "${work_dir}/tests.cmake")
 
-    create_mock_test_executable("${exe_path}")
-    run_discover("${exe_path}" "${work_dir}" "${out_file}")
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}")
 
     if(NOT DISCOVER_RESULT EQUAL 0)
         fail("DiscoverTests failed for workdir with spaces: ${DISCOVER_ERROR}")
