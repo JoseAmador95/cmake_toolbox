@@ -25,5 +25,5 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pipx ensurepath \
-    && pipx install --upgrade-all gersemi \
-    && pipx install --upgrade-all pre-commit
+    && pipx install gersemi \
+    && pipx install pre-commit
