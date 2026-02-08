@@ -13,7 +13,13 @@ This document outlines the coding standards, patterns, and best practices to fol
 
 This project uses **pre-commit framework** to automatically enforce CMake formatting with gersemi on every commit.
 
-**Initial Setup (One-time)**:
+**Initial Setup**:
+
+**Option 1: Using Dev Container (Recommended)**
+
+If using the VS Code dev container, pre-commit hooks are installed automatically when the container starts. No additional setup needed!
+
+**Option 2: Local Machine Setup**
 
 1. Install pre-commit framework:
    ```bash
@@ -27,7 +33,7 @@ This project uses **pre-commit framework** to automatically enforce CMake format
    pre-commit install
    ```
 
-3. (Optional) Run gersemi on all files to ensure they're formatted:
+3. (Optional) Run validation on all files:
    ```bash
    pre-commit run --all-files
    ```
