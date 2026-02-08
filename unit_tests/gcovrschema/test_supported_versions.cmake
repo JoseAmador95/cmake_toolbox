@@ -47,8 +47,28 @@ function(test_contains_expected_version)
     message(STATUS "  ✓ Version 7.0 found in supported versions")
 endfunction()
 
+function(test_contains_expected_version_8_0)
+    message(STATUS "Test 3: Supported versions contains '8.0'")
+
+    GcovrSchema_GetSupportedVersions(versions)
+
+    list(
+        FIND versions
+        "8.0"
+        version_index
+    )
+    if(version_index EQUAL -1)
+        message(STATUS "  ✗ Version 8.0 not found in: ${versions}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Version 8.0 found in supported versions")
+endfunction()
+
 function(test_version_format)
-    message(STATUS "Test 3: Versions follow MAJOR.MINOR format")
+    message(STATUS "Test 4: Versions follow MAJOR.MINOR format")
 
     GcovrSchema_GetSupportedVersions(versions)
 
@@ -65,7 +85,7 @@ function(test_version_format)
 endfunction()
 
 function(test_output_variable_set)
-    message(STATUS "Test 4: Output variable is set correctly")
+    message(STATUS "Test 5: Output variable is set correctly")
 
     # Ensure variable doesn't exist before call
     unset(my_output)
@@ -87,6 +107,7 @@ function(run_all_tests)
 
     test_returns_non_empty_list()
     test_contains_expected_version()
+    test_contains_expected_version_8_0()
     test_version_format()
     test_output_variable_set()
 
