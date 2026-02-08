@@ -32,28 +32,33 @@ function(cleanup_test_environment)
     file(REMOVE_RECURSE "${TEST_ROOT}")
 endfunction()
 
-# Helper to create a mock gcovr script that returns a specific version
-function(create_mock_gcovr OUTPUT_PATH VERSION_STRING)
+# Helper to create a mock gcovr script that returns a specific version.
+# On Windows, batch scripts require a .bat extension to be executable,
+# so the actual written path may differ from the requested one.
+# The variable named by RESULT_VAR receives the real path.
+function(create_mock_gcovr RESULT_VAR REQUESTED_PATH VERSION_STRING)
     if(WIN32)
-        file(WRITE "${OUTPUT_PATH}" "@echo off\necho ${VERSION_STRING}")
+        set(actual_path "${REQUESTED_PATH}.bat")
+        file(WRITE "${actual_path}" "@echo off\necho ${VERSION_STRING}")
     else()
-        file(WRITE "${OUTPUT_PATH}" "#!/bin/sh\necho '${VERSION_STRING}'")
+        set(actual_path "${REQUESTED_PATH}")
+        file(WRITE "${actual_path}" "#!/bin/sh\necho '${VERSION_STRING}'")
         file(
             CHMOD
-            "${OUTPUT_PATH}"
+            "${actual_path}"
             PERMISSIONS
                 OWNER_EXECUTE
                 OWNER_READ
                 OWNER_WRITE
         )
     endif()
+    set(${RESULT_VAR} "${actual_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_detect_supported_version_exact)
     message(STATUS "Test 1: Detect exact supported version (7.0)")
 
-    set(mock_gcovr "${TEST_ROOT}/gcovr_7_0")
-    create_mock_gcovr("${mock_gcovr}" "gcovr 7.0")
+    create_mock_gcovr(mock_gcovr "${TEST_ROOT}/gcovr_7_0" "gcovr 7.0")
 
     GcovrSchema_DetectVersion("${mock_gcovr}" detected_version)
 
@@ -70,8 +75,7 @@ endfunction()
 function(test_detect_compatible_patch_version)
     message(STATUS "Test 2: Detect compatible patch version (7.2.1 -> 7.0)")
 
-    set(mock_gcovr "${TEST_ROOT}/gcovr_7_2_1")
-    create_mock_gcovr("${mock_gcovr}" "gcovr 7.2.1")
+    create_mock_gcovr(mock_gcovr "${TEST_ROOT}/gcovr_7_2_1" "gcovr 7.2.1")
 
     GcovrSchema_DetectVersion("${mock_gcovr}" detected_version)
 
@@ -88,8 +92,7 @@ endfunction()
 function(test_detect_compatible_mapped_major_version)
     message(STATUS "Test 3: Detect compatible major version (8.6 -> 8.0)")
 
-    set(mock_gcovr "${TEST_ROOT}/gcovr_8_6")
-    create_mock_gcovr("${mock_gcovr}" "gcovr 8.6")
+    create_mock_gcovr(mock_gcovr "${TEST_ROOT}/gcovr_8_6" "gcovr 8.6")
 
     GcovrSchema_DetectVersion("${mock_gcovr}" detected_version)
 
@@ -106,8 +109,7 @@ endfunction()
 function(test_detect_unsupported_version)
     message(STATUS "Test 4: Unsupported version returns empty string (6.0)")
 
-    set(mock_gcovr "${TEST_ROOT}/gcovr_6_0")
-    create_mock_gcovr("${mock_gcovr}" "gcovr 6.0")
+    create_mock_gcovr(mock_gcovr "${TEST_ROOT}/gcovr_6_0" "gcovr 6.0")
 
     GcovrSchema_DetectVersion("${mock_gcovr}" detected_version)
 
@@ -141,8 +143,7 @@ endfunction()
 function(test_detect_malformed_output)
     message(STATUS "Test 6: Malformed version output returns empty string")
 
-    set(mock_gcovr "${TEST_ROOT}/gcovr_malformed")
-    create_mock_gcovr("${mock_gcovr}" "some random output without version")
+    create_mock_gcovr(mock_gcovr "${TEST_ROOT}/gcovr_malformed" "some random output without version")
 
     GcovrSchema_DetectVersion("${mock_gcovr}" detected_version)
 
@@ -174,8 +175,7 @@ endfunction()
 function(test_output_variable_scope)
     message(STATUS "Test 8: Output variable is set in caller scope")
 
-    set(mock_gcovr "${TEST_ROOT}/gcovr_scope_test")
-    create_mock_gcovr("${mock_gcovr}" "gcovr 7.0")
+    create_mock_gcovr(mock_gcovr "${TEST_ROOT}/gcovr_scope_test" "gcovr 7.0")
 
     unset(my_result_var)
     GcovrSchema_DetectVersion("${mock_gcovr}" my_result_var)
