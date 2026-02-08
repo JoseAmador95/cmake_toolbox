@@ -85,8 +85,26 @@ function(test_detect_compatible_patch_version)
     message(STATUS "  ✓ Correctly mapped 7.2.1 to schema 7.0")
 endfunction()
 
+function(test_detect_compatible_mapped_major_version)
+    message(STATUS "Test 3: Detect compatible major version (8.6 -> 8.0)")
+
+    set(mock_gcovr "${TEST_ROOT}/gcovr_8_6")
+    create_mock_gcovr("${mock_gcovr}" "gcovr 8.6")
+
+    GcovrSchema_DetectVersion("${mock_gcovr}" detected_version)
+
+    if(NOT detected_version STREQUAL "8.0")
+        message(STATUS "  ✗ Expected '8.0' for 8.6, got '${detected_version}'")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  ✓ Correctly mapped 8.6 to schema 8.0")
+endfunction()
+
 function(test_detect_unsupported_version)
-    message(STATUS "Test 3: Unsupported version returns empty string (6.0)")
+    message(STATUS "Test 4: Unsupported version returns empty string (6.0)")
 
     set(mock_gcovr "${TEST_ROOT}/gcovr_6_0")
     create_mock_gcovr("${mock_gcovr}" "gcovr 6.0")
@@ -104,7 +122,7 @@ function(test_detect_unsupported_version)
 endfunction()
 
 function(test_detect_nonexistent_executable)
-    message(STATUS "Test 4: Non-existent executable returns empty string")
+    message(STATUS "Test 5: Non-existent executable returns empty string")
 
     set(fake_path "${TEST_ROOT}/nonexistent_gcovr_binary")
 
@@ -121,7 +139,7 @@ function(test_detect_nonexistent_executable)
 endfunction()
 
 function(test_detect_malformed_output)
-    message(STATUS "Test 5: Malformed version output returns empty string")
+    message(STATUS "Test 6: Malformed version output returns empty string")
 
     set(mock_gcovr "${TEST_ROOT}/gcovr_malformed")
     create_mock_gcovr("${mock_gcovr}" "some random output without version")
@@ -139,7 +157,7 @@ function(test_detect_malformed_output)
 endfunction()
 
 function(test_detect_empty_executable_path)
-    message(STATUS "Test 6: Empty executable path returns empty string")
+    message(STATUS "Test 7: Empty executable path returns empty string")
 
     GcovrSchema_DetectVersion("" detected_version)
 
@@ -154,7 +172,7 @@ function(test_detect_empty_executable_path)
 endfunction()
 
 function(test_output_variable_scope)
-    message(STATUS "Test 7: Output variable is set in caller scope")
+    message(STATUS "Test 8: Output variable is set in caller scope")
 
     set(mock_gcovr "${TEST_ROOT}/gcovr_scope_test")
     create_mock_gcovr("${mock_gcovr}" "gcovr 7.0")
@@ -179,6 +197,7 @@ function(run_all_tests)
 
     test_detect_supported_version_exact()
     test_detect_compatible_patch_version()
+    test_detect_compatible_mapped_major_version()
     test_detect_unsupported_version()
     test_detect_nonexistent_executable()
     test_detect_malformed_output()

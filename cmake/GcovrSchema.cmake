@@ -27,7 +27,7 @@ include_guard(GLOBAL)
 #   OUTPUT_VAR - Variable name to store the list of supported versions
 #
 function(GcovrSchema_GetSupportedVersions OUTPUT_VAR)
-    set(SUPPORTED_VERSIONS "7.0")
+    set(SUPPORTED_VERSIONS "7.0;8.0")
     set(${OUTPUT_VAR} "${SUPPORTED_VERSIONS}" PARENT_SCOPE)
 endfunction()
 
@@ -57,7 +57,7 @@ function(GcovrSchema_DetectVersion GCOVR_EXE OUTPUT_VAR)
         )
 
         if(gcovr_version_result EQUAL 0 AND gcovr_version_output)
-            # Extract version from output (format: "gcovr 7.0" or "gcovr 7.2.1")
+            # Extract version from output (format: "gcovr 7.0", "gcovr 7.2.1", "gcovr 8.6")
             if(gcovr_version_output MATCHES "gcovr ([0-9]+)\\.([0-9]+)")
                 set(DETECTED_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
                 message(
@@ -93,11 +93,11 @@ function(GcovrSchema_DetectVersion GCOVR_EXE OUTPUT_VAR)
             return()
         endif()
 
-        # Try to find a compatible major version schema
-        string(REGEX MATCH "^([0-9]+)" MAJOR_VERSION "${DETECTED_VERSION}")
+        # Try to find a compatible schema by major version.
+        string(REGEX MATCH "^([0-9]+)" DETECTED_MAJOR "${DETECTED_VERSION}")
         foreach(supported IN LISTS SUPPORTED_VERSIONS)
             string(REGEX MATCH "^([0-9]+)" supported_major "${supported}")
-            if(MAJOR_VERSION STREQUAL supported_major)
+            if(DETECTED_MAJOR STREQUAL supported_major)
                 set(${OUTPUT_VAR} "${supported}" PARENT_SCOPE)
                 message(
                     STATUS
