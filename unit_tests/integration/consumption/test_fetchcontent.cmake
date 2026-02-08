@@ -52,6 +52,11 @@ include(ClangFormat)
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)
  target_link_libraries(consumer_app PRIVATE consumer_lib)
+ add_custom_command(
+     TARGET consumer_app
+     POST_BUILD
+     COMMAND \${CMAKE_COMMAND} -E copy $<TARGET_FILE:consumer_app> \${CMAKE_BINARY_DIR}/consumer_app.resolved
+ )
  "
     )
 
@@ -96,8 +101,8 @@ include(ClangFormat)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/consumer_app")
-        message(STATUS "  [FAIL] FetchContent linked consumer target was not produced")
+    if(NOT EXISTS "${build_dir}/consumer_app.resolved")
+        message(STATUS "  [FAIL] FetchContent linked consumer target artifact was not produced")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
