@@ -20,7 +20,7 @@ Flags are applied automatically per language (C/CXX) based on compiler:
 
 - **GNU (GCC)**: address, undefined, leak
 - **Clang**: address, undefined, leak
-- **AppleClang**: address, undefined, leak
+- **AppleClang**: address, undefined (leak not supported on macOS)
 - **MSVC**: address only (UBSan and LeakSanitizer not supported)
 - **Clang-cl**: address only (detected via MSVC frontend variant)
 
@@ -128,11 +128,17 @@ option(ENABLE_SANITIZER_LEAK "Enable LeakSanitizer (LSAN)" ON)
 # Define which sanitizers are supported by each compiler and their argument names
 
 # C language compiler support matrix
-if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang)$")
     set(_SUPPORTED_C_SANITIZERS "address;undefined;leak")
     set(_SANITIZER_C_ADDRESS_ARG "address")
     set(_SANITIZER_C_UNDEFINED_ARG "undefined")
     set(_SANITIZER_C_LEAK_ARG "leak")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
+    # AppleClang supports address and undefined but NOT leak sanitizer
+    set(_SUPPORTED_C_SANITIZERS "address;undefined")
+    set(_SANITIZER_C_ADDRESS_ARG "address")
+    set(_SANITIZER_C_UNDEFINED_ARG "undefined")
+    set(_SANITIZER_C_LEAK_ARG "")
 elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
     set(_SUPPORTED_C_SANITIZERS "address")
     set(_SANITIZER_C_ADDRESS_ARG "address")
@@ -143,11 +149,17 @@ else()
 endif()
 
 # CXX language compiler support matrix
-if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
     set(_SUPPORTED_CXX_SANITIZERS "address;undefined;leak")
     set(_SANITIZER_CXX_ADDRESS_ARG "address")
     set(_SANITIZER_CXX_UNDEFINED_ARG "undefined")
     set(_SANITIZER_CXX_LEAK_ARG "leak")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    # AppleClang supports address and undefined but NOT leak sanitizer
+    set(_SUPPORTED_CXX_SANITIZERS "address;undefined")
+    set(_SANITIZER_CXX_ADDRESS_ARG "address")
+    set(_SANITIZER_CXX_UNDEFINED_ARG "undefined")
+    set(_SANITIZER_CXX_LEAK_ARG "")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
     set(_SUPPORTED_CXX_SANITIZERS "address")
     set(_SANITIZER_CXX_ADDRESS_ARG "address")

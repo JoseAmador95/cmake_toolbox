@@ -36,7 +36,8 @@ cmake --build build-sanitizer-test
 
 ## Expected Behavior
 
-- **GNU/Clang/AppleClang/MinGW**: Should use `-fsanitize=address,undefined,leak`
+- **GNU/Clang/MinGW**: Should use `-fsanitize=address,undefined,leak`
+- **AppleClang**: Should use `-fsanitize=address,undefined` (leak not supported on macOS)
 - **MSVC/Clang-cl**: Should use `/fsanitize=address`
 - **Unsupported compilers**: Should FATAL_ERROR if SANITIZER_FLAGS not set manually
 
