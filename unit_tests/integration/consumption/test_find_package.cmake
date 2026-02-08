@@ -44,12 +44,18 @@ find_package(cmake_toolbox CONFIG REQUIRED)
 include(Policy)
 include(ClangFormat)
 
-add_library(consumer STATIC consumer.c)
-"
+ add_library(consumer_lib STATIC consumer_lib.c)
+ add_executable(consumer_app consumer_app.c)
+ target_link_libraries(consumer_app PRIVATE consumer_lib)
+ "
     )
 
     file(WRITE "${consumer_src_dir}/CMakeLists.txt" "${test_project}")
-    file(WRITE "${consumer_src_dir}/consumer.c" "int consumer(void) { return 0; }")
+    file(WRITE "${consumer_src_dir}/consumer_lib.c" "int consumer_lib_value(void) { return 13; }")
+    file(
+        WRITE "${consumer_src_dir}/consumer_app.c"
+        "int consumer_lib_value(void); int main(void) { return consumer_lib_value() == 13 ? 0 : 1; }"
+    )
 
     execute_process(
         COMMAND
@@ -136,7 +142,31 @@ add_library(consumer STATIC consumer.c)
         return()
     endif()
 
-    message(STATUS "  [PASS] find_package consumption works")
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} --build "${consumer_build_dir}" --target consumer_app
+        RESULT_VARIABLE consumer_build_result
+        OUTPUT_VARIABLE consumer_build_output
+        ERROR_VARIABLE consumer_build_error
+    )
+
+    if(NOT consumer_build_result EQUAL 0)
+        message(STATUS "  [FAIL] Consumer build with find_package failed")
+        message(STATUS "  stdout: ${consumer_build_output}")
+        message(STATUS "  stderr: ${consumer_build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    if(NOT EXISTS "${consumer_build_dir}/consumer_app")
+        message(STATUS "  [FAIL] find_package linked consumer target was not produced")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  [PASS] find_package consumption configures and builds linked consumer target")
 endfunction()
 
 function(run_all_tests)

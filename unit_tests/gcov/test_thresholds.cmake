@@ -1,3 +1,13 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    if(DEFINED CMAKE_BINARY_DIR AND NOT CMAKE_BINARY_DIR STREQUAL "")
+        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+    elseif(DEFINED CMAKE_CURRENT_BINARY_DIR AND NOT CMAKE_CURRENT_BINARY_DIR STREQUAL "")
+        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_CURRENT_BINARY_DIR}/test_artifacts")
+    else()
+        set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_CURRENT_LIST_DIR}/test_artifacts")
+    endif()
+endif()
+
 # Test: Gcovr Threshold Enforcement
 # ==============================================================================
 #
@@ -21,7 +31,7 @@
 
 set(ERROR_COUNT 0)
 set(REPO_ROOT "")
-set(TEST_ROOT "${CMAKE_CURRENT_LIST_DIR}/_thresholds_temp")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_thresholds")
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(MODULE_DIR "${REPO_ROOT}/cmake")

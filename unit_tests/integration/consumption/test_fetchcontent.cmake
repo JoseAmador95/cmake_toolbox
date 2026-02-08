@@ -49,12 +49,18 @@ list(PREPEND CMAKE_MODULE_PATH \"\${cmake_toolbox_SOURCE_DIR}/cmake\")
 include(Policy)
 include(ClangFormat)
 
-add_library(consumer STATIC consumer.c)
-"
+ add_library(consumer_lib STATIC consumer_lib.c)
+ add_executable(consumer_app consumer_app.c)
+ target_link_libraries(consumer_app PRIVATE consumer_lib)
+ "
     )
 
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_project}")
-    file(WRITE "${src_dir}/consumer.c" "int consumer(void) { return 0; }")
+    file(WRITE "${src_dir}/consumer_lib.c" "int consumer_lib_value(void) { return 11; }")
+    file(
+        WRITE "${src_dir}/consumer_app.c"
+        "int consumer_lib_value(void); int main(void) { return consumer_lib_value() == 11 ? 0 : 1; }"
+    )
 
     execute_process(
         COMMAND
@@ -73,7 +79,31 @@ add_library(consumer STATIC consumer.c)
         return()
     endif()
 
-    message(STATUS "  [PASS] FetchContent consumption works")
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} --build "${build_dir}" --target consumer_app
+        RESULT_VARIABLE build_result
+        OUTPUT_VARIABLE build_output
+        ERROR_VARIABLE build_error
+    )
+
+    if(NOT build_result EQUAL 0)
+        message(STATUS "  [FAIL] FetchContent build failed")
+        message(STATUS "  stdout: ${build_output}")
+        message(STATUS "  stderr: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    if(NOT EXISTS "${build_dir}/consumer_app")
+        message(STATUS "  [FAIL] FetchContent linked consumer target was not produced")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    message(STATUS "  [PASS] FetchContent consumption configures and builds linked consumer target")
 endfunction()
 
 function(run_all_tests)

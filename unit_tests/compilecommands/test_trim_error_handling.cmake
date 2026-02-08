@@ -20,8 +20,8 @@ set(CMAKE_MODULE_PATH
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/compilecommands_error_test")
 
-# Helper to test that a project configuration fails
-function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR)
+# Helper to test that a project configuration fails for the expected reason
+function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR EXPECTED_ERROR_SUBSTRING)
     message(STATUS "  Testing: ${DESCRIPTION}")
 
     execute_process(
@@ -30,8 +30,6 @@ function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR)
         RESULT_VARIABLE cmd_result
         OUTPUT_VARIABLE cmd_output
         ERROR_VARIABLE cmd_error
-        OUTPUT_QUIET
-        ERROR_QUIET
     )
 
     if(cmd_result EQUAL 0)
@@ -39,7 +37,17 @@ function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR)
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
     else()
-        message(STATUS "    ✓ ${DESCRIPTION} - correctly failed")
+        set(combined_output "${cmd_output}\n${cmd_error}")
+        string(FIND "${combined_output}" "${EXPECTED_ERROR_SUBSTRING}" expected_pos)
+        if(expected_pos EQUAL -1)
+            message(STATUS "    ✗ ${DESCRIPTION} - failed for unexpected reason")
+            message(STATUS "      Expected substring: ${EXPECTED_ERROR_SUBSTRING}")
+            message(STATUS "      Actual output: ${combined_output}")
+            math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+            set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+            return()
+        endif()
+        message(STATUS "    ✓ ${DESCRIPTION} - correctly failed with expected diagnostic")
     endif()
 endfunction()
 
@@ -74,7 +82,14 @@ CompileCommands_Trim(
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
 
-    test_project_fails("Missing INPUT parameter" "${src_dir}" "${build_dir}")
+    test_project_fails(
+        "Missing INPUT parameter"
+        "${src_dir}"
+        "${build_dir}"
+        "CompileCommands_Trim: INPUT must be specified"
+    )
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
 endfunction()
 
 function(test_missing_output_fails)
@@ -102,7 +117,14 @@ CompileCommands_Trim(
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
 
-    test_project_fails("Missing OUTPUT parameter" "${src_dir}" "${build_dir}")
+    test_project_fails(
+        "Missing OUTPUT parameter"
+        "${src_dir}"
+        "${build_dir}"
+        "CompileCommands_Trim: OUTPUT must be specified"
+    )
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
 endfunction()
 
 function(test_missing_both_params_fails)
@@ -128,7 +150,14 @@ CompileCommands_Trim()
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
 
-    test_project_fails("No parameters" "${src_dir}" "${build_dir}")
+    test_project_fails(
+        "No parameters"
+        "${src_dir}"
+        "${build_dir}"
+        "CompileCommands_Trim: INPUT must be specified"
+    )
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
 endfunction()
 
 function(test_empty_input_fails)
@@ -157,7 +186,14 @@ CompileCommands_Trim(
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
 
-    test_project_fails("Empty INPUT parameter" "${src_dir}" "${build_dir}")
+    test_project_fails(
+        "Empty INPUT parameter"
+        "${src_dir}"
+        "${build_dir}"
+        "CompileCommands_Trim: INPUT must be specified"
+    )
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
 endfunction()
 
 function(test_empty_output_fails)
@@ -186,7 +222,14 @@ CompileCommands_Trim(
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
 
-    test_project_fails("Empty OUTPUT parameter" "${src_dir}" "${build_dir}")
+    test_project_fails(
+        "Empty OUTPUT parameter"
+        "${src_dir}"
+        "${build_dir}"
+        "CompileCommands_Trim: OUTPUT must be specified"
+    )
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
 endfunction()
 
 function(test_unknown_parameters_ignored)

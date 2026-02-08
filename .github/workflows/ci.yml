@@ -31,6 +31,14 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build --output-on-failure
 
+      - name: Verify tests do not mutate source tree
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git diff
+            exit 1
+          fi
+
       - name: Upload CTest log on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -72,6 +80,14 @@ jobs:
         run: |
           ctest --test-dir build --output-on-failure \
             -R "policy_|clangformat_|compilecommands_|discover_tests_|gcov_|integration_"
+
+      - name: Verify tests do not mutate source tree
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git diff
+            exit 1
+          fi
 
       - name: Upload CTest log on failure
         if: failure()
