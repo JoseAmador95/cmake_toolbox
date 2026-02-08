@@ -55,7 +55,7 @@ Checks: >
   google-runtime-int,
   readability-function-cognitive-complexity,
   readability-function-size,
-  cert-dcl21-cpp,
+  cert-dcl51-cpp,
   cert-flp30-c,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
 WarningsAsErrors: >
