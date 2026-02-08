@@ -38,10 +38,10 @@ function(setup_test_environment)
 
     Policy_Register(
         NAME FIELDS003
-        DESCRIPTION "Description with \; semicolon and | pipe"
+        DESCRIPTION "Description with ; semicolon and | pipe"
         DEFAULT OLD
         INTRODUCED_VERSION 3.0.0
-        WARNING "Warning with \; and | and 100% roundtrip"
+        WARNING "Warning with ; and | and 100% roundtrip"
     )
 endfunction()
 
