@@ -27,8 +27,8 @@ All clang-format-related unit tests are located in `unit_tests/clangformat/` and
    - Cache variable behavior
 
 4. **`test_target_creation.cmake`** - Tests custom target creation
-   - clangformat_check target properties
-   - clangformat_edit target properties
+   - `<prefix>_check` target properties
+   - `<prefix>_format` target properties
    - Command line argument construction
    - VERBATIM handling
 

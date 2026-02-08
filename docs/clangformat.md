@@ -1,308 +1,145 @@
 # Clang-Format CMake Module
 
-This module provides CMake integration for clang-format to automatically format C/C++ source code.
+This module integrates `clang-format` into your CMake project using generated build targets.
 
-## Features
+## API Overview
 
-- **Automatic Discovery**: Finds all C/C++ source files in specified directories
-- **Flexible Configuration**: Supports both file-based and inline style configuration
-- **Optional Dependencies**: Gracefully handles missing clang-format installation
-- **File Exclusion**: Powerful pattern-based exclusion system
-- **Two Modes**: Check-only mode for CI/CD and edit mode for development
-
-## Configuration Variables
-
-### Required Configuration
-```cmake
-set(CLANG_FORMAT_SOURCE_DIRS "src;include" CACHE STRING 
-    "Semicolon-separated list of source directories to format")
-```
-
-### Optional Configuration
-```cmake
-# Use .clang-format file (default: ON)
-option(CLANG_FORMAT_USE_FILE "Use .clang-format file" ON)
-
-# Path to .clang-format file (default: ${CMAKE_SOURCE_DIR}/.clang-format)
-set(CLANG_FORMAT_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-format" CACHE STRING 
-    "Clang-Format config file")
-
-# Additional command-line arguments
-set(CLANG_FORMAT_ARGS "--verbose" CACHE STRING 
-    "Additional arguments to pass to clang-format")
-
-# File exclusion patterns
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "generated/.*;\\.test\\." CACHE STRING 
-    "Semicolon-separated list of regex patterns to exclude from formatting")
-```
-
-## File Exclusion Patterns
-
-The `CLANG_FORMAT_EXCLUDE_PATTERNS` variable accepts a semicolon-separated list of regex patterns to exclude files from formatting.
+Use the current API:
 
 ```cmake
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "pattern1;pattern2;pattern3")
-```
+find_package(ClangFormat QUIET)
+include(ClangFormat)
 
-### Regex Pattern Types
-
-#### 1. Directory Patterns
-Exclude entire directories or files within specific directories:
-
-```cmake
-# Exclude all files in generated/ directory
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "^generated/.*")
-
-# Exclude multiple directories
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "^generated/.*;^third_party/.*;^build/.*")
-
-# Exclude any directory named "vendor" anywhere in the tree
-set(CLANG_FORMAT_EXCLUDE_PATTERNS ".*/vendor/.*")
-```
-
-#### 2. Filename Patterns
-Exclude files based on their names using precise regex:
-
-```cmake
-# Exclude all files containing "test" anywhere in the name
-set(CLANG_FORMAT_EXCLUDE_PATTERNS ".*test.*")
-
-# Exclude backup and temporary files
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "\\.bak$;\\.tmp$;~$")
-
-# Exclude files starting with "test_"
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "^test_.*")
-
-# Exclude specific filenames exactly
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "^config\\.h$;^version\\.c$")
-```
-
-#### 3. File Extension Patterns
-Use regex for precise file extension matching:
-
-```cmake
-# Exclude C++ files (but keep C files)
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "\\.(cpp|cxx|cc|c\\+\\+)$")
-
-# Exclude header files only
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "\\.(h|hpp|hxx|hh|h\\+\\+)$")
-
-# Exclude files with double extensions
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "\\.[^.]+\\.[^.]+$")
-```
-
-#### 4. Advanced Regex Patterns
-Leverage full regex power for complex exclusions:
-
-```cmake
-# Use alternation: exclude generated OR test files
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "(^generated/.*|.*test.*)")
-
-# Exclude numbered files (file1.c, file2.h, etc.)
-set(CLANG_FORMAT_EXCLUDE_PATTERNS ".*[0-9]+\\.(c|h)$")
-
-# Exclude files modified recently (combine with CMake date logic)
-set(CLANG_FORMAT_EXCLUDE_PATTERNS ".*_(today|new|recent)\\.")
-```
-
-### Real-World Exclusion Examples
-
-#### Typical C Project
-```cmake
-set(CLANG_FORMAT_SOURCE_DIRS "src;include;examples")
-set(CLANG_FORMAT_EXCLUDE_PATTERNS 
-    "^third_party/.*"    # External dependencies
-    "^generated/.*"      # Auto-generated files
-    ".*test.*"          # Test files (if using separate linter rules)
-    "examples/legacy/.*" # Legacy example code
+ClangFormat_AddTargets(
+    TARGET_PREFIX myproject
+    SOURCE_DIRS src include
 )
 ```
 
-#### CMake Project with Multiple Components
+This creates:
+- `myproject_check`: verifies formatting without modifying files
+- `myproject_format`: formats files in-place
+
+## Requirements
+
+- CMake `3.22+`
+- CMake module path includes this repository's `cmake/` directory
+- `find_package(ClangFormat ...)` called before `include(ClangFormat)`
+
+If `clang-format` is not found, target creation is skipped with a warning.
+
+## Function Reference
+
 ```cmake
-set(CLANG_FORMAT_SOURCE_DIRS "lib;tools;tests")
-set(CLANG_FORMAT_EXCLUDE_PATTERNS 
-    ".*/vendor/.*"       # Vendor code in any directory
-    ".*_autogen\\."      # Auto-generated files
-    "^tests/data/.*"     # Test data files
-    "tools/external/.*"  # External tools
+ClangFormat_AddTargets(
+    TARGET_PREFIX <prefix>
+    SOURCE_DIRS <dir1> [<dir2> ...]
+    [EXTENSIONS <pattern1> [<pattern2> ...]]
+    [EXCLUDE_PATTERNS <regex1> [<regex2> ...]]
+    [CONFIG_FILE <path>]
+    [ADDITIONAL_ARGS <arg1> [<arg2> ...]]
 )
 ```
 
-#### Cross-Platform Project
+Parameters:
+- `TARGET_PREFIX` (required): creates `<prefix>_check` and `<prefix>_format`
+- `SOURCE_DIRS` (required): source directories to scan for files
+- `EXTENSIONS` (optional): glob patterns (default includes common C/C++ extensions)
+- `EXCLUDE_PATTERNS` (optional): regex patterns matched against source-relative paths
+- `CONFIG_FILE` (optional): path to `.clang-format` (default `${CMAKE_SOURCE_DIR}/.clang-format`)
+- `ADDITIONAL_ARGS` (optional): extra flags passed to `clang-format`
+
+## Minimal Working Example
+
+`CMakeLists.txt`:
+
 ```cmake
-set(CLANG_FORMAT_SOURCE_DIRS "src;platform")
-set(CLANG_FORMAT_EXCLUDE_PATTERNS 
-    "^platform/windows/.*" # Platform-specific code (if desired)
-    ".*/compat/.*"         # Compatibility layers
-    ".*_win32\\."          # Windows-specific files
-    ".*\\.(asm|s)$"        # Assembly files
+cmake_minimum_required(VERSION 3.22)
+project(Example LANGUAGES C CXX)
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+find_package(ClangFormat QUIET)
+include(ClangFormat)
+
+ClangFormat_AddTargets(
+    TARGET_PREFIX example
+    SOURCE_DIRS src include
 )
 ```
 
-#### Large Codebase with Strict Rules
-```cmake
-set(CLANG_FORMAT_SOURCE_DIRS "src;include;lib;tools")
-set(CLANG_FORMAT_EXCLUDE_PATTERNS 
-    "^(third_party|external|vendor)/.*"  # All external code
-    ".*/deprecated/.*"                    # Deprecated code
-    ".*\\.(proto|generated)\\."          # Generated files
-    ".*/test[_-].*"                      # Test files with various naming
-    ".*[Bb]ackup.*"                      # Backup files
-)
-```
-
-### Pattern Matching Rules
-
-1. **Path Matching**: Patterns are matched against the relative path from `CMAKE_SOURCE_DIR`
-2. **Filename Matching**: Patterns are also matched against just the filename
-3. **Full Regex**: Use complete CMake regex syntax including:
-   - `^` - Start of string
-   - `$` - End of string  
-   - `.*` - Match any characters
-   - `.` - Match single character
-   - `[abc]` - Character class
-   - `(a|b)` - Alternation
-   - `\\` - Escape special characters
-4. **Case Sensitivity**: Patterns are case-sensitive
-5. **First Match Wins**: Patterns are evaluated in order, first match excludes the file
-
-### Common Regex Patterns
-
-| Pattern | Description | Example |
-|---------|-------------|---------|
-| `^generated/.*` | Files in generated/ directory | `generated/parser.c` |
-| `.*test.*` | Files with "test" anywhere | `test_file.c`, `utils_test.h` |
-| `\\.bak$` | Files ending with .bak | `main.c.bak` |
-| `^test_.*` | Files starting with "test_" | `test_utils.c` |
-| `.*[0-9]+\\.c$` | C files with numbers | `file1.c`, `test123.c` |
-| `(generated\\|tests)/.*` | Files in generated OR tests | `generated/a.c`, `tests/b.c` |
-| `\\.(cpp\\|hpp)$` | C++ files only | `main.cpp`, `api.hpp` |
-
-### Testing Your Patterns
-
-You can test your regex patterns by temporarily adding debug output:
-
-```cmake
-# Add this temporarily to see what gets excluded
-if(CLANG_FORMAT_EXCLUDE_PATTERNS)
-    message(STATUS "Active exclusion patterns: ${CLANG_FORMAT_EXCLUDE_PATTERNS}")
-    # Module will automatically report excluded count
-endif()
-```
-
-### Migration from Glob Patterns
-
-If you were using glob-style patterns before:
-
-| Old Glob Pattern | New Regex Pattern | Description |
-|------------------|-------------------|-------------|
-| `generated/*` | `^generated/.*` | Directory exclusion |
-| `*test*` | `.*test.*` | Filename containing text |
-| `*.bak` | `\\.bak$` | File extension |
-| `*/legacy/*` | `.*/legacy/.*` | Subdirectory anywhere |
-
-### Performance Tips
-
-1. **Anchor patterns** when possible (`^`, `$`) for faster matching
-2. **Order patterns** from most specific to most general
-3. **Combine related patterns** using alternation `(a|b|c)` instead of separate patterns
-4. **Escape special characters** properly to avoid unexpected matches
-
-## Usage
-
-### Basic Setup
-```cmake
-include(clangformat)
-
-# Configure source directories
-set(CLANG_FORMAT_SOURCE_DIRS "src;include;examples")
-
-# Optional: exclude patterns
-set(CLANG_FORMAT_EXCLUDE_PATTERNS "generated/*;*test*")
-```
-
-### Generated Targets
-
-The module creates two custom targets:
-
-#### `clangformat_check`
-- Checks code formatting without making changes
-- Uses `--dry-run` and `--Werror` flags
-- Perfect for CI/CD pipelines
-- Returns non-zero exit code if formatting issues found
+Build and run targets:
 
 ```bash
-cmake --build . --target clangformat_check
+cmake -S . -B build
+cmake --build build --target example_check
+cmake --build build --target example_format
 ```
 
-#### `clangformat_edit`
-- Formats code in-place
-- Uses `-i` flag to edit files directly
-- For development workflow
+## Target Naming
 
-```bash
-cmake --build . --target clangformat_edit
-```
+Target names are derived from `TARGET_PREFIX`:
 
-## Examples
+- `<prefix>_check`
+- `<prefix>_format`
 
-### Simple Project
+Example:
+
 ```cmake
-include(clangformat)
-set(CLANG_FORMAT_SOURCE_DIRS "src;include")
+ClangFormat_AddTargets(TARGET_PREFIX core SOURCE_DIRS src)
 ```
 
-### Complex Project with Exclusions
+Creates `core_check` and `core_format`.
+
+## Excluding Files
+
+Use `EXCLUDE_PATTERNS` with regex patterns:
+
 ```cmake
-include(clangformat)
-set(CLANG_FORMAT_SOURCE_DIRS "lib;tools;examples")
-set(CLANG_FORMAT_EXCLUDE_PATTERNS 
-    "^third_party/.*"     # External dependencies
-    "^generated/.*"       # Auto-generated files
-    ".*_test\\."         # Test files
-    "examples/legacy/.*" # Legacy examples
+ClangFormat_AddTargets(
+    TARGET_PREFIX myproject
+    SOURCE_DIRS src include tests
+    EXCLUDE_PATTERNS
+        "^generated/.*"
+        ".*third_party.*"
+        ".*_autogen\\."
 )
-set(CLANG_FORMAT_ARGS "--verbose --sort-includes")
 ```
 
-### CI/CD Integration
+Useful regex examples:
+- `^generated/.*`: exclude files under `generated/`
+- `.*test.*`: exclude files containing `test`
+- `\\.bak$`: exclude `.bak` files
+
+## Custom Extensions and Arguments
+
+```cmake
+ClangFormat_AddTargets(
+    TARGET_PREFIX myproject
+    SOURCE_DIRS src include
+    EXTENSIONS "*.c" "*.h" "*.cpp" "*.hpp"
+    ADDITIONAL_ARGS "--verbose" "--sort-includes"
+)
+```
+
+## CI Example
+
 ```yaml
-- name: Check Code Formatting
-  run: |
-    cmake --build build --target clangformat_check
+- name: Check formatting
+  run: cmake --build build --target myproject_check
 ```
 
-## Supported File Extensions
+## Behavior and Errors
 
-The module automatically formats files with these extensions:
-- **C**: `.c`, `.h`
-- **C++**: `.cpp`, `.cxx`, `.cc`, `.c++`, `.hpp`, `.hxx`, `.hh`, `.h++`
+- Missing `clang-format`: warning, no targets created
+- Missing source directories: warning for each non-existent directory
+- No matching source files: warning, no targets created
+- Missing config file: warning, style argument omitted
 
-## Error Handling
+## Migration Notes (Legacy API)
 
-- **Missing clang-format**: Module skips target creation with status message
-- **Missing config file**: Fatal error with clear message (when using file-based style)
-- **No source files**: Warning message and graceful exit
-- **Invalid directories**: Warning for each non-existent directory
+The following legacy usage is deprecated and should be replaced:
 
-## Dependencies
-
-- **clang-format**: Optional, module gracefully handles absence
-- **CMake 3.22+**: Required for modern CMake features
-
-## Output Examples
-
-```
--- clang-format not found, skipping format targets
-```
-
-```
--- Excluded 5 files matching patterns: ^generated/.*;.*test.*
--- Found 23 source files for clang-format
-```
-
-```
--- Source directory does not exist: /path/to/nonexistent
--- Found 15 source files for clang-format
-```
+- `include(clangformat)` -> `include(ClangFormat)`
+- `CLANG_FORMAT_SOURCE_DIRS` and other `CLANG_FORMAT_*` cache variables -> `ClangFormat_AddTargets(...)` arguments
+- `clangformat_check` / `clangformat_edit` -> `<prefix>_check` / `<prefix>_format`
