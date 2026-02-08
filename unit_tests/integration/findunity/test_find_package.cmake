@@ -14,13 +14,13 @@ get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_findunity_find_package")
-set(PROJECT_SOURCE_DIR "${TEST_ROOT}/project")
+set(TEST_PROJECT_SOURCE_DIR "${TEST_ROOT}/project")
 
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
-    file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    file(MAKE_DIRECTORY "${TEST_PROJECT_SOURCE_DIR}")
 
     set(_project_file
         "
@@ -55,7 +55,7 @@ endif()
 "
     )
 
-    file(WRITE "${PROJECT_SOURCE_DIR}/CMakeLists.txt" "${_project_file}")
+    file(WRITE "${TEST_PROJECT_SOURCE_DIR}/CMakeLists.txt" "${_project_file}")
 
     set(_unity_layout_root "${TEST_ROOT}/fixtures/unity_root")
     file(MAKE_DIRECTORY "${_unity_layout_root}/src")
@@ -93,7 +93,7 @@ function(run_configure_case name expect_success)
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${PROJECT_SOURCE_DIR}" -B "${ARG_work_dir}" ${ARG_args}
+            ${CMAKE_COMMAND} -S "${TEST_PROJECT_SOURCE_DIR}" -B "${ARG_work_dir}" ${ARG_args}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -137,7 +137,7 @@ endfunction()
 
 function(test_unset_hints_fail)
     message(STATUS "Test 1: configure fails when no Unity hints are provided")
-    set(ENV{UNITY_ROOT})
+    unset(ENV{UNITY_ROOT})
     run_configure_case(
         "unset hints"
         FALSE
@@ -153,7 +153,7 @@ endfunction()
 
 function(test_unity_root_hint)
     message(STATUS "Test 2: Unity_ROOT hint resolves a valid Unity layout")
-    set(ENV{UNITY_ROOT})
+    unset(ENV{UNITY_ROOT})
     run_configure_case(
         "Unity_ROOT hint"
         TRUE
@@ -180,12 +180,12 @@ function(test_env_hint)
             "-DEXPECT_ROOT=${UNITY_ENV_FIXTURE}"
             "-DEXPECT_VERSION=2.5"
     )
-    set(ENV{UNITY_ROOT})
+    unset(ENV{UNITY_ROOT})
 endfunction()
 
 function(test_unsupported_layout_fail)
     message(STATUS "Test 4: malformed Unity layout fails with deterministic diagnostics")
-    set(ENV{UNITY_ROOT})
+    unset(ENV{UNITY_ROOT})
     run_configure_case(
         "unsupported layout"
         FALSE
