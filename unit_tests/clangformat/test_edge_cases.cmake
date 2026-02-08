@@ -1,10 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Edge Cases and Error Conditions
 # Tests various edge cases and error handling scenarios
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/ClangFormat.cmake)
 
 set(ERROR_COUNT 0)
-set(TEST_DIR "${CMAKE_BINARY_DIR}/clangformat_edge_test")
+set(TEST_DIR "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/clangformat_edge_test")
 
 function(setup_test_environment)
     file(REMOVE_RECURSE "${TEST_DIR}")

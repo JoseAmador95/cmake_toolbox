@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: GcovrSchema_DetectVersion
 # Validates version detection from mock executables
 
@@ -10,7 +14,7 @@ set(CMAKE_MODULE_PATH
 include(GcovrSchema)
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/gcovrschema_detect_test")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcovrschema_detect_test")
 
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")

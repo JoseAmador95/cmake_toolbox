@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Integration Test: Gcov SCHEMA mode with threshold enforcement
 # Verifies that fail-under thresholds are correctly written to config
 
@@ -8,7 +12,7 @@ set(CMAKE_MODULE_PATH
 )
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/integration_gcov_thresholds")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_gcov_thresholds")
 
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")

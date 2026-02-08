@@ -1,9 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Policy Get Fields Function
 # Tests policy_get_fields function with various scenarios
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 
 set(ERROR_COUNT 0)
+file(MAKE_DIRECTORY "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}")
 
 function(setup_test_environment)
     # No file system setup needed for policy tests
@@ -174,7 +179,7 @@ endfunction()
 function(test_error_handling)
     message(STATUS "Test 5: Testing error handling for unregistered policy")
 
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_get_fields_error.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_get_fields_error.cmake")
     file(
         WRITE "${temp_script}"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)

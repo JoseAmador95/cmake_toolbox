@@ -1,9 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Policy Version Function
 # Tests policy_version function with various version ranges
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 
 set(ERROR_COUNT 0)
+file(MAKE_DIRECTORY "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}")
 
 function(setup_test_environment)
     # Register test policies for version testing
@@ -219,7 +224,7 @@ endfunction()
 function(test_version_invalid_range)
     message(STATUS "Test 6: Testing invalid range (MAXIMUM < MINIMUM should error)")
 
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_invalid_version_range.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_invalid_version_range.cmake")
     file(
         WRITE "${temp_script}"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)

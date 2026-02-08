@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: ClangTidy_ConfigureTarget
 # Validates per-target clang-tidy configuration
 
@@ -8,7 +12,7 @@ set(CMAKE_MODULE_PATH
 )
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/clangtidy_target_test")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/clangtidy_target_test")
 
 # Helper to test that a command fails (FATAL_ERROR)
 function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR)

@@ -1,10 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Command Creation Functionality
 # Tests the ClangFormat_CreateCommand function with various scenarios
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/ClangFormat.cmake)
 
 set(ERROR_COUNT 0)
-set(TEST_DIR "${CMAKE_BINARY_DIR}/clangformat_command_test")
+set(TEST_DIR "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/clangformat_command_test")
 
 function(setup_test_environment)
     file(REMOVE_RECURSE "${TEST_DIR}")

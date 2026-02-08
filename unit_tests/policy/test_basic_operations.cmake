@@ -1,9 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Basic Policy Operations
 # Tests policy_register, policy_set, policy_get functions
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 
 set(ERROR_COUNT 0)
+file(MAKE_DIRECTORY "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}")
 
 function(setup_test_environment)
     # No file system setup needed for policy tests
@@ -157,7 +162,7 @@ endfunction()
 function(test_policy_set_get_roundtrip)
     message(STATUS "Test 3b: Policy set/get roundtrip (regression for issue #7)")
 
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_set_get_roundtrip.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_set_get_roundtrip.cmake")
     file(
         WRITE "${temp_script}"
         "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
@@ -234,7 +239,7 @@ function(test_error_handling)
     message(STATUS "Test 5: Testing error handling")
 
     # Test duplicate registration
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_dup.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_dup.cmake")
     file(
         WRITE "${temp_script}"
         "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
@@ -262,7 +267,7 @@ Policy_Register(NAME DUP_TEST DESCRIPTION \"Duplicate\" DEFAULT NEW INTRODUCED_V
     endif()
 
     # Test invalid policy value
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_inv.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_inv.cmake")
     file(
         WRITE "${temp_script}"
         "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
@@ -289,7 +294,7 @@ Policy_Register(NAME INV_TEST DESCRIPTION \"Test\" DEFAULT INVALID INTRODUCED_VE
     endif()
 
     # Test unregistered policy
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_unreg.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_unreg.cmake")
     file(
         WRITE "${temp_script}"
         "include(\${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)

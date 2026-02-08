@@ -1,8 +1,12 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: FindClangTidy supported versions
 # Verifies discovery and priority for clang-tidy 10..22.
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/findclangtidy_supported_versions")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/findclangtidy_supported_versions")
 
 function(setup_test_environment)
     file(REMOVE_RECURSE "${TEST_ROOT}")

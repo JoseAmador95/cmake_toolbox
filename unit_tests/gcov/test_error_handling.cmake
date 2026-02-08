@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Gcov_AddToTarget Error Handling
 # Validates error conditions and parameter validation
 
@@ -8,7 +12,7 @@ set(CMAKE_MODULE_PATH
 )
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/gcov_error_test")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_error_test")
 
 # Helper to test that a project configuration fails
 function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR)

@@ -1,10 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Basic Clang-Format Functionality
 # Tests basic operations of the clang-format module
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/ClangFormat.cmake)
 
 set(ERROR_COUNT 0)
-set(TEST_DIR "${CMAKE_BINARY_DIR}/clangformat_test")
+set(TEST_DIR "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/clangformat_test")
 
 function(setup_test_environment)
     # Create test directories and files

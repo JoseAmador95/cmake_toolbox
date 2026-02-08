@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: GcovrSchema_SetDefaults
 # Validates that version-specific defaults are correctly applied
 
@@ -10,7 +14,7 @@ set(CMAKE_MODULE_PATH
 include(GcovrSchema)
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/gcovrschema_defaults_test")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcovrschema_defaults_test")
 
 # Helper to test that a command fails (FATAL_ERROR)
 function(test_command_fails DESCRIPTION COMMAND_STRING)

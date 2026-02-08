@@ -1,9 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Policy Info Function
 # Tests policy_info function output and formatting
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 
 set(ERROR_COUNT 0)
+file(MAKE_DIRECTORY "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}")
 
 function(setup_test_environment)
     # Register test policies
@@ -102,7 +107,7 @@ function(test_policy_info_error_handling)
     message(STATUS "Test 4: Testing policy_info error handling")
 
     # Test with unregistered policy
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_policy_info_error.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_policy_info_error.cmake")
     file(
         WRITE "${temp_script}"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)

@@ -1,7 +1,11 @@
-# DiscoverTests path handling tests using /tmp for portability.
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
+# DiscoverTests path handling tests using test_artifacts in build tree.
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "/tmp/discover_tests_paths_${CMAKE_PROCESS_ID}")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/discover_tests_paths_${CMAKE_PROCESS_ID}")
 set(DISCOVER_TESTS_MODULE "${CMAKE_CURRENT_LIST_DIR}/../../cmake/DiscoverTests.cmake")
 
 macro(fail message_text)

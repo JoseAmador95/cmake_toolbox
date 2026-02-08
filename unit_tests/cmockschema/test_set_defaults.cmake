@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: CMockSchema_SetDefaults
 # Validates that version-specific defaults are correctly applied
 
@@ -10,7 +14,7 @@ set(CMAKE_MODULE_PATH
 include(CMockSchema)
 
 set(ERROR_COUNT 0)
-set(TEST_ROOT "${CMAKE_BINARY_DIR}/cmockschema_defaults_test")
+set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/cmockschema_defaults_test")
 
 # Helper to test that a command fails (FATAL_ERROR)
 function(test_command_fails DESCRIPTION COMMAND_STRING)

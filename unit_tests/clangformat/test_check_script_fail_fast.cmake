@@ -1,7 +1,11 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: ClangFormatCheck script fail-fast behavior
 
 set(ERROR_COUNT 0)
-set(TEST_DIR "${CMAKE_BINARY_DIR}/clangformat_check_fail_fast_test")
+set(TEST_DIR "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/clangformat_check_fail_fast_test")
 
 function(setup_test_environment)
     file(REMOVE_RECURSE "${TEST_DIR}")

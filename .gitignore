@@ -13,3 +13,4 @@ build
 .DS_Store
 .idx
 .cache
+test_artifacts/

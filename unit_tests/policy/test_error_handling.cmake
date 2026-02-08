@@ -1,9 +1,14 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: Error Handling
 # Tests various error conditions and parameter validation
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 
 set(ERROR_COUNT 0)
+file(MAKE_DIRECTORY "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}")
 
 function(setup_test_environment)
     # No file system setup needed for policy tests
@@ -16,7 +21,7 @@ function(test_command_fails DESCRIPTION COMMAND_STRING)
 
     # Create a temporary script file
     string(MD5 temp_script_id "${DESCRIPTION};${COMMAND_STRING}")
-    set(temp_script "${CMAKE_BINARY_DIR}/temp_test_${temp_script_id}.cmake")
+    set(temp_script "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/temp_test_${temp_script_id}.cmake")
     file(WRITE "${temp_script}" "${COMMAND_STRING}")
 
     execute_process(

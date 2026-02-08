@@ -1,3 +1,7 @@
+if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
+    set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
+endif()
+
 # Test: ClangFormat Utility Functions
 # Tests the actual ClangFormat utility function implementations
 
@@ -11,7 +15,7 @@ set(ERROR_COUNT 0)
 set(ORIGINAL_CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 
 # Create test environment
-set(TEST_DIR "${CMAKE_BINARY_DIR}/clangformat_utility_test")
+set(TEST_DIR "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/clangformat_utility_test")
 
 function(setup_test_environment)
     file(REMOVE_RECURSE "${TEST_DIR}")
