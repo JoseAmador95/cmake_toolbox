@@ -45,11 +45,7 @@ include(ClangFormat)
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)
  target_link_libraries(consumer_app PRIVATE consumer_lib)
- add_custom_command(
-     TARGET consumer_app
-     POST_BUILD
-     COMMAND \${CMAKE_COMMAND} -E copy $<TARGET_FILE:consumer_app> \${CMAKE_BINARY_DIR}/consumer_app.resolved
- )
+ file(GENERATE OUTPUT \${CMAKE_BINARY_DIR}/consumer_app.target_path CONTENT $<TARGET_FILE:consumer_app>)
  "
     )
 
@@ -94,8 +90,17 @@ include(ClangFormat)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/consumer_app.resolved")
-        message(STATUS "  [FAIL] add_subdirectory linked consumer target artifact was not produced")
+    if(NOT EXISTS "${build_dir}/consumer_app.target_path")
+        message(STATUS "  [FAIL] add_subdirectory target path metadata was not generated")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    file(READ "${build_dir}/consumer_app.target_path" consumer_app_path)
+    string(STRIP "${consumer_app_path}" consumer_app_path)
+    if(consumer_app_path STREQUAL "" OR NOT EXISTS "${consumer_app_path}")
+        message(STATUS "  [FAIL] add_subdirectory linked consumer target was not produced at resolved path")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
