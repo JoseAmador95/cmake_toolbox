@@ -29,6 +29,13 @@ endfunction()
 function(test_build_with_sanitizers)
     message(STATUS "Test 1: Build executable with AddressSanitizer")
 
+    # On Windows, ASan runtime DLLs are typically not on PATH for MinGW/Clang
+    # builds, so even a successful compile will fail at run time.
+    if(WIN32)
+        message(STATUS "  ⊘ Skipping on Windows (sanitizer runtime DLLs not reliably available)")
+        return()
+    endif()
+
     # Find a compiler that supports sanitizers
     find_program(CLANG_COMPILER clang)
     find_program(GCC_COMPILER gcc)
