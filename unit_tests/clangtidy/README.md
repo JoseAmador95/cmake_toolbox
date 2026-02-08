@@ -12,6 +12,8 @@ Unit tests for the `ClangTidy.cmake` module.
 |----------|-----------|
 | `ClangTidy_Configure` | `test_configure_global.cmake` |
 | `ClangTidy_ConfigureTarget` | `test_configure_target.cmake` |
+| `.clang-tidy` config validation | `test_config_file_valid.cmake` |
+| `FindClangTidy` version support (10-22) | `test_find_clangtidy_supported_versions.cmake` |
 
 ## Running Tests
 
@@ -31,6 +33,8 @@ ctest -R "clangtidy_" --output-on-failure
 - **Happy paths**: Valid inputs produce expected behavior
 - **Error paths**: Missing parameters trigger FATAL_ERROR
 - **Integration**: Target configuration in mock projects
+- **Config validation**: `.clang-tidy` validated with `--verify-config` (baseline clang-tidy 18)
+- **Version support**: Finder behavior validated for clang-tidy 10..22
 
 ## Notes
 

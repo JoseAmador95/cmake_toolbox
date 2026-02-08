@@ -27,6 +27,12 @@ Cache Variables
 ``CLANG_TIDY_EXECUTABLE``
   Path to the clang-tidy executable (user-settable).
 
+Supported Versions
+^^^^^^^^^^^^^^^^^^
+
+This finder supports executable names ``clang-tidy-10`` through
+``clang-tidy-22`` (plus unversioned ``clang-tidy``).
+
 Example
 ^^^^^^^
 
