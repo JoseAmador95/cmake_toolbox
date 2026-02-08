@@ -16,7 +16,7 @@ Tests the fix for **Issue #10** - unsafe if() expansion for optional hints.
 5. Hints with special characters (spaces, semicolons)
 6. Environment variable hints (ENV{UNITY_ROOT})
 
-**Important:** These tests verify the **internal hint processing logic** only. They do not test the full `find_package(Unity)` functionality, which requires a complete CMake project context.
+**Important:** These tests verify the **internal hint processing logic** only. Full `find_package(Unity)` behavior is covered by integration tests in `unit_tests/integration/findunity/`.
 
 ## Running Tests
 

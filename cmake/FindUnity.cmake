@@ -42,7 +42,7 @@
 #
 # Notes:
 #   - Both unity.h AND unity.c are required (no header-only mode)
-#   - Version detection uses try_run with unity.h definitions for accuracy
+#   - Version detection parses unity.h preprocessor macros (cross-compile safe)
 #   - CMock integration similar to Unity.cmake module
 #
 # ============================================================================
@@ -206,62 +206,78 @@ if((NOT Unity_INCLUDE_DIR OR NOT Unity_SOURCE) AND UNITY_FETCH)
 endif()
 
 # ----------------------------------------------------------------------------
-# Parse version from unity.h using try_run for accuracy
+# Parse version from unity.h macros (cross-compile safe)
 # ----------------------------------------------------------------------------
 unset(Unity_VERSION)
+unset(Unity_VERSION_MAJOR)
+unset(Unity_VERSION_MINOR)
+unset(Unity_VERSION_PATCH)
 if(Unity_INCLUDE_DIR AND EXISTS "${Unity_INCLUDE_DIR}/unity.h")
-    # Create a small test program to extract version at compile time
-    set(_version_test_code
-        "
-#include <stdio.h>
-#include <unity.h>
-
-int main(void) {
-#ifdef UNITY_VERSION_MAJOR
-    printf(\"%d\", UNITY_VERSION_MAJOR);
-#else
-    printf(\"0\");
-#endif
-    printf(\".\");
-#ifdef UNITY_VERSION_MINOR  
-    printf(\"%d\", UNITY_VERSION_MINOR);
-#else
-    printf(\"0\");
-#endif
-#ifdef UNITY_VERSION_BUILD
-    printf(\".%d\", UNITY_VERSION_BUILD);
-#endif
-    return 0;
-}
-"
+    set(_unity_header "${Unity_INCLUDE_DIR}/unity.h")
+    file(
+        STRINGS
+        "${_unity_header}"
+        _unity_version_macro_lines
+        REGEX
+            "^#[ \t]*define[ \t]+UNITY_VERSION_(MAJOR|MINOR|BUILD)[ \t]+[0-9]+"
     )
 
-    file(WRITE "${CMAKE_BINARY_DIR}/unity_version_test.c" "${_version_test_code}")
+    unset(_unity_major)
+    unset(_unity_minor)
+    unset(_unity_patch)
+    foreach(_unity_line IN LISTS _unity_version_macro_lines)
+        if(_unity_line MATCHES "^#[ \t]*define[ \t]+UNITY_VERSION_MAJOR[ \t]+([0-9]+)")
+            set(_unity_major "${CMAKE_MATCH_1}")
+        elseif(_unity_line MATCHES "^#[ \t]*define[ \t]+UNITY_VERSION_MINOR[ \t]+([0-9]+)")
+            set(_unity_minor "${CMAKE_MATCH_1}")
+        elseif(_unity_line MATCHES "^#[ \t]*define[ \t]+UNITY_VERSION_BUILD[ \t]+([0-9]+)")
+            set(_unity_patch "${CMAKE_MATCH_1}")
+        endif()
+    endforeach()
 
-    try_run(
-        _version_run_result
-        _version_compile_result
-        "${CMAKE_BINARY_DIR}"
-        "${CMAKE_BINARY_DIR}/unity_version_test.c"
-        CMAKE_FLAGS
-            "-DINCLUDE_DIRECTORIES=${Unity_INCLUDE_DIR}"
-        RUN_OUTPUT_VARIABLE _version_output
-    )
-
-    if(_version_compile_result AND _version_run_result EQUAL 0 AND _version_output)
-        set(Unity_VERSION "${_version_output}")
-        # Parse components
-        if(Unity_VERSION MATCHES "^([0-9]+)\\.([0-9]+)(\\.([0-9]+))?")
-            set(Unity_VERSION_MAJOR "${CMAKE_MATCH_1}")
-            set(Unity_VERSION_MINOR "${CMAKE_MATCH_2}")
-            if(CMAKE_MATCH_4)
-                set(Unity_VERSION_PATCH "${CMAKE_MATCH_4}")
+    if(DEFINED _unity_major AND DEFINED _unity_minor)
+        set(Unity_VERSION_MAJOR "${_unity_major}")
+        set(Unity_VERSION_MINOR "${_unity_minor}")
+        set(Unity_VERSION "${Unity_VERSION_MAJOR}.${Unity_VERSION_MINOR}")
+        if(DEFINED _unity_patch)
+            set(Unity_VERSION_PATCH "${_unity_patch}")
+            string(APPEND Unity_VERSION ".${Unity_VERSION_PATCH}")
+        endif()
+    else()
+        file(
+            STRINGS
+            "${_unity_header}"
+            _unity_version_string_line
+            REGEX
+                "^#[ \t]*define[ \t]+UNITY_VERSION[ \t]+\"[0-9]+\\.[0-9]+(\\.[0-9]+)?\""
+        )
+        if(_unity_version_string_line)
+            list(GET _unity_version_string_line 0 _unity_version_line)
+            string(
+                REGEX REPLACE
+                    "^#[ \t]*define[ \t]+UNITY_VERSION[ \t]+\"([0-9]+\\.[0-9]+(\\.[0-9]+)?)\".*$"
+                    "\\1"
+                    Unity_VERSION
+                    "${_unity_version_line}"
+            )
+            if(Unity_VERSION MATCHES "^([0-9]+)\\.([0-9]+)(\\.([0-9]+))?")
+                set(Unity_VERSION_MAJOR "${CMAKE_MATCH_1}")
+                set(Unity_VERSION_MINOR "${CMAKE_MATCH_2}")
+                if(CMAKE_MATCH_4)
+                    set(Unity_VERSION_PATCH "${CMAKE_MATCH_4}")
+                endif()
             endif()
         endif()
     endif()
 
-    # Cleanup
-    file(REMOVE "${CMAKE_BINARY_DIR}/unity_version_test.c")
+    unset(_unity_header)
+    unset(_unity_version_macro_lines)
+    unset(_unity_version_string_line)
+    unset(_unity_version_line)
+    unset(_unity_major)
+    unset(_unity_minor)
+    unset(_unity_patch)
+    unset(_unity_line)
 endif()
 
 # ----------------------------------------------------------------------------
