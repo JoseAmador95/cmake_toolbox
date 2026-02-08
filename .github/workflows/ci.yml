@@ -126,6 +126,7 @@ jobs:
           - name: windows-msvc-baseline
             os: windows-latest
             cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            build_config: Debug
             install_deps: choco install jq -y
 
           - name: windows-msvc-sanitizer
@@ -133,6 +134,7 @@ jobs:
             cmake_flags: >-
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
               -DCEEDLING_ENABLE_SANITIZER=ON
+            build_config: Debug
             install_deps: choco install jq -y
 
           # ── Windows MinGW ────────────────────────────────────────────────
@@ -172,10 +174,10 @@ jobs:
         run: cmake -S . -B build ${{ matrix.cmake_flags }}
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build ${{ matrix.build_config && format('--config {0}', matrix.build_config) || '' }}
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
 
       - name: Verify tests do not mutate source tree
         shell: pwsh
