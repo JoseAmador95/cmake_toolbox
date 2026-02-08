@@ -42,15 +42,13 @@ Example
 include_guard(GLOBAL)
 
 # Look for jq executable
-find_program(JQ_EXECUTABLE
-    NAMES jq
-    DOC "Path to jq executable"
-)
+find_program(JQ_EXECUTABLE NAMES jq DOC "Path to jq executable")
 
 # Try to get version
 if(JQ_EXECUTABLE)
     execute_process(
-        COMMAND ${JQ_EXECUTABLE} --version
+        COMMAND
+            ${JQ_EXECUTABLE} --version
         OUTPUT_VARIABLE _jq_version_output
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -66,9 +64,6 @@ set(Jq_EXECUTABLE "${JQ_EXECUTABLE}")
 
 # Handle standard find_package arguments
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Jq
-    REQUIRED_VARS JQ_EXECUTABLE
-    VERSION_VAR Jq_VERSION
-)
+find_package_handle_standard_args(Jq REQUIRED_VARS JQ_EXECUTABLE VERSION_VAR Jq_VERSION)
 
 mark_as_advanced(JQ_EXECUTABLE)

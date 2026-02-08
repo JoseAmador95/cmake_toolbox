@@ -7,10 +7,65 @@ This document outlines the coding standards, patterns, and best practices to fol
 
 #]=======================================================================]
 
-### CMake Formatting with Gersemi
-- **Always use gersemi** for formatting CMake files
-- Configuration is in `.gersemirc`:
-- **Format before committing**: `gersemi --in-place <file.cmake>`
+### CMake Formatting with Gersemi and Pre-commit Hooks
+
+#### Automatic Formatting with Pre-commit
+
+This project uses **pre-commit framework** to automatically enforce CMake formatting with gersemi on every commit.
+
+**Initial Setup (One-time)**:
+
+1. Install pre-commit framework:
+   ```bash
+   pip install pre-commit
+   # or: pipx install pre-commit
+   ```
+
+2. Install the git hooks:
+   ```bash
+   cd /path/to/cmake_toolbox
+   pre-commit install
+   ```
+
+3. (Optional) Run gersemi on all files to ensure they're formatted:
+   ```bash
+   pre-commit run --all-files
+   ```
+
+#### How It Works
+
+- **Automatic on commit**: When you run `git commit`, the pre-commit hook checks all staged CMake files
+- **Blocks bad commits**: If formatting is needed, the commit is blocked and files are automatically reformatted
+- **Fix and retry**: After formatting, simply stage the changes and commit again:
+  ```bash
+  git add .
+  git commit -m "Your message"
+  ```
+
+#### Manual Formatting
+
+You can also format files manually without committing:
+
+```bash
+# Format a single file
+pipx run gersemi --in-place CMakeLists.txt
+
+# Format entire directory
+pipx run gersemi -i cmake/ examples/ unit_tests/
+
+# Check without modifying (dry-run)
+pipx run gersemi --check CMakeLists.txt
+```
+
+#### Configuration
+
+CMake formatting is configured in [.gersemirc](.gersemirc):
+- **Indent**: 4 spaces
+- **Line length**: 100 characters
+- **List expansion**: favour-expansion
+- **Unknown commands warning**: enabled
+
+See [gersemi documentation](https://github.com/BlankSpruce/gersemi) for detailed options.
 
 ### Function Argument Patterns
 

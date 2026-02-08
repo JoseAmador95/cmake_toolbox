@@ -35,7 +35,7 @@
 #
 #   # Initialize Unity (call once per project)
 #   Unity_Initialize()
-#   
+#
 #   # Generate mock for a header file (CONFIG_FILE now optional)
 #   Unity_GenerateMock(
 #       HEADER path/to/interface.h
@@ -43,13 +43,13 @@
 #       MOCK_SOURCE_VAR mock_src
 #       MOCK_HEADER_VAR mock_hdr
 #   )
-#   
+#
 #   # Generate test runner (CONFIG_FILE now optional)
 #   Unity_GenerateRunner(
 #       TEST_SOURCE test_example.c
 #       RUNNER_SOURCE_VAR runner_src
 #   )
-#   
+#
 #   # Create complete test target (CONFIG_FILE now optional)
 #   Unity_CreateTestTarget(
 #       TARGET_NAME test_my_module
@@ -125,7 +125,11 @@ function(Unity_Initialize)
     set(_UNITY_TAG ${ARG_UNITY_TAG} CACHE INTERNAL "Unity version tag")
     set(_CMOCK_REPO ${ARG_CMOCK_REPO} CACHE INTERNAL "CMock repository URL")
     set(_CMOCK_TAG ${ARG_CMOCK_TAG} CACHE INTERNAL "CMock version tag")
-    set(_CEEDLING_EXTRACT_FUNCTIONS ${ARG_ENABLE_CEEDLING} CACHE INTERNAL "Ceedling extract functions mode")
+    set(_CEEDLING_EXTRACT_FUNCTIONS
+        ${ARG_ENABLE_CEEDLING}
+        CACHE INTERNAL
+        "Ceedling extract functions mode"
+    )
 
     # Use FindUnity to locate or fetch Unity and CMock
     set(UNITY_FETCH ON)
@@ -133,7 +137,7 @@ function(Unity_Initialize)
     set(UNITY_GIT_TAG ${ARG_UNITY_TAG})
     set(CMOCK_GIT_REPOSITORY ${ARG_CMOCK_REPO})
     set(CMOCK_GIT_TAG ${ARG_CMOCK_TAG})
-    
+
     find_package(Unity REQUIRED)
 
     # Find Ruby executable for CMock and runner generation
@@ -143,7 +147,7 @@ function(Unity_Initialize)
     if(CMock_EXECUTABLE)
         set(_CMOCK_EXE ${CMock_EXECUTABLE} CACHE INTERNAL "CMock executable path")
     endif()
-    
+
     if(Unity_RUNNER_GENERATOR)
         set(_RUNNER_EXE ${Unity_RUNNER_GENERATOR} CACHE INTERNAL "Unity runner generator path")
     else()
@@ -155,22 +159,41 @@ function(Unity_Initialize)
         CMockSchema_DetectVersion("${_CMOCK_EXE}" "${ARG_CMOCK_TAG}" DETECTED_SCHEMA_VERSION)
         if(DETECTED_SCHEMA_VERSION)
             # Use schema-based configuration
-            set(_CMOCK_SCHEMA_VERSION "${DETECTED_SCHEMA_VERSION}" CACHE INTERNAL "Detected CMock schema version")
+            set(_CMOCK_SCHEMA_VERSION
+                "${DETECTED_SCHEMA_VERSION}"
+                CACHE INTERNAL
+                "Detected CMock schema version"
+            )
             set(_CMOCK_CONFIG_MODE "SCHEMA" CACHE INTERNAL "CMock configuration mode")
-            
+
             # Set version-specific defaults
             CMockSchema_SetDefaults("${DETECTED_SCHEMA_VERSION}")
-            
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Using CMock schema version ${DETECTED_SCHEMA_VERSION}")
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Configure via CMOCK_* cached variables (see module documentation)")
+
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Using CMock schema version ${DETECTED_SCHEMA_VERSION}"
+            )
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Configure via CMOCK_* cached variables (see module documentation)"
+            )
         else()
             # Fall back to CONFIG_FILE mode
             set(_CMOCK_SCHEMA_VERSION "" CACHE INTERNAL "Detected CMock schema version")
             set(_CMOCK_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "CMock configuration mode")
-            
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: CMock version ${ARG_CMOCK_TAG} not supported by schema system")
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Please use CONFIG_FILE parameter in Unity functions")
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Configuration experience may vary for unsupported versions")
+
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: CMock version ${ARG_CMOCK_TAG} not supported by schema system"
+            )
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Please use CONFIG_FILE parameter in Unity functions"
+            )
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Configuration experience may vary for unsupported versions"
+            )
         endif()
     else()
         # No CMock available
@@ -202,7 +225,7 @@ endfunction()
 # Parameters:
 #   HEADER            - Path to the header file to mock (required)
 #   OUTPUT_DIR        - Directory where mock files will be generated (required)
-#   MOCK_SOURCE_VAR   - Variable name to store the generated mock source file path (required)  
+#   MOCK_SOURCE_VAR   - Variable name to store the generated mock source file path (required)
 #   MOCK_HEADER_VAR   - Variable name to store the generated mock header file path (required)
 #   CONFIG_FILE       - Path to the CMock configuration file (optional, for unsupported versions)
 #   MOCK_PREFIX       - Prefix for mock files (optional, overrides CMOCK_MOCK_PREFIX)
@@ -233,15 +256,15 @@ function(Unity_GenerateMock)
     if(NOT ARG_HEADER)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: HEADER must be provided")
     endif()
-    
+
     if(NOT ARG_OUTPUT_DIR)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTPUT_DIR must be provided")
     endif()
-    
+
     if(NOT ARG_MOCK_SOURCE_VAR)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: MOCK_SOURCE_VAR must be provided")
     endif()
-    
+
     if(NOT ARG_MOCK_HEADER_VAR)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: MOCK_HEADER_VAR must be provided")
     endif()
@@ -255,25 +278,33 @@ function(Unity_GenerateMock)
     if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
         # Using schema-based configuration - CONFIG_FILE is optional/ignored
         if(ARG_CONFIG_FILE)
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE ignored - using CMock schema ${_CMOCK_SCHEMA_VERSION}")
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE ignored - using CMock schema ${_CMOCK_SCHEMA_VERSION}"
+            )
         endif()
-        
+
         # Generate configuration using schema (only if not already generated)
         set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
         if(NOT EXISTS "${GENERATED_CONFIG_FILE}")
             CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
         endif()
-        
     else()
         # Using CONFIG_FILE mode for unsupported versions
         if(NOT ARG_CONFIG_FILE)
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided for CMock version ${_CMOCK_TAG} (unsupported by schema system)")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided for CMock version ${_CMOCK_TAG} (unsupported by schema system)"
+            )
         endif()
-        
+
         if(NOT EXISTS "${ARG_CONFIG_FILE}")
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Config file does not exist: ${ARG_CONFIG_FILE}")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: Config file does not exist: ${ARG_CONFIG_FILE}"
+            )
         endif()
-        
+
         # Use configure_file for template processing
         set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
         configure_file(${ARG_CONFIG_FILE} ${GENERATED_CONFIG_FILE} @ONLY)
@@ -287,7 +318,7 @@ function(Unity_GenerateMock)
             set(ARG_MOCK_PREFIX "mock_")
         endif()
     endif()
-    
+
     if(NOT ARG_MOCK_SUFFIX)
         if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
             set(ARG_MOCK_SUFFIX "${CMOCK_MOCK_SUFFIX}")
@@ -295,7 +326,7 @@ function(Unity_GenerateMock)
             set(ARG_MOCK_SUFFIX "")
         endif()
     endif()
-    
+
     if(NOT ARG_MOCK_SUBDIR)
         if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
             set(ARG_MOCK_SUBDIR "${CMOCK_MOCK_PATH}")
@@ -306,15 +337,15 @@ function(Unity_GenerateMock)
 
     # Extract header filename without extension
     cmake_path(GET ARG_HEADER STEM header_name)
-    
+
     # Create mock directory
     set(MOCK_DIR ${ARG_OUTPUT_DIR}/${ARG_MOCK_SUBDIR})
     file(MAKE_DIRECTORY ${MOCK_DIR})
-    
+
     # Generate mock file paths
     set(MOCK_SOURCE ${MOCK_DIR}/${ARG_MOCK_PREFIX}${header_name}${ARG_MOCK_SUFFIX}.c)
     set(MOCK_HEADER ${MOCK_DIR}/${ARG_MOCK_PREFIX}${header_name}${ARG_MOCK_SUFFIX}.h)
-    
+
     # Create custom command to generate mock files
     add_custom_command(
         OUTPUT
@@ -330,7 +361,7 @@ function(Unity_GenerateMock)
         COMMENT "Generating mock for ${ARG_HEADER}"
         VERBATIM
     )
-    
+
     # Return generated file paths
     set(${ARG_MOCK_SOURCE_VAR} ${MOCK_SOURCE} PARENT_SCOPE)
     set(${ARG_MOCK_HEADER_VAR} ${MOCK_HEADER} PARENT_SCOPE)
@@ -344,7 +375,7 @@ endfunction()
 #
 # Parameters:
 #   TEST_SOURCE       - Path to the test source file (required)
-#   OUTPUT_DIR        - Directory where runner file will be generated (required)  
+#   OUTPUT_DIR        - Directory where runner file will be generated (required)
 #   CONFIG_FILE       - Path to the CMock configuration file (required)
 #   RUNNER_SOURCE_VAR - Variable name to store the generated runner source file path (required)
 #
@@ -368,43 +399,54 @@ function(Unity_GenerateRunner)
     if(NOT ARG_TEST_SOURCE)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TEST_SOURCE must be provided")
     endif()
-    
+
     if(NOT ARG_OUTPUT_DIR)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTPUT_DIR must be provided")
     endif()
-    
+
     if(NOT ARG_RUNNER_SOURCE_VAR)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: RUNNER_SOURCE_VAR must be provided")
     endif()
 
     # Validate files exist
     if(NOT EXISTS "${ARG_TEST_SOURCE}")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Test source file does not exist: ${ARG_TEST_SOURCE}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Test source file does not exist: ${ARG_TEST_SOURCE}"
+        )
     endif()
-    
+
     # Determine configuration mode and generate config file accordingly
     if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
         # Schema mode - no CONFIG_FILE needed
         if(ARG_CONFIG_FILE)
-            message(WARNING "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_SCHEMA_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}")
+            message(
+                WARNING
+                "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_SCHEMA_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}"
+            )
         endif()
-        
+
         # Generate CMock configuration file (only if not already generated)
         set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
         if(NOT EXISTS "${GENERATED_CONFIG_FILE}")
             CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
         endif()
-        
     else()
         # CONFIG_FILE mode - validate CONFIG_FILE parameter and file existence
         if(NOT ARG_CONFIG_FILE)
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided (CMock version ${_CMOCK_VERSION} not supported by schema system)")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided (CMock version ${_CMOCK_VERSION} not supported by schema system)"
+            )
         endif()
-        
+
         if(NOT EXISTS "${ARG_CONFIG_FILE}")
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Config file does not exist: ${ARG_CONFIG_FILE}")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: Config file does not exist: ${ARG_CONFIG_FILE}"
+            )
         endif()
-        
+
         # Configure the config file
         set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
         configure_file(${ARG_CONFIG_FILE} ${GENERATED_CONFIG_FILE} @ONLY)
@@ -412,20 +454,21 @@ function(Unity_GenerateRunner)
 
     # Extract test filename without extension
     cmake_path(GET ARG_TEST_SOURCE STEM test_name)
-    
+
     # Create runner directory
     set(RUNNER_DIR ${ARG_OUTPUT_DIR}/runners)
     file(MAKE_DIRECTORY ${RUNNER_DIR})
-    
+
     # Generate runner file path
     set(RUNNER_SOURCE ${RUNNER_DIR}/${test_name}_runner.c)
-    
+
     # Create custom command to generate runner file
     add_custom_command(
         OUTPUT
             ${RUNNER_SOURCE}
         COMMAND
-            ${Ruby_EXECUTABLE} ${_RUNNER_EXE} ${GENERATED_CONFIG_FILE} ${ARG_TEST_SOURCE} ${RUNNER_SOURCE}
+            ${Ruby_EXECUTABLE} ${_RUNNER_EXE} ${GENERATED_CONFIG_FILE} ${ARG_TEST_SOURCE}
+            ${RUNNER_SOURCE}
         DEPENDS
             ${ARG_TEST_SOURCE}
             ${GENERATED_CONFIG_FILE}
@@ -433,7 +476,7 @@ function(Unity_GenerateRunner)
         COMMENT "Generating test runner for ${ARG_TEST_SOURCE}"
         VERBATIM
     )
-    
+
     # Return generated file path
     set(${ARG_RUNNER_SOURCE_VAR} ${RUNNER_SOURCE} PARENT_SCOPE)
 endfunction()
@@ -485,31 +528,42 @@ function(Unity_CreateTestTarget)
     if(NOT ARG_TARGET_NAME)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TARGET_NAME must be provided")
     endif()
-    
+
     if(NOT ARG_TEST_SOURCE)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TEST_SOURCE must be provided")
     endif()
 
     # Validate files exist
     if(NOT EXISTS "${ARG_TEST_SOURCE}")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Test source file does not exist: ${ARG_TEST_SOURCE}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Test source file does not exist: ${ARG_TEST_SOURCE}"
+        )
     endif()
-    
+
     # Validate configuration based on mode
     if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
         # Schema mode - no CONFIG_FILE needed
         if(ARG_CONFIG_FILE)
-            message(WARNING "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}")
+            message(
+                WARNING
+                "CONFIG_FILE ignored in schema mode (CMock ${_CMOCK_VERSION} detected) - ${CMAKE_CURRENT_FUNCTION}"
+            )
         endif()
-        
     else()
         # CONFIG_FILE mode - validate CONFIG_FILE parameter and file existence
         if(NOT ARG_CONFIG_FILE)
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided (CMock version ${_CMOCK_VERSION} not supported by schema system)")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided (CMock version ${_CMOCK_VERSION} not supported by schema system)"
+            )
         endif()
-        
+
         if(NOT EXISTS "${ARG_CONFIG_FILE}")
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Config file does not exist: ${ARG_CONFIG_FILE}")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: Config file does not exist: ${ARG_CONFIG_FILE}"
+            )
         endif()
     endif()
 
@@ -517,7 +571,7 @@ function(Unity_CreateTestTarget)
     if(NOT ARG_OUTPUT_DIR)
         set(ARG_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
     endif()
-    
+
     if(NOT ARG_MOCK_PREFIX)
         if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
             set(ARG_MOCK_PREFIX "${CMOCK_MOCK_PREFIX}")
@@ -525,7 +579,7 @@ function(Unity_CreateTestTarget)
             set(ARG_MOCK_PREFIX "mock_")
         endif()
     endif()
-    
+
     if(NOT ARG_MOCK_SUFFIX)
         if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
             set(ARG_MOCK_SUFFIX "${CMOCK_MOCK_SUFFIX}")
@@ -533,7 +587,7 @@ function(Unity_CreateTestTarget)
             set(ARG_MOCK_SUFFIX "")
         endif()
     endif()
-    
+
     if(NOT ARG_MOCK_SUBDIR)
         if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
             set(ARG_MOCK_SUBDIR "${CMOCK_MOCK_PATH}")
@@ -544,9 +598,12 @@ function(Unity_CreateTestTarget)
 
     # Set CONFIG_FILE argument based on configuration mode
     if(_CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
-        set(CONFIG_FILE_ARG "")  # No CONFIG_FILE needed for schema mode
+        set(CONFIG_FILE_ARG "") # No CONFIG_FILE needed for schema mode
     else()
-        set(CONFIG_FILE_ARG "CONFIG_FILE" "${ARG_CONFIG_FILE}")  # Pass CONFIG_FILE for legacy mode
+        set(CONFIG_FILE_ARG
+            "CONFIG_FILE"
+            "${ARG_CONFIG_FILE}"
+        ) # Pass CONFIG_FILE for legacy mode
     endif()
 
     # Generate runner for the test
@@ -558,7 +615,10 @@ function(Unity_CreateTestTarget)
     )
 
     # Collect all source files
-    set(all_sources ${ARG_TEST_SOURCE} ${runner_source})
+    set(all_sources
+        ${ARG_TEST_SOURCE}
+        ${runner_source}
+    )
     if(ARG_SOURCES)
         list(APPEND all_sources ${ARG_SOURCES})
     endif()
@@ -584,7 +644,7 @@ function(Unity_CreateTestTarget)
 
     # Create the test executable
     add_executable(${ARG_TARGET_NAME} ${all_sources})
-    
+
     # Link required libraries
     if(TARGET Unity::Unity)
         target_link_libraries(${ARG_TARGET_NAME} PRIVATE Unity::Unity)
@@ -600,16 +660,20 @@ function(Unity_CreateTestTarget)
     if(ARG_INCLUDE_DIRS)
         target_include_directories(${ARG_TARGET_NAME} PRIVATE ${ARG_INCLUDE_DIRS})
     endif()
-    
+
     # Add mock directory to includes if mocks were generated
     if(ARG_MOCK_HEADERS)
         target_include_directories(${ARG_TARGET_NAME} PRIVATE ${ARG_OUTPUT_DIR}/${ARG_MOCK_SUBDIR})
     endif()
 
     # Disable linting for test targets
-    set_target_properties(${ARG_TARGET_NAME} PROPERTIES
-        C_CLANG_TIDY ""
-        SKIP_LINTING TRUE
+    set_target_properties(
+        ${ARG_TARGET_NAME}
+        PROPERTIES
+            C_CLANG_TIDY
+                ""
+            SKIP_LINTING
+                TRUE
     )
 
     message(STATUS "Unity: Created test target '${ARG_TARGET_NAME}'")

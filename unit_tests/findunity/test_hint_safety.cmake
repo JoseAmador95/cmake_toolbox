@@ -1,5 +1,5 @@
 # Unit test for FindUnity.cmake hint variable safety (Issue #10)
-# 
+#
 # This test verifies that FindUnity.cmake handles undefined, empty, and invalid
 # hint variables without causing evaluation errors.
 
@@ -33,7 +33,7 @@ function(test_undefined_hints)
     unset(ENV{UNITY_ROOT})
     unset(Unity_ROOT CACHE)
     unset(UNITY_ROOT CACHE)
-    
+
     # This should not cause any errors
     # Before fix: if(${var}) would expand to if() which could cause syntax errors
     set(_Unity_HINT_DIRS)
@@ -42,14 +42,14 @@ function(test_undefined_hints)
             list(APPEND _Unity_HINT_DIRS "${${var}}")
         endif()
     endforeach()
-    
+
     # Verify hint list is empty
     list(LENGTH _Unity_HINT_DIRS hint_count)
     if(NOT hint_count EQUAL 0)
         report_error("Undefined hints" "Expected empty hint list, got ${hint_count} items")
         return()
     endif()
-    
+
     expect_no_error("Undefined hints")
 endfunction()
 
@@ -60,7 +60,7 @@ function(test_empty_hints)
     # Set hint variables to empty strings
     set(Unity_ROOT "")
     set(UNITY_ROOT "")
-    
+
     # This should not cause errors
     # Empty strings are still DEFINED, so they will be added to the list
     set(_Unity_HINT_DIRS)
@@ -69,7 +69,7 @@ function(test_empty_hints)
             list(APPEND _Unity_HINT_DIRS "${${var}}")
         endif()
     endforeach()
-    
+
     # Empty strings still get added to the list (CMake behavior)
     # The important thing is no errors occurred during evaluation
     expect_no_error("Empty hints")
@@ -82,7 +82,7 @@ function(test_valid_hints)
     # Set real hint paths
     set(Unity_ROOT "/usr/local")
     set(UNITY_ROOT "/opt/unity")
-    
+
     # Process hints
     set(_Unity_HINT_DIRS)
     foreach(var IN ITEMS Unity_ROOT UNITY_ROOT)
@@ -90,28 +90,28 @@ function(test_valid_hints)
             list(APPEND _Unity_HINT_DIRS "${${var}}")
         endif()
     endforeach()
-    
+
     # Verify hints were added
     list(LENGTH _Unity_HINT_DIRS hint_count)
     if(NOT hint_count EQUAL 2)
         report_error("Valid hints" "Expected 2 hints, got ${hint_count}")
         return()
     endif()
-    
+
     # Verify paths are correct
     list(GET _Unity_HINT_DIRS 0 first_hint)
     list(GET _Unity_HINT_DIRS 1 second_hint)
-    
+
     if(NOT first_hint STREQUAL "/usr/local")
         report_error("Valid hints" "First hint mismatch: ${first_hint}")
         return()
     endif()
-    
+
     if(NOT second_hint STREQUAL "/opt/unity")
         report_error("Valid hints" "Second hint mismatch: ${second_hint}")
         return()
     endif()
-    
+
     expect_no_error("Valid hints")
 endfunction()
 
@@ -122,7 +122,7 @@ function(test_mixed_hints)
     # Only set one variable
     set(Unity_ROOT "/usr/local")
     unset(UNITY_ROOT)
-    
+
     # Process hints
     set(_Unity_HINT_DIRS)
     foreach(var IN ITEMS Unity_ROOT UNITY_ROOT)
@@ -130,20 +130,20 @@ function(test_mixed_hints)
             list(APPEND _Unity_HINT_DIRS "${${var}}")
         endif()
     endforeach()
-    
+
     # Should only get one hint
     list(LENGTH _Unity_HINT_DIRS hint_count)
     if(NOT hint_count EQUAL 1)
         report_error("Mixed hints" "Expected 1 hint, got ${hint_count}")
         return()
     endif()
-    
+
     list(GET _Unity_HINT_DIRS 0 first_hint)
     if(NOT first_hint STREQUAL "/usr/local")
         report_error("Mixed hints" "Hint mismatch: ${first_hint}")
         return()
     endif()
-    
+
     expect_no_error("Mixed hints")
 endfunction()
 
@@ -154,7 +154,7 @@ function(test_special_characters)
     # Test paths with spaces (semicolons are list separators in CMake, so we avoid them)
     set(Unity_ROOT "/path with spaces")
     set(UNITY_ROOT "/path-with-dashes")
-    
+
     # Process hints
     set(_Unity_HINT_DIRS)
     foreach(var IN ITEMS Unity_ROOT UNITY_ROOT)
@@ -162,7 +162,7 @@ function(test_special_characters)
             list(APPEND _Unity_HINT_DIRS "${${var}}")
         endif()
     endforeach()
-    
+
     # Verify both hints were processed
     list(LENGTH _Unity_HINT_DIRS hint_count)
     if(NOT hint_count EQUAL 2)
@@ -170,7 +170,7 @@ function(test_special_characters)
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     expect_no_error("Special characters")
 endfunction()
 
@@ -181,10 +181,10 @@ function(test_env_hint)
     # Clear regular variables
     unset(Unity_ROOT)
     unset(UNITY_ROOT)
-    
+
     # Set environment variable
     set(ENV{UNITY_ROOT} "/env/path")
-    
+
     # Process hints including environment
     set(_Unity_HINT_DIRS)
     foreach(var IN ITEMS Unity_ROOT UNITY_ROOT)
@@ -195,20 +195,20 @@ function(test_env_hint)
     if(DEFINED ENV{UNITY_ROOT})
         list(APPEND _Unity_HINT_DIRS "$ENV{UNITY_ROOT}")
     endif()
-    
+
     # Should only have env hint
     list(LENGTH _Unity_HINT_DIRS hint_count)
     if(NOT hint_count EQUAL 1)
         report_error("Environment hint" "Expected 1 hint, got ${hint_count}")
         return()
     endif()
-    
+
     list(GET _Unity_HINT_DIRS 0 env_hint)
     if(NOT env_hint STREQUAL "/env/path")
         report_error("Environment hint" "Hint mismatch: ${env_hint}")
         return()
     endif()
-    
+
     expect_no_error("Environment hint")
 endfunction()
 
@@ -219,14 +219,14 @@ function(run_all_tests)
     message(STATUS "")
     message(STATUS "=== FindUnity Hint Safety Tests (Issue #10) ===")
     message(STATUS "")
-    
+
     test_undefined_hints()
     test_empty_hints()
     test_valid_hints()
     test_mixed_hints()
     test_special_characters()
     test_env_hint()
-    
+
     message(STATUS "")
     message(STATUS "Tests completed: 6 scenarios")
     if(ERROR_COUNT EQUAL 0)

@@ -52,16 +52,23 @@ if(NOT GCOV_COMPILE_FLAGS AND NOT GCOV_LINKER_FLAGS)
         message(SEND_ERROR "COMPILE_OPTIONS should be set with generator expressions")
         set(TEST_FAILED TRUE)
     endif()
-    
+
     if(NOT LINK_OPTIONS)
         message(SEND_ERROR "LINK_OPTIONS should be set with generator expressions")
         set(TEST_FAILED TRUE)
     endif()
-    
+
     # Validate that generator expressions are present for per-language detection
-    string(FIND "${COMPILE_OPTIONS}" "COMPILE_LANGUAGE" HAS_GENEX)
+    string(
+        FIND "${COMPILE_OPTIONS}"
+        "COMPILE_LANGUAGE"
+        HAS_GENEX
+    )
     if(HAS_GENEX EQUAL -1)
-        message(SEND_ERROR "Expected generator expressions in COMPILE_OPTIONS for language detection")
+        message(
+            SEND_ERROR
+            "Expected generator expressions in COMPILE_OPTIONS for language detection"
+        )
         set(TEST_FAILED TRUE)
     else()
         message(STATUS "✓ Generator expressions (per-language) detected in compile options")
@@ -73,7 +80,7 @@ if(NOT GCOV_COMPILE_FLAGS AND NOT GCOV_LINKER_FLAGS)
             message(STATUS "✓ C++ language-specific flags detected")
         endif()
     endif()
-    
+
     message(STATUS "✓ Using automatic per-language coverage detection (no manual overrides)")
 else()
     # User provided manual override

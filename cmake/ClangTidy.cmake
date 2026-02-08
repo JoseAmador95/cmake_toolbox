@@ -151,7 +151,10 @@ endfunction()
 #
 function(ClangTidy_ConfigureTarget)
     set(options TRIM_COMPILE_COMMANDS)
-    set(oneValueArgs TARGET STATUS)
+    set(oneValueArgs
+        TARGET
+        STATUS
+    )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -172,8 +175,10 @@ function(ClangTidy_ConfigureTarget)
     set_target_properties(
         ${ARG_TARGET}
         PROPERTIES
-            C_CLANG_TIDY "${exe}"
-            CXX_CLANG_TIDY "${exe}"
+            C_CLANG_TIDY
+                "${exe}"
+            CXX_CLANG_TIDY
+                "${exe}"
     )
 
     if(compilecommands)
@@ -191,6 +196,9 @@ function(set_clang_tidy)
 endfunction()
 
 function(target_set_clang_tidy)
-    message(DEPRECATION "target_set_clang_tidy() is deprecated, use ClangTidy_ConfigureTarget() instead")
+    message(
+        DEPRECATION
+        "target_set_clang_tidy() is deprecated, use ClangTidy_ConfigureTarget() instead"
+    )
     ClangTidy_ConfigureTarget(${ARGN})
 endfunction()

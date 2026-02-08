@@ -15,17 +15,9 @@
 # Coverage Thresholds
 # ------------------------------------------------------------------------------
 
-set(GCOVR_ENFORCE_THRESHOLDS
-    OFF
-    CACHE BOOL
-    "Enable fail-under thresholds for coverage metrics"
-)
+set(GCOVR_ENFORCE_THRESHOLDS OFF CACHE BOOL "Enable fail-under thresholds for coverage metrics")
 
-set(GCOVR_FAIL_UNDER_LINE
-    "0"
-    CACHE STRING
-    "Fail if line coverage is below this percentage (0-100)"
-)
+set(GCOVR_FAIL_UNDER_LINE "0" CACHE STRING "Fail if line coverage is below this percentage (0-100)")
 
 set(GCOVR_FAIL_UNDER_BRANCH
     "0"
@@ -49,11 +41,7 @@ set(GCOVR_FAIL_UNDER_DECISION
 # HTML Report Thresholds
 # ------------------------------------------------------------------------------
 
-set(GCOVR_HTML_HIGH_THRESHOLD
-    "95"
-    CACHE STRING
-    "High coverage threshold for HTML reports (0-100)"
-)
+set(GCOVR_HTML_HIGH_THRESHOLD "95" CACHE STRING "High coverage threshold for HTML reports (0-100)")
 
 set(GCOVR_HTML_MEDIUM_THRESHOLD
     "85"
@@ -65,17 +53,9 @@ set(GCOVR_HTML_MEDIUM_THRESHOLD
 # File Filters
 # ------------------------------------------------------------------------------
 
-set(GCOVR_FILTER
-    ""
-    CACHE STRING
-    "Semicolon-separated list of regex patterns to include files"
-)
+set(GCOVR_FILTER "" CACHE STRING "Semicolon-separated list of regex patterns to include files")
 
-set(GCOVR_EXCLUDE
-    ""
-    CACHE STRING
-    "Semicolon-separated list of regex patterns to exclude files"
-)
+set(GCOVR_EXCLUDE "" CACHE STRING "Semicolon-separated list of regex patterns to exclude files")
 
 set(GCOVR_EXCLUDE_DIRECTORIES
     ""
@@ -83,23 +63,11 @@ set(GCOVR_EXCLUDE_DIRECTORIES
     "Semicolon-separated list of regex patterns to exclude directories"
 )
 
-set(GCOVR_EXCLUDE_UNREACHABLE_BRANCHES
-    ON
-    CACHE BOOL
-    "Exclude unreachable branches from coverage"
-)
+set(GCOVR_EXCLUDE_UNREACHABLE_BRANCHES ON CACHE BOOL "Exclude unreachable branches from coverage")
 
-set(GCOVR_EXCLUDE_THROW_BRANCHES
-    ON
-    CACHE BOOL
-    "Exclude throw branches from coverage"
-)
+set(GCOVR_EXCLUDE_THROW_BRANCHES ON CACHE BOOL "Exclude throw branches from coverage")
 
-set(GCOVR_EXCLUDE_FUNCTION_LINES
-    OFF
-    CACHE BOOL
-    "Exclude function definition lines from coverage"
-)
+set(GCOVR_EXCLUDE_FUNCTION_LINES OFF CACHE BOOL "Exclude function definition lines from coverage")
 
 # ------------------------------------------------------------------------------
 # Output Configuration
@@ -111,11 +79,7 @@ set(GCOVR_OUTPUT_FORMATS
     "Semicolon-separated list of output formats (html;xml;json;cobertura;lcov;csv;txt)"
 )
 
-set(GCOVR_PRINT_SUMMARY
-    ON
-    CACHE BOOL
-    "Print summary to console"
-)
+set(GCOVR_PRINT_SUMMARY ON CACHE BOOL "Print summary to console")
 
 set(GCOVR_SORT
     "uncovered-number"
@@ -127,57 +91,25 @@ set(GCOVR_SORT
 # HTML Report Options
 # ------------------------------------------------------------------------------
 
-set(GCOVR_HTML_DETAILS
-    ON
-    CACHE BOOL
-    "Generate detailed HTML with per-file coverage"
-)
+set(GCOVR_HTML_DETAILS ON CACHE BOOL "Generate detailed HTML with per-file coverage")
 
-set(GCOVR_HTML_NESTED
-    OFF
-    CACHE BOOL
-    "Generate nested HTML structure following source layout"
-)
+set(GCOVR_HTML_NESTED OFF CACHE BOOL "Generate nested HTML structure following source layout")
 
-set(GCOVR_HTML_TITLE
-    "Coverage Report"
-    CACHE STRING
-    "Title for HTML report"
-)
+set(GCOVR_HTML_TITLE "Coverage Report" CACHE STRING "Title for HTML report")
 
-set(GCOVR_HTML_SELF_CONTAINED
-    ON
-    CACHE BOOL
-    "Generate self-contained HTML (inline CSS/JS)"
-)
+set(GCOVR_HTML_SELF_CONTAINED ON CACHE BOOL "Generate self-contained HTML (inline CSS/JS)")
 
 # ------------------------------------------------------------------------------
 # Advanced Options
 # ------------------------------------------------------------------------------
 
-set(GCOVR_GCOV_EXECUTABLE
-    ""
-    CACHE FILEPATH
-    "Path to gcov executable (empty = auto-detect)"
-)
+set(GCOVR_GCOV_EXECUTABLE "" CACHE FILEPATH "Path to gcov executable (empty = auto-detect)")
 
-set(GCOVR_SEARCH_PATH
-    ""
-    CACHE STRING
-    "Semicolon-separated list of search paths for .gcda files"
-)
+set(GCOVR_SEARCH_PATH "" CACHE STRING "Semicolon-separated list of search paths for .gcda files")
 
-set(GCOVR_DECISIONS
-    OFF
-    CACHE BOOL
-    "Enable decision coverage (MC/DC)"
-)
+set(GCOVR_DECISIONS OFF CACHE BOOL "Enable decision coverage (MC/DC)")
 
-set(GCOVR_CALLS
-    OFF
-    CACHE BOOL
-    "Enable call coverage"
-)
+set(GCOVR_CALLS OFF CACHE BOOL "Enable call coverage")
 
 # ==============================================================================
 # GcovrSchema_7_0_GenerateConfig

@@ -29,7 +29,14 @@ set(MODULE_DIR "${REPO_ROOT}/cmake")
 # ==============================================================================
 # Test Case: Basic LINE/BRANCH thresholds (existing)
 # ==============================================================================
-function(run_case NAME ENFORCE LINE BRANCH EXPECT_FAIL_UNDER)
+function(
+    run_case
+    NAME
+    ENFORCE
+    LINE
+    BRANCH
+    EXPECT_FAIL_UNDER
+)
     set(case_dir "${TEST_ROOT}/${NAME}")
     set(src_dir "${case_dir}/src")
     set(build_dir "${case_dir}/build")
@@ -42,14 +49,18 @@ function(run_case NAME ENFORCE LINE BRANCH EXPECT_FAIL_UNDER)
     string(APPEND cmake_lists "project(GcovThresholdsTest)\n")
     string(APPEND cmake_lists "list(APPEND CMAKE_MODULE_PATH \"${MODULE_DIR}\")\n")
     string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_LINE \"${LINE}\" CACHE STRING \"\" FORCE)\n")
-    string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_BRANCH \"${BRANCH}\" CACHE STRING \"\" FORCE)\n")
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_FAIL_UNDER_BRANCH \"${BRANCH}\" CACHE STRING \"\" FORCE)\n"
+    )
     string(APPEND cmake_lists "set(GCOVR_ENFORCE_THRESHOLDS ${ENFORCE} CACHE BOOL \"\" FORCE)\n")
     string(APPEND cmake_lists "include(Gcov)\n")
 
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -73,8 +84,16 @@ function(run_case NAME ENFORCE LINE BRANCH EXPECT_FAIL_UNDER)
     endif()
 
     file(READ "${config_file}" config_content)
-    string(FIND "${config_content}" "fail-under-line" line_pos)
-    string(FIND "${config_content}" "fail-under-branch" branch_pos)
+    string(
+        FIND "${config_content}"
+        "fail-under-line"
+        line_pos
+    )
+    string(
+        FIND "${config_content}"
+        "fail-under-branch"
+        branch_pos
+    )
 
     if(EXPECT_FAIL_UNDER)
         if(line_pos EQUAL -1 OR branch_pos EQUAL -1)
@@ -98,7 +117,16 @@ endfunction()
 # ==============================================================================
 # Test Case: FUNCTION and DECISION thresholds
 # ==============================================================================
-function(run_case_all_thresholds NAME ENFORCE LINE BRANCH FUNCTION DECISION EXPECT_FAIL_UNDER)
+function(
+    run_case_all_thresholds
+    NAME
+    ENFORCE
+    LINE
+    BRANCH
+    FUNCTION
+    DECISION
+    EXPECT_FAIL_UNDER
+)
     set(case_dir "${TEST_ROOT}/${NAME}")
     set(src_dir "${case_dir}/src")
     set(build_dir "${case_dir}/build")
@@ -111,16 +139,26 @@ function(run_case_all_thresholds NAME ENFORCE LINE BRANCH FUNCTION DECISION EXPE
     string(APPEND cmake_lists "project(GcovThresholdsTest)\n")
     string(APPEND cmake_lists "list(APPEND CMAKE_MODULE_PATH \"${MODULE_DIR}\")\n")
     string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_LINE \"${LINE}\" CACHE STRING \"\" FORCE)\n")
-    string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_BRANCH \"${BRANCH}\" CACHE STRING \"\" FORCE)\n")
-    string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_FUNCTION \"${FUNCTION}\" CACHE STRING \"\" FORCE)\n")
-    string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_DECISION \"${DECISION}\" CACHE STRING \"\" FORCE)\n")
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_FAIL_UNDER_BRANCH \"${BRANCH}\" CACHE STRING \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_FAIL_UNDER_FUNCTION \"${FUNCTION}\" CACHE STRING \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_FAIL_UNDER_DECISION \"${DECISION}\" CACHE STRING \"\" FORCE)\n"
+    )
     string(APPEND cmake_lists "set(GCOVR_ENFORCE_THRESHOLDS ${ENFORCE} CACHE BOOL \"\" FORCE)\n")
     string(APPEND cmake_lists "include(Gcov)\n")
 
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -144,24 +182,56 @@ function(run_case_all_thresholds NAME ENFORCE LINE BRANCH FUNCTION DECISION EXPE
     endif()
 
     file(READ "${config_file}" config_content)
-    string(FIND "${config_content}" "fail-under-line" line_pos)
-    string(FIND "${config_content}" "fail-under-branch" branch_pos)
-    string(FIND "${config_content}" "fail-under-function" function_pos)
-    string(FIND "${config_content}" "fail-under-decision" decision_pos)
+    string(
+        FIND "${config_content}"
+        "fail-under-line"
+        line_pos
+    )
+    string(
+        FIND "${config_content}"
+        "fail-under-branch"
+        branch_pos
+    )
+    string(
+        FIND "${config_content}"
+        "fail-under-function"
+        function_pos
+    )
+    string(
+        FIND "${config_content}"
+        "fail-under-decision"
+        decision_pos
+    )
 
     set(all_present TRUE)
     set(any_present FALSE)
-    
+
     if(line_pos EQUAL -1 OR branch_pos EQUAL -1 OR function_pos EQUAL -1 OR decision_pos EQUAL -1)
         set(all_present FALSE)
     endif()
-    if(line_pos GREATER -1 OR branch_pos GREATER -1 OR function_pos GREATER -1 OR decision_pos GREATER -1)
+    if(
+        line_pos
+            GREATER
+            -1
+        OR branch_pos
+            GREATER
+            -1
+        OR function_pos
+            GREATER
+            -1
+        OR decision_pos
+            GREATER
+            -1
+    )
         set(any_present TRUE)
     endif()
 
     if(EXPECT_FAIL_UNDER)
         if(NOT all_present)
-            message(STATUS "[FAIL] ${NAME}: expected all fail-under entries in config (line=${line_pos}, branch=${branch_pos}, function=${function_pos}, decision=${decision_pos})")
+            message(
+                STATUS
+                "[FAIL] ${NAME}: expected all fail-under entries in config (line=${line_pos}, branch=${branch_pos}, function=${function_pos}, decision=${decision_pos})"
+            )
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         else()
             message(STATUS "[PASS] ${NAME}: all fail-under entries present")
@@ -205,7 +275,8 @@ function(run_case_zero_threshold NAME THRESHOLD_VAR)
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -227,7 +298,11 @@ function(run_case_zero_threshold NAME THRESHOLD_VAR)
     endif()
 
     file(READ "${config_file}" config_content)
-    string(FIND "${config_content}" "${threshold_key}" threshold_pos)
+    string(
+        FIND "${config_content}"
+        "${threshold_key}"
+        threshold_pos
+    )
 
     # Zero values should NOT appear in config (they're excluded)
     if(threshold_pos GREATER -1)
@@ -267,7 +342,8 @@ function(run_case_100_threshold NAME THRESHOLD_VAR)
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -289,7 +365,11 @@ function(run_case_100_threshold NAME THRESHOLD_VAR)
     endif()
 
     file(READ "${config_file}" config_content)
-    string(FIND "${config_content}" "${threshold_key} = 100" threshold_pos)
+    string(
+        FIND "${config_content}"
+        "${threshold_key} = 100"
+        threshold_pos
+    )
 
     # 100 values SHOULD appear in config
     if(threshold_pos EQUAL -1)
@@ -330,7 +410,8 @@ function(run_case_enforce_no_thresholds NAME)
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -338,14 +419,21 @@ function(run_case_enforce_no_thresholds NAME)
 
     # Configuration should NOT fail
     if(NOT configure_result EQUAL 0)
-        message(STATUS "[FAIL] ${NAME}: configure should not fail when ENFORCE=ON but no thresholds")
+        message(
+            STATUS
+            "[FAIL] ${NAME}: configure should not fail when ENFORCE=ON but no thresholds"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
     # Should emit informative message
-    string(FIND "${configure_output}${configure_error}" "no thresholds are set" info_pos)
+    string(
+        FIND "${configure_output}${configure_error}"
+        "no thresholds are set"
+        info_pos
+    )
     if(info_pos EQUAL -1)
         message(STATUS "[FAIL] ${NAME}: expected informative message about no thresholds")
         message(STATUS "  Output: ${configure_output}")
@@ -358,7 +446,11 @@ function(run_case_enforce_no_thresholds NAME)
     set(config_file "${build_dir}/coverage/gcovr_generated.cfg")
     if(EXISTS "${config_file}")
         file(READ "${config_file}" config_content)
-        string(FIND "${config_content}" "fail-under" failunder_pos)
+        string(
+            FIND "${config_content}"
+            "fail-under"
+            failunder_pos
+        )
         if(failunder_pos GREATER -1)
             message(STATUS "[FAIL] ${NAME}: config should have no fail-under entries")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -393,7 +485,8 @@ function(run_case_status_message_format NAME)
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -408,9 +501,13 @@ function(run_case_status_message_format NAME)
 
     # Check that status message includes metric names and values
     set(combined_output "${configure_output}${configure_error}")
-    
+
     # Should include "Enforcing coverage thresholds" message
-    string(FIND "${combined_output}" "Enforcing coverage thresholds" enforce_pos)
+    string(
+        FIND "${combined_output}"
+        "Enforcing coverage thresholds"
+        enforce_pos
+    )
     if(enforce_pos EQUAL -1)
         message(STATUS "[FAIL] ${NAME}: missing 'Enforcing coverage thresholds' message")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -419,8 +516,16 @@ function(run_case_status_message_format NAME)
     endif()
 
     # Should include metric names in the message
-    string(FIND "${combined_output}" "GCOVR_FAIL_UNDER_LINE=80" line_pos)
-    string(FIND "${combined_output}" "GCOVR_FAIL_UNDER_BRANCH=70" branch_pos)
+    string(
+        FIND "${combined_output}"
+        "GCOVR_FAIL_UNDER_LINE=80"
+        line_pos
+    )
+    string(
+        FIND "${combined_output}"
+        "GCOVR_FAIL_UNDER_BRANCH=70"
+        branch_pos
+    )
 
     if(line_pos EQUAL -1 OR branch_pos EQUAL -1)
         message(STATUS "[FAIL] ${NAME}: status message should include metric=value format")
@@ -453,7 +558,10 @@ function(run_case_config_file_mode NAME)
     string(APPEND cmake_lists "project(GcovThresholdsTest)\n")
     string(APPEND cmake_lists "list(APPEND CMAKE_MODULE_PATH \"${MODULE_DIR}\")\n")
     # Set config file to trigger CONFIG_FILE mode
-    string(APPEND cmake_lists "set(GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/gcovr.cfg\" CACHE FILEPATH \"\" FORCE)\n")
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/gcovr.cfg\" CACHE FILEPATH \"\" FORCE)\n"
+    )
     # Enable enforcement - should be ignored and emit warning
     string(APPEND cmake_lists "set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)\n")
     string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)\n")
@@ -462,7 +570,8 @@ function(run_case_config_file_mode NAME)
     file(WRITE "${src_dir}/CMakeLists.txt" "${cmake_lists}")
 
     execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -478,10 +587,17 @@ function(run_case_config_file_mode NAME)
     endif()
 
     # Check that the warning about GCOVR_ENFORCE_THRESHOLDS being ignored was emitted
-    string(FIND "${configure_output}${configure_error}" "GCOVR_ENFORCE_THRESHOLDS is ignored in CONFIG_FILE mode" warning_pos)
+    string(
+        FIND "${configure_output}${configure_error}"
+        "GCOVR_ENFORCE_THRESHOLDS is ignored in CONFIG_FILE mode"
+        warning_pos
+    )
 
     if(warning_pos EQUAL -1)
-        message(STATUS "[FAIL] ${NAME}: expected warning about GCOVR_ENFORCE_THRESHOLDS being ignored")
+        message(
+            STATUS
+            "[FAIL] ${NAME}: expected warning about GCOVR_ENFORCE_THRESHOLDS being ignored"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
     else()
         message(STATUS "[PASS] ${NAME}: warning about ignored GCOVR_ENFORCE_THRESHOLDS emitted")

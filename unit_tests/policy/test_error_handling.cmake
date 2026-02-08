@@ -13,22 +13,23 @@ endfunction()
 # Helper function to test that a command fails
 function(test_command_fails DESCRIPTION COMMAND_STRING)
     message(STATUS "  Testing: ${DESCRIPTION}")
-    
+
     # Create a temporary script file
     string(MD5 temp_script_id "${DESCRIPTION};${COMMAND_STRING}")
     set(temp_script "${CMAKE_BINARY_DIR}/temp_test_${temp_script_id}.cmake")
     file(WRITE "${temp_script}" "${COMMAND_STRING}")
-    
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
+        COMMAND
+            ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE cmd_result
         OUTPUT_VARIABLE cmd_output
         ERROR_VARIABLE cmd_error
     )
-    
+
     # Clean up
     file(REMOVE "${temp_script}")
-    
+
     if(cmd_result EQUAL 0)
         message(STATUS "    ✗ ${DESCRIPTION} - should have failed but succeeded")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1" PARENT_SCOPE)
@@ -39,9 +40,9 @@ endfunction()
 
 function(test_policy_register_errors)
     message(STATUS "Test 1: Testing policy_register parameter validation")
-    
+
     set(local_errors 0)
-    
+
     # Missing required parameters for policy_register
     test_command_fails(
         "policy_register without NAME"
@@ -73,18 +74,18 @@ function(test_policy_register_errors)
         "policy_register with lowercase default"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Register(NAME TEST DESCRIPTION \"test\" DEFAULT old INTRODUCED_VERSION 1.0)"
     )
-    
+
     test_command_fails(
         "Duplicate policy registration"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Register(NAME DUP DESCRIPTION \"first\" DEFAULT OLD INTRODUCED_VERSION 1.0); Policy_Register(NAME DUP DESCRIPTION \"second\" DEFAULT NEW INTRODUCED_VERSION 2.0)"
     )
-    
+
     message(STATUS "  ✓ All policy_register error conditions handled correctly")
 endfunction()
 
 function(test_policy_set_errors)
     message(STATUS "Test 2: Testing policy_set parameter validation")
-    
+
     test_command_fails(
         "policy_set without POLICY"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Set(VALUE NEW)"
@@ -104,13 +105,13 @@ function(test_policy_set_errors)
         "policy_set with unregistered policy"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Set(NONEXISTENT NEW)"
     )
-    
+
     message(STATUS "  ✓ All policy_set error conditions handled correctly")
 endfunction()
 
 function(test_policy_get_errors)
     message(STATUS "Test 3: Testing policy_get parameter validation")
-    
+
     test_command_fails(
         "policy_get without POLICY"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Get(OUTVAR result)"
@@ -125,29 +126,29 @@ function(test_policy_get_errors)
         "policy_get with unregistered policy"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Get(NONEXISTENT result)"
     )
-    
+
     message(STATUS "  ✓ All policy_get error conditions handled correctly")
 endfunction()
 
 function(test_policy_version_errors)
     message(STATUS "Test 4: Testing policy_version parameter validation")
-    
+
     test_command_fails(
         "policy_version without MINIMUM"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Version()"
     )
-    
+
     test_command_fails(
         "policy_version with MAXIMUM < MINIMUM"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Register(NAME TEST DESCRIPTION \"test\" DEFAULT OLD INTRODUCED_VERSION 1.0); Policy_Version(MINIMUM 4.0 MAXIMUM 3.5)"
     )
-    
+
     message(STATUS "  ✓ All policy_version error conditions handled correctly")
 endfunction()
 
 function(test_policy_info_errors)
     message(STATUS "Test 5: Testing policy_info parameter validation")
-    
+
     test_command_fails(
         "policy_info without POLICY"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Info()"
@@ -157,13 +158,13 @@ function(test_policy_info_errors)
         "policy_info with unregistered policy"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_Info(NONEXISTENT)"
     )
-    
+
     message(STATUS "  ✓ All policy_info error conditions handled correctly")
 endfunction()
 
 function(test_policy_get_fields_errors)
     message(STATUS "Test 6: Testing policy_get_fields parameter validation")
-    
+
     test_command_fails(
         "policy_get_fields without POLICY"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_GetFields(PREFIX TEST)"
@@ -178,7 +179,7 @@ function(test_policy_get_fields_errors)
         "policy_get_fields with unregistered policy"
         "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake); Policy_GetFields(NONEXISTENT TEST)"
     )
-    
+
     message(STATUS "  ✓ All policy_get_fields error conditions handled correctly")
 endfunction()
 
@@ -189,7 +190,7 @@ endfunction()
 
 function(run_all_tests)
     message(STATUS "=== Error Handling Unit Tests ===")
-    
+
     setup_test_environment()
     test_policy_register_errors()
     test_policy_set_errors()
@@ -198,7 +199,7 @@ function(run_all_tests)
     test_policy_info_errors()
     test_policy_get_fields_errors()
     cleanup_test_environment()
-    
+
     # Test Summary
     message(STATUS "")
     if(ERROR_COUNT EQUAL 0)
@@ -207,7 +208,7 @@ function(run_all_tests)
         message(STATUS "✗ ${ERROR_COUNT} test(s) failed")
     endif()
     message(STATUS "")
-    
+
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "${ERROR_COUNT} test(s) failed")
     endif()

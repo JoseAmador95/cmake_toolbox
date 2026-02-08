@@ -2,7 +2,10 @@
 # Validates threshold and format validation logic
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH
+    "${REPO_ROOT}/cmake"
+    ${CMAKE_MODULE_PATH}
+)
 
 include(GcovrSchema)
 
@@ -17,102 +20,102 @@ endfunction()
 
 function(test_valid_thresholds_zero)
     message(STATUS "Test 1: Threshold 0 is valid")
-    
+
     # Set up valid threshold at 0
     set(GCOVR_FAIL_UNDER_LINE "0")
     set(GCOVR_FAIL_UNDER_BRANCH "0")
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Threshold 0 should be valid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Threshold 0 correctly accepted")
 endfunction()
 
 function(test_valid_thresholds_mid_range)
     message(STATUS "Test 2: Threshold 50 is valid")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "50")
     set(GCOVR_FAIL_UNDER_BRANCH "50")
     set(GCOVR_HTML_HIGH_THRESHOLD "50")
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Threshold 50 should be valid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Threshold 50 correctly accepted")
 endfunction()
 
 function(test_valid_thresholds_max)
     message(STATUS "Test 3: Threshold 100 is valid")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "100")
     set(GCOVR_FAIL_UNDER_BRANCH "100")
     set(GCOVR_HTML_HIGH_THRESHOLD "100")
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Threshold 100 should be valid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Threshold 100 correctly accepted")
 endfunction()
 
 function(test_invalid_threshold_over_100)
     message(STATUS "Test 4: Threshold > 100 is invalid")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "150")
-    
+
     GcovrSchema_Validate()
-    
+
     if(GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Threshold 150 should be invalid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Threshold 150 correctly rejected")
 endfunction()
 
 function(test_invalid_threshold_non_numeric)
     message(STATUS "Test 5: Non-numeric threshold is invalid")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "abc")
-    
+
     GcovrSchema_Validate()
-    
+
     if(GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Non-numeric threshold 'abc' should be invalid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Non-numeric threshold correctly rejected")
 endfunction()
 
 function(test_invalid_threshold_negative)
     message(STATUS "Test 6: Negative threshold is invalid (treated as non-numeric)")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "-10")
-    
+
     GcovrSchema_Validate()
-    
+
     # Negative numbers fail the ^[0-9]+$ regex, so they're treated as invalid
     if(GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Negative threshold '-10' should be invalid")
@@ -120,103 +123,103 @@ function(test_invalid_threshold_negative)
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Negative threshold correctly rejected")
 endfunction()
 
 function(test_invalid_threshold_decimal)
     message(STATUS "Test 7: Decimal threshold is invalid")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "50.5")
-    
+
     GcovrSchema_Validate()
-    
+
     if(GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Decimal threshold '50.5' should be invalid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Decimal threshold correctly rejected")
 endfunction()
 
 function(test_valid_output_format_html)
     message(STATUS "Test 8: Output format 'html' is valid")
-    
+
     # Clear thresholds to avoid interference
     unset(GCOVR_FAIL_UNDER_LINE)
     set(GCOVR_OUTPUT_FORMATS "html")
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Output format 'html' should be valid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Output format 'html' correctly accepted")
 endfunction()
 
 function(test_valid_output_formats_multiple)
     message(STATUS "Test 9: Multiple valid output formats")
-    
+
     unset(GCOVR_FAIL_UNDER_LINE)
     set(GCOVR_OUTPUT_FORMATS "html;xml;json")
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Multiple formats 'html;xml;json' should be valid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Multiple output formats correctly accepted")
 endfunction()
 
 function(test_invalid_output_format)
     message(STATUS "Test 10: Invalid output format is rejected")
-    
+
     unset(GCOVR_FAIL_UNDER_LINE)
     set(GCOVR_OUTPUT_FORMATS "invalid_format")
-    
+
     GcovrSchema_Validate()
-    
+
     if(GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Invalid format 'invalid_format' should be rejected")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Invalid output format correctly rejected")
 endfunction()
 
 function(test_all_valid_formats)
     message(STATUS "Test 11: All documented formats are valid")
-    
+
     unset(GCOVR_FAIL_UNDER_LINE)
     set(GCOVR_OUTPUT_FORMATS "html;xml;json;cobertura;coveralls;lcov;csv;txt")
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ All documented formats should be valid")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ All documented output formats accepted")
 endfunction()
 
 function(test_undefined_variables_are_valid)
     message(STATUS "Test 12: Undefined threshold variables don't cause validation failure")
-    
+
     # Unset all threshold variables
     unset(GCOVR_FAIL_UNDER_LINE)
     unset(GCOVR_FAIL_UNDER_BRANCH)
@@ -225,43 +228,43 @@ function(test_undefined_variables_are_valid)
     unset(GCOVR_HTML_HIGH_THRESHOLD)
     unset(GCOVR_HTML_MEDIUM_THRESHOLD)
     unset(GCOVR_OUTPUT_FORMATS)
-    
+
     GcovrSchema_Validate()
-    
+
     if(NOT GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Undefined variables should not cause validation failure")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Undefined variables correctly handled")
 endfunction()
 
 function(test_multiple_invalid_values)
     message(STATUS "Test 13: Multiple invalid values all reported")
-    
+
     set(GCOVR_FAIL_UNDER_LINE "invalid")
     set(GCOVR_FAIL_UNDER_BRANCH "200")
     set(GCOVR_OUTPUT_FORMATS "bad_format")
-    
+
     GcovrSchema_Validate()
-    
+
     if(GCOVR_SCHEMA_VALID)
         message(STATUS "  ✗ Multiple invalid values should fail validation")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Multiple invalid values correctly detected")
 endfunction()
 
 function(run_all_tests)
     message(STATUS "=== GcovrSchema_Validate Tests ===")
-    
+
     setup_test_environment()
-    
+
     test_valid_thresholds_zero()
     test_valid_thresholds_mid_range()
     test_valid_thresholds_max()
@@ -275,7 +278,7 @@ function(run_all_tests)
     test_all_valid_formats()
     test_undefined_variables_are_valid()
     test_multiple_invalid_values()
-    
+
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "GcovrSchema Validate tests failed with ${ERROR_COUNT} error(s)")

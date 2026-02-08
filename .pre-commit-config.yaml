@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/BlankSpruce/gersemi
+    rev: 0.25.4
+    hooks:
+      - id: gersemi
+        types: [cmake]
+        args: [--check]
+        additional_dependencies:
+          - gersemi

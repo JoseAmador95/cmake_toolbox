@@ -76,14 +76,17 @@ function(GcovrSchema_DetectVersion GCOVR_EXE OUTPUT_VAR)
     # Check if detected version is supported
     if(DETECTED_VERSION)
         GcovrSchema_GetSupportedVersions(SUPPORTED_VERSIONS)
-        
+
         # Check for exact match first
         if(DETECTED_VERSION IN_LIST SUPPORTED_VERSIONS)
             set(${OUTPUT_VAR} "${DETECTED_VERSION}" PARENT_SCOPE)
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Using gcovr schema version: ${DETECTED_VERSION}")
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Using gcovr schema version: ${DETECTED_VERSION}"
+            )
             return()
         endif()
-        
+
         # Try to find a compatible major version schema
         string(REGEX MATCH "^([0-9]+)" MAJOR_VERSION "${DETECTED_VERSION}")
         foreach(supported IN LISTS SUPPORTED_VERSIONS)
@@ -97,7 +100,7 @@ function(GcovrSchema_DetectVersion GCOVR_EXE OUTPUT_VAR)
                 return()
             endif()
         endforeach()
-        
+
         set(${OUTPUT_VAR} "" PARENT_SCOPE)
         message(STATUS "${CMAKE_CURRENT_FUNCTION}: Unsupported gcovr version ${DETECTED_VERSION}")
         message(STATUS "${CMAKE_CURRENT_FUNCTION}: Supported versions: ${SUPPORTED_VERSIONS}")
@@ -123,7 +126,7 @@ endfunction()
 function(GcovrSchema_SetDefaults VERSION)
     # Normalize version for filename (7.0 -> 7.0)
     string(REPLACE "." "." VERSION_NORMALIZED "${VERSION}")
-    
+
     # Load version-specific schema
     set(SCHEMA_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/schemas/gcovr-${VERSION_NORMALIZED}.cmake")
     if(EXISTS "${SCHEMA_FILE}")
@@ -167,11 +170,7 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
 
     # Call version-specific generation function (replace . with _ for function name)
     string(REPLACE "." "_" VERSION_UNDERSCORE "${_GCOVR_SCHEMA_VERSION}")
-    cmake_language(
-        CALL
-            "GcovrSchema_${VERSION_UNDERSCORE}_GenerateConfig"
-            "${CONFIG_FILE}"
-    )
+    cmake_language(CALL "GcovrSchema_${VERSION_UNDERSCORE}_GenerateConfig" "${CONFIG_FILE}")
 
     message(
         STATUS
@@ -193,9 +192,15 @@ function(GcovrSchema_Validate)
     set(ERRORS "")
 
     # Validate threshold values are numbers between 0 and 100
-    foreach(var GCOVR_FAIL_UNDER_LINE GCOVR_FAIL_UNDER_BRANCH
-                GCOVR_FAIL_UNDER_FUNCTION GCOVR_FAIL_UNDER_DECISION
-                GCOVR_HTML_HIGH_THRESHOLD GCOVR_HTML_MEDIUM_THRESHOLD)
+    foreach(
+        var
+        GCOVR_FAIL_UNDER_LINE
+        GCOVR_FAIL_UNDER_BRANCH
+        GCOVR_FAIL_UNDER_FUNCTION
+        GCOVR_FAIL_UNDER_DECISION
+        GCOVR_HTML_HIGH_THRESHOLD
+        GCOVR_HTML_MEDIUM_THRESHOLD
+    )
         if(DEFINED ${var})
             if(NOT "${${var}}" MATCHES "^[0-9]+$")
                 set(IS_VALID FALSE)
@@ -209,11 +214,23 @@ function(GcovrSchema_Validate)
 
     # Validate output formats
     if(DEFINED GCOVR_OUTPUT_FORMATS)
-        set(VALID_FORMATS "html" "xml" "json" "cobertura" "coveralls" "lcov" "csv" "txt")
+        set(VALID_FORMATS
+            "html"
+            "xml"
+            "json"
+            "cobertura"
+            "coveralls"
+            "lcov"
+            "csv"
+            "txt"
+        )
         foreach(format IN LISTS GCOVR_OUTPUT_FORMATS)
             if(NOT format IN_LIST VALID_FORMATS)
                 set(IS_VALID FALSE)
-                list(APPEND ERRORS "Invalid output format: ${format}. Valid formats: ${VALID_FORMATS}")
+                list(
+                    APPEND ERRORS
+                    "Invalid output format: ${format}. Valid formats: ${VALID_FORMATS}"
+                )
             endif()
         endforeach()
     endif()

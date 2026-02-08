@@ -42,15 +42,13 @@ Example
 include_guard(GLOBAL)
 
 # Look for gcovr executable
-find_program(GCOVR_EXECUTABLE
-    NAMES gcovr
-    DOC "Path to gcovr executable"
-)
+find_program(GCOVR_EXECUTABLE NAMES gcovr DOC "Path to gcovr executable")
 
 # Try to get version
 if(GCOVR_EXECUTABLE)
     execute_process(
-        COMMAND ${GCOVR_EXECUTABLE} --version
+        COMMAND
+            ${GCOVR_EXECUTABLE} --version
         OUTPUT_VARIABLE _gcovr_version_output
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -66,9 +64,6 @@ set(Gcovr_EXECUTABLE "${GCOVR_EXECUTABLE}")
 
 # Handle standard find_package arguments
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Gcovr
-    REQUIRED_VARS GCOVR_EXECUTABLE
-    VERSION_VAR Gcovr_VERSION
-)
+find_package_handle_standard_args(Gcovr REQUIRED_VARS GCOVR_EXECUTABLE VERSION_VAR Gcovr_VERSION)
 
 mark_as_advanced(GCOVR_EXECUTABLE)

@@ -80,9 +80,16 @@ endif()
 # The options should contain $<$<COMPILE_LANGUAGE:C>:...> patterns
 if(NOT SANITIZER_FLAGS)
     # Using automatic detection via generator expressions
-    string(FIND "${COMPILE_OPTIONS}" "COMPILE_LANGUAGE" HAS_GENEX)
+    string(
+        FIND "${COMPILE_OPTIONS}"
+        "COMPILE_LANGUAGE"
+        HAS_GENEX
+    )
     if(HAS_GENEX EQUAL -1)
-        message(SEND_ERROR "Expected generator expressions in COMPILE_OPTIONS for language detection")
+        message(
+            SEND_ERROR
+            "Expected generator expressions in COMPILE_OPTIONS for language detection"
+        )
         set(TEST_FAILED TRUE)
     else()
         message(STATUS "✓ Generator expressions (per-language) detected in compile options")

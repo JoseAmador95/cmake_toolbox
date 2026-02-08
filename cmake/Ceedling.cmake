@@ -131,7 +131,10 @@ Unity_Initialize()
 #
 function(_Ceedling_ParseMockIncludes)
     set(options "")
-    set(oneValueArgs TEST_SOURCE OUTPUT_VAR)
+    set(oneValueArgs
+        TEST_SOURCE
+        OUTPUT_VAR
+    )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -144,7 +147,10 @@ function(_Ceedling_ParseMockIncludes)
     endif()
 
     if(NOT EXISTS "${ARG_TEST_SOURCE}")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Test source file not found: ${ARG_TEST_SOURCE}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Test source file not found: ${ARG_TEST_SOURCE}"
+        )
     endif()
 
     # Read the test file content
@@ -156,12 +162,23 @@ function(_Ceedling_ParseMockIncludes)
     endif()
 
     # Escape special regex characters in the prefix
-    string(REGEX REPLACE "([.^$*+?()\\[\\]{}|\\\\])" "\\\\\\1" prefix_escaped "${CMOCK_MOCK_PREFIX}")
+    string(
+        REGEX REPLACE
+        "([.^$*+?()\\[\\]{}|\\\\])"
+        "\\\\\\1"
+        prefix_escaped
+        "${CMOCK_MOCK_PREFIX}"
+    )
 
     # Find all #include directives matching the mock prefix pattern
     # Pattern matches: #include "mock_name.h" or #include <mock_name.h> or .hpp
     set(detected_mocks "")
-    string(REGEX MATCHALL "#include[ \t]*[<\"]${prefix_escaped}([a-zA-Z0-9_]+)\\.(h|hpp)[>\"]" matches "${file_content}")
+    string(
+        REGEX MATCHALL
+        "#include[ \t]*[<\"]${prefix_escaped}([a-zA-Z0-9_]+)\\.(h|hpp)[>\"]"
+        matches
+        "${file_content}"
+    )
 
     foreach(match IN LISTS matches)
         # Extract the base name (without prefix and extension)
@@ -190,7 +207,10 @@ endfunction()
 #
 function(_Ceedling_GetTargetIncludeDirs)
     set(options "")
-    set(oneValueArgs TARGET OUTPUT_VAR)
+    set(oneValueArgs
+        TARGET
+        OUTPUT_VAR
+    )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -281,7 +301,10 @@ endfunction()
 #
 function(_Ceedling_ResolveHeader)
     set(options "")
-    set(oneValueArgs HEADER_BASE_NAME OUTPUT_VAR)
+    set(oneValueArgs
+        HEADER_BASE_NAME
+        OUTPUT_VAR
+    )
     set(multiValueArgs INCLUDE_DIRS)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -297,7 +320,10 @@ function(_Ceedling_ResolveHeader)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: OUTPUT_VAR must be specified")
     endif()
 
-    set(extensions ".h" ".hpp")
+    set(extensions
+        ".h"
+        ".hpp"
+    )
 
     foreach(dir IN LISTS ARG_INCLUDE_DIRS)
         foreach(ext IN LISTS extensions)
@@ -310,7 +336,8 @@ function(_Ceedling_ResolveHeader)
     endforeach()
 
     # Not found - fatal error
-    message(FATAL_ERROR 
+    message(
+        FATAL_ERROR
         "${CMAKE_CURRENT_FUNCTION}: Could not find header '${ARG_HEADER_BASE_NAME}.h' or '${ARG_HEADER_BASE_NAME}.hpp'\n"
         "Searched in directories:\n  ${ARG_INCLUDE_DIRS}\n"
         "This header was detected from a mock include (${CMOCK_MOCK_PREFIX}${ARG_HEADER_BASE_NAME}.h) in the test file.\n"
@@ -348,7 +375,10 @@ function(Ceedling_AddUnitTest)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: TARGET must be specified")
     endif()
     if(ARG_DISABLE_SANITIZER AND ARG_ENABLE_SANITIZER)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Cannot enable and disable sanitizer at the same time")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Cannot enable and disable sanitizer at the same time"
+        )
     endif()
 
     # Create test executable
@@ -397,7 +427,10 @@ function(Ceedling_AddUnitTest)
     # Build optional CONFIG_FILE argument
     set(config_file_arg "")
     if(default_config)
-        set(config_file_arg CONFIG_FILE ${default_config})
+        set(config_file_arg
+            CONFIG_FILE
+            ${default_config}
+        )
     endif()
 
     # Generate test runner
@@ -411,9 +444,12 @@ function(Ceedling_AddUnitTest)
     cmake_path(GET RUNNER_SOURCE STEM RUNNER_STEM)
     set(TEST_RUNNER ${TEST_BINARY_DIR}/${RUNNER_STEM}.c)
     add_custom_command(
-        OUTPUT ${TEST_RUNNER}
-        DEPENDS ${RUNNER_SOURCE}
-        COMMAND ${CMAKE_COMMAND} -E rename ${RUNNER_SOURCE} ${TEST_RUNNER}
+        OUTPUT
+            ${TEST_RUNNER}
+        DEPENDS
+            ${RUNNER_SOURCE}
+        COMMAND
+            ${CMAKE_COMMAND} -E rename ${RUNNER_SOURCE} ${TEST_RUNNER}
         COMMENT "Move ${RUNNER_STEM} to ${TEST_BINARY_DIR}"
     )
     target_sources(${ARG_NAME} PRIVATE ${TEST_RUNNER})
@@ -432,7 +468,8 @@ function(Ceedling_AddUnitTest)
         _Ceedling_GetTargetIncludeDirs(TARGET ${ARG_TARGET} OUTPUT_VAR TARGET_INCLUDE_DIRS)
 
         # Also add common locations
-        list(APPEND TARGET_INCLUDE_DIRS
+        list(
+            APPEND TARGET_INCLUDE_DIRS
             "${CMAKE_CURRENT_SOURCE_DIR}"
             "${CMAKE_CURRENT_SOURCE_DIR}/include"
             "${CMAKE_SOURCE_DIR}"
@@ -440,11 +477,19 @@ function(Ceedling_AddUnitTest)
         )
 
         foreach(mock_name IN LISTS DETECTED_MOCK_NAMES)
-            _Ceedling_ResolveHeader(HEADER_BASE_NAME "${mock_name}" INCLUDE_DIRS ${TARGET_INCLUDE_DIRS} OUTPUT_VAR RESOLVED_HEADER)
+            _Ceedling_ResolveHeader(
+                HEADER_BASE_NAME "${mock_name}"
+                INCLUDE_DIRS
+                    ${TARGET_INCLUDE_DIRS}
+                OUTPUT_VAR RESOLVED_HEADER
+            )
             list(APPEND DETECTED_MOCK_HEADERS "${RESOLVED_HEADER}")
         endforeach()
 
-        message(STATUS "${CMAKE_CURRENT_FUNCTION}: Auto-detected mocks from ${ARG_NAME}: ${DETECTED_MOCK_NAMES}")
+        message(
+            STATUS
+            "${CMAKE_CURRENT_FUNCTION}: Auto-detected mocks from ${ARG_NAME}: ${DETECTED_MOCK_NAMES}"
+        )
     endif()
 
     # Generate mocks for all auto-detected headers
@@ -469,8 +514,14 @@ function(Ceedling_AddUnitTest)
     if(
         CEEDLING_ENABLE_SANITIZER
         AND (
-            (CEEDLING_SANITIZER_DEFAULT AND NOT ARG_DISABLE_SANITIZER)
-            OR (NOT CEEDLING_SANITIZER_DEFAULT AND ARG_ENABLE_SANITIZER)
+            (
+                CEEDLING_SANITIZER_DEFAULT
+                AND NOT ARG_DISABLE_SANITIZER
+            )
+            OR (
+                NOT CEEDLING_SANITIZER_DEFAULT
+                AND ARG_ENABLE_SANITIZER
+            )
         )
     )
         Sanitizer_AddToTarget(TARGET ${ARG_TARGET} SCOPE PUBLIC)
@@ -480,9 +531,12 @@ function(Ceedling_AddUnitTest)
     set_target_properties(
         ${ARG_NAME}
         PROPERTIES
-            C_CLANG_TIDY ""
-            CXX_CLANG_TIDY ""
-            SKIP_LINTING TRUE
+            C_CLANG_TIDY
+                ""
+            CXX_CLANG_TIDY
+                ""
+            SKIP_LINTING
+                TRUE
     )
 
     # Test discovery or single test
@@ -493,21 +547,22 @@ function(Ceedling_AddUnitTest)
         add_custom_command(
             TARGET ${ARG_NAME}
             POST_BUILD
-            BYPRODUCTS "${TB_UNITY_TEST_FILE}"
+            BYPRODUCTS
+                "${TB_UNITY_TEST_FILE}"
             COMMAND
-                "${CMAKE_COMMAND}"
-                -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>"
-                -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-                -D "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>"
-                -D "TEST_FILE=${TB_UNITY_TEST_FILE}"
-                -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
+                "${CMAKE_COMMAND}" -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>" -D
+                "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -D
+                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${TB_UNITY_TEST_FILE}" -P
+                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
         )
 
         set_property(
             DIRECTORY
             APPEND
-            PROPERTY TEST_INCLUDE_FILES "${TB_UNITY_TEST_FILE}"
+            PROPERTY
+                TEST_INCLUDE_FILES
+                    "${TB_UNITY_TEST_FILE}"
         )
     else()
         # Add the whole file as a single test

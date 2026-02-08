@@ -42,7 +42,10 @@ function(test_validate_config)
     if(RESULT STREQUAL "--style=file:${TEST_DIR}/.clang-format")
         message(STATUS "  ✓ ValidateConfig works with existing file")
     else()
-        message(STATUS "  ✗ ValidateConfig failed: expected '--style=file:${TEST_DIR}/.clang-format', got '${RESULT}'")
+        message(
+            STATUS
+            "  ✗ ValidateConfig failed: expected '--style=file:${TEST_DIR}/.clang-format', got '${RESULT}'"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
     endif()
@@ -64,11 +67,14 @@ function(test_collect_files)
     # Test with default patterns
     ClangFormat_CollectFiles(
         COLLECTED_FILES
-        SOURCE_DIRS "src" "include" "nested"
+        SOURCE_DIRS
+            "src"
+            "include"
+            "nested"
     )
 
     # Verify specific files were found and .txt was excluded
-    set(EXPECTED_FILES 
+    set(EXPECTED_FILES
         "${TEST_DIR}/src/main.c"
         "${TEST_DIR}/src/utils.cpp"
         "${TEST_DIR}/src/legacy.cxx"
@@ -89,7 +95,11 @@ function(test_collect_files)
     endif()
 
     foreach(expected_file IN LISTS EXPECTED_FILES)
-        list(FIND COLLECTED_FILES "${expected_file}" file_index)
+        list(
+            FIND COLLECTED_FILES
+            "${expected_file}"
+            file_index
+        )
         if(file_index EQUAL -1)
             message(STATUS "  ✗ Missing expected file: ${expected_file}")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -98,7 +108,11 @@ function(test_collect_files)
     endforeach()
 
     # Verify .txt file was not included
-    list(FIND COLLECTED_FILES "${TEST_DIR}/src/README.txt" txt_index)
+    list(
+        FIND COLLECTED_FILES
+        "${TEST_DIR}/src/README.txt"
+        txt_index
+    )
     if(txt_index EQUAL -1)
         message(STATUS "  ✓ Correctly excluded non-source files")
     else()
@@ -108,11 +122,7 @@ function(test_collect_files)
     endif()
 
     # Test with custom patterns
-    ClangFormat_CollectFiles(
-        COLLECTED_FILES
-        SOURCE_DIRS "src"
-        PATTERNS "*.c"
-    )
+    ClangFormat_CollectFiles(COLLECTED_FILES SOURCE_DIRS "src" PATTERNS "*.c")
 
     list(LENGTH COLLECTED_FILES c_file_count)
     if(c_file_count EQUAL 1)
@@ -127,7 +137,10 @@ endfunction()
 function(test_create_command)
     message(STATUS "Test 3: ClangFormat_CreateCommand function")
 
-    set(TEST_FILES "${TEST_DIR}/src/main.c" "${TEST_DIR}/include/header.h")
+    set(TEST_FILES
+        "${TEST_DIR}/src/main.c"
+        "${TEST_DIR}/include/header.h"
+    )
 
     # Test FORMAT mode - this is the main use case
     ClangFormat_CreateCommand(
@@ -135,8 +148,10 @@ function(test_create_command)
         EXECUTABLE "clang-format-10"
         STYLE_ARG "--style=Google"
         MODE "FORMAT"
-        FILES ${TEST_FILES}
-        ADDITIONAL_ARGS "--verbose"
+        FILES
+            ${TEST_FILES}
+        ADDITIONAL_ARGS
+            "--verbose"
     )
 
     # Verify the command starts with the executable
@@ -150,7 +165,11 @@ function(test_create_command)
     endif()
 
     # Check for -i flag (in-place editing)
-    list(FIND FORMAT_COMMAND "-i" i_flag_index)
+    list(
+        FIND FORMAT_COMMAND
+        "-i"
+        i_flag_index
+    )
     if(i_flag_index GREATER -1)
         message(STATUS "  ✓ FORMAT command includes -i flag for in-place editing")
     else()
@@ -161,7 +180,11 @@ function(test_create_command)
 
     # Check that files are included
     foreach(test_file IN LISTS TEST_FILES)
-        list(FIND FORMAT_COMMAND "${test_file}" file_index)
+        list(
+            FIND FORMAT_COMMAND
+            "${test_file}"
+            file_index
+        )
         if(file_index GREATER -1)
             message(STATUS "  ✓ FORMAT command includes file: ${test_file}")
         else()
@@ -178,7 +201,8 @@ function(test_create_command)
         EXECUTABLE "clang-format-10"
         STYLE_ARG "--style=Google"
         MODE "CHECK"
-        FILES ${TEST_FILES}
+        FILES
+            ${TEST_FILES}
     )
 
     # The check command should be different from format command
@@ -191,7 +215,11 @@ function(test_create_command)
     endif()
 
     # Check command should not include -i flag (since it's not formatting in-place)
-    list(FIND CHECK_COMMAND "-i" check_i_flag)
+    list(
+        FIND CHECK_COMMAND
+        "-i"
+        check_i_flag
+    )
     if(check_i_flag EQUAL -1)
         message(STATUS "  ✓ CHECK command correctly excludes -i flag")
     else()
@@ -206,10 +234,7 @@ function(test_error_handling)
 
     # Test CollectFiles with missing SOURCE_DIRS - this should produce a warning
     # but we can't easily test FATAL_ERROR in script mode, so we'll test the warning case
-    ClangFormat_CollectFiles(
-        EMPTY_FILES
-        SOURCE_DIRS "nonexistent"
-    )
+    ClangFormat_CollectFiles(EMPTY_FILES SOURCE_DIRS "nonexistent")
 
     list(LENGTH EMPTY_FILES empty_count)
     if(empty_count EQUAL 0)
@@ -231,7 +256,7 @@ endfunction()
 
 function(run_all_tests)
     message(STATUS "=== ${TEST_NAME} ===")
-    
+
     setup_test_environment()
     test_validate_config()
     test_collect_files()
@@ -247,7 +272,7 @@ function(run_all_tests)
         message(STATUS "✗ ${ERROR_COUNT} test(s) failed in ${TEST_NAME}")
     endif()
     message(STATUS "")
-    
+
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "${ERROR_COUNT} test(s) failed")
     endif()

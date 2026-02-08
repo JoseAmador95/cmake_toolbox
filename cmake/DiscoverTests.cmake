@@ -85,7 +85,8 @@ function(DiscoverTests_Generate)
     string(REPLACE "$" "\\$" safe_workdir "${ARG_TEST_WORKING_DIR}")
 
     cmake_language(
-        EVAL CODE [==[
+        EVAL CODE
+            [==[
 set(exe_path "${safe_executable}")
 set(work_dir "${safe_workdir}")
 execute_process(
@@ -98,7 +99,10 @@ execute_process(
     )
 
     if(NOT ${result} EQUAL 0)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Failed to get tests from '${ARG_TEST_EXECUTABLE}'")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Failed to get tests from '${ARG_TEST_EXECUTABLE}'"
+        )
     endif()
 
     # Convert output to list (each line is a test name)
@@ -112,7 +116,8 @@ execute_process(
     foreach(line ${output})
         string(STRIP "${line}" test_name)
         if(test_name)
-            string(APPEND script
+            string(
+                APPEND script
                 "add_test(\"${ARG_TEST_SUITE}/${test_name}\" ${ARG_TEST_SUITE} -f ${test_name})\n"
             )
         endif()

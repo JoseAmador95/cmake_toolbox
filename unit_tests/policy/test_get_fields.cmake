@@ -8,23 +8,27 @@ set(ERROR_COUNT 0)
 function(setup_test_environment)
     # No file system setup needed for policy tests
     message(STATUS "Setting up policy get fields test environment")
-    
-    # Register policies for testing
-    Policy_Register(NAME FIELDS001 
-                    DESCRIPTION "Policy for fields testing" 
-                    DEFAULT OLD 
-                    INTRODUCED_VERSION 1.2.3 
-                    WARNING "Test warning with | pipe")
 
-    Policy_Register(NAME FIELDS002 
-                    DESCRIPTION "Policy without warning" 
-                    DEFAULT NEW 
-                    INTRODUCED_VERSION 2.0.0)
+    # Register policies for testing
+    Policy_Register(
+        NAME FIELDS001
+        DESCRIPTION "Policy for fields testing"
+        DEFAULT OLD
+        INTRODUCED_VERSION 1.2.3
+        WARNING "Test warning with | pipe"
+    )
+
+    Policy_Register(
+        NAME FIELDS002
+        DESCRIPTION "Policy without warning"
+        DEFAULT NEW
+        INTRODUCED_VERSION 2.0.0
+    )
 endfunction()
 
 function(test_get_fields_with_warning)
     message(STATUS "Test 1: Getting fields for policy with warning (default state)")
-    
+
     Policy_GetFields(FIELDS001 TEST1)
 
     # Verify all fields
@@ -50,7 +54,10 @@ function(test_get_fields_with_warning)
     endif()
 
     if(NOT TEST1_INTRODUCED_VERSION STREQUAL "1.2.3")
-        message(STATUS "  ✗ TEST1_INTRODUCED_VERSION should be '1.2.3', got: '${TEST1_INTRODUCED_VERSION}'")
+        message(
+            STATUS
+            "  ✗ TEST1_INTRODUCED_VERSION should be '1.2.3', got: '${TEST1_INTRODUCED_VERSION}'"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -64,7 +71,10 @@ function(test_get_fields_with_warning)
     endif()
 
     if(NOT TEST1_CURRENT_VALUE STREQUAL "OLD")
-        message(STATUS "  ✗ TEST1_CURRENT_VALUE should be 'OLD' (default), got: '${TEST1_CURRENT_VALUE}'")
+        message(
+            STATUS
+            "  ✗ TEST1_CURRENT_VALUE should be 'OLD' (default), got: '${TEST1_CURRENT_VALUE}'"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -76,18 +86,21 @@ function(test_get_fields_with_warning)
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Fields retrieved correctly for policy with warning")
 endfunction()
 
 function(test_is_default_changes)
     message(STATUS "Test 2: Setting policy and verifying IS_DEFAULT changes")
-    
+
     Policy_Set(FIELDS001 NEW)
     Policy_GetFields(FIELDS001 TEST1_SET)
 
     if(NOT TEST1_SET_CURRENT_VALUE STREQUAL "NEW")
-        message(STATUS "  ✗ TEST1_SET_CURRENT_VALUE should be 'NEW', got: '${TEST1_SET_CURRENT_VALUE}'")
+        message(
+            STATUS
+            "  ✗ TEST1_SET_CURRENT_VALUE should be 'NEW', got: '${TEST1_SET_CURRENT_VALUE}'"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -99,13 +112,13 @@ function(test_is_default_changes)
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ IS_DEFAULT correctly changed after setting policy")
 endfunction()
 
 function(test_policy_without_warning)
     message(STATUS "Test 3: Getting fields for policy without warning")
-    
+
     Policy_GetFields(FIELDS002 TEST2)
 
     if(NOT TEST2_WARNING STREQUAL "")
@@ -116,7 +129,10 @@ function(test_policy_without_warning)
     endif()
 
     if(NOT TEST2_CURRENT_VALUE STREQUAL "NEW")
-        message(STATUS "  ✗ TEST2_CURRENT_VALUE should be 'NEW' (default), got: '${TEST2_CURRENT_VALUE}'")
+        message(
+            STATUS
+            "  ✗ TEST2_CURRENT_VALUE should be 'NEW' (default), got: '${TEST2_CURRENT_VALUE}'"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -128,13 +144,13 @@ function(test_policy_without_warning)
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Fields retrieved correctly for policy without warning")
 endfunction()
 
 function(test_multiple_prefixes)
     message(STATUS "Test 4: Testing multiple prefixes don't interfere")
-    
+
     Policy_GetFields(FIELDS001 PREFIX_A)
     Policy_GetFields(FIELDS002 PREFIX_B)
 
@@ -151,35 +167,39 @@ function(test_multiple_prefixes)
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Multiple prefixes work correctly")
 endfunction()
 
 function(test_error_handling)
     message(STATUS "Test 5: Testing error handling for unregistered policy")
-    
+
     set(temp_script "${CMAKE_BINARY_DIR}/temp_test_get_fields_error.cmake")
-    file(WRITE "${temp_script}" "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
+    file(
+        WRITE "${temp_script}"
+        "include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/Policy.cmake)
 Policy_GetFields(NONEXISTENT TEST)
-")
-    
+"
+    )
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -P "${temp_script}"
+        COMMAND
+            ${CMAKE_COMMAND} -P "${temp_script}"
         RESULT_VARIABLE unreg_result
         OUTPUT_VARIABLE unreg_output
         ERROR_VARIABLE unreg_error
     )
-    
+
     # Clean up
     file(REMOVE "${temp_script}")
-    
+
     if(unreg_result EQUAL 0)
         message(STATUS "  ✗ Getting fields for unregistered policy should have failed")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Error handling working correctly")
 endfunction()
 
@@ -190,7 +210,7 @@ endfunction()
 
 function(run_all_tests)
     message(STATUS "=== Policy Get Fields Unit Tests ===")
-    
+
     setup_test_environment()
     test_get_fields_with_warning()
     test_is_default_changes()
@@ -198,7 +218,7 @@ function(run_all_tests)
     test_multiple_prefixes()
     test_error_handling()
     cleanup_test_environment()
-    
+
     # Test Summary
     message(STATUS "")
     if(ERROR_COUNT EQUAL 0)
@@ -207,7 +227,7 @@ function(run_all_tests)
         message(STATUS "✗ ${ERROR_COUNT} test(s) failed")
     endif()
     message(STATUS "")
-    
+
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "${ERROR_COUNT} test(s) failed")
     endif()

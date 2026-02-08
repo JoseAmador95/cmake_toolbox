@@ -52,15 +52,13 @@ foreach(_version RANGE ${_CLANGTIDY_MAX_VERSION} ${_CLANGTIDY_MIN_VERSION} -1)
 endforeach()
 
 # Find clang-tidy executable
-find_program(CLANG_TIDY_EXECUTABLE
-    NAMES ${_CLANGTIDY_NAMES}
-    DOC "Path to clang-tidy executable"
-)
+find_program(CLANG_TIDY_EXECUTABLE NAMES ${_CLANGTIDY_NAMES} DOC "Path to clang-tidy executable")
 
 # Get version information
 if(CLANG_TIDY_EXECUTABLE)
     execute_process(
-        COMMAND ${CLANG_TIDY_EXECUTABLE} --version
+        COMMAND
+            ${CLANG_TIDY_EXECUTABLE} --version
         OUTPUT_VARIABLE _clangtidy_version_output
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -84,8 +82,10 @@ unset(_CLANGTIDY_MIN_VERSION)
 
 # Handle standard find_package arguments
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(ClangTidy
-    REQUIRED_VARS CLANG_TIDY_EXECUTABLE
+find_package_handle_standard_args(
+    ClangTidy
+    REQUIRED_VARS
+        CLANG_TIDY_EXECUTABLE
     VERSION_VAR ClangTidy_VERSION
 )
 

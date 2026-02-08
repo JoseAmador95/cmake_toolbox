@@ -2,7 +2,10 @@
 # Verifies that Gcov module correctly applies coverage flags in SCHEMA mode
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH
+    "${REPO_ROOT}/cmake"
+    ${CMAKE_MODULE_PATH}
+)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_BINARY_DIR}/integration_gcov_schema_defaults")
@@ -15,8 +18,9 @@ endfunction()
 
 function(test_schema_defaults_gcc)
     message(STATUS "Test 1: SCHEMA mode with GCC defaults")
-    
-    set(test_script "
+
+    set(test_script
+        "
 cmake_minimum_required(VERSION 3.22)
 project(GcovSchemaTest LANGUAGES C CXX)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
@@ -44,28 +48,30 @@ if(NOT EXISTS \"\${CMAKE_BINARY_DIR}/coverage/gcovr_generated.cfg\")
 endif()
 
 message(STATUS \"SCHEMA mode defaults test passed\")
-")
-    
+"
+    )
+
     set(src_dir "${TEST_ROOT}/schema_gcc/src")
     set(build_dir "${TEST_ROOT}/schema_gcc/build")
     file(MAKE_DIRECTORY "${src_dir}")
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
-    
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
     )
-    
+
     if(NOT result EQUAL 0)
         message(STATUS "  ✗ SCHEMA mode GCC defaults failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     # Verify config file exists
     if(NOT EXISTS "${build_dir}/coverage/gcovr_generated.cfg")
         message(STATUS "  ✗ gcovr_generated.cfg not created")
@@ -73,7 +79,7 @@ message(STATUS \"SCHEMA mode defaults test passed\")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     # Verify config file has some content (schema varies by gcovr version)
     file(READ "${build_dir}/coverage/gcovr_generated.cfg" config_content)
     string(LENGTH "${config_content}" config_len)
@@ -83,14 +89,15 @@ message(STATUS \"SCHEMA mode defaults test passed\")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ SCHEMA mode GCC defaults works correctly")
 endfunction()
 
 function(test_schema_defaults_clang)
     message(STATUS "Test 2: SCHEMA mode with Clang defaults")
-    
-    set(test_script "
+
+    set(test_script
+        "
 cmake_minimum_required(VERSION 3.22)
 project(GcovSchemaTest LANGUAGES C CXX)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
@@ -110,39 +117,41 @@ if(has_coverage EQUAL -1)
 endif()
 
 message(STATUS \"SCHEMA mode Clang test passed\")
-")
-    
+"
+    )
+
     set(src_dir "${TEST_ROOT}/schema_clang/src")
     set(build_dir "${TEST_ROOT}/schema_clang/build")
     file(MAKE_DIRECTORY "${src_dir}")
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
-    
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
     )
-    
+
     if(NOT result EQUAL 0)
         message(STATUS "  ✗ SCHEMA mode Clang defaults failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ SCHEMA mode Clang defaults works correctly")
 endfunction()
 
 function(run_all_tests)
     message(STATUS "=== Gcov SCHEMA Mode Defaults Integration Tests ===")
-    
+
     setup_test_environment()
-    
+
     test_schema_defaults_gcc()
     test_schema_defaults_clang()
-    
+
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "Gcov SCHEMA defaults tests failed with ${ERROR_COUNT} error(s)")

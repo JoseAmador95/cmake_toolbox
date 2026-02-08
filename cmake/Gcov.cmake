@@ -175,10 +175,23 @@ include_guard(GLOBAL)
 if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
     set(_GCOV_C_COMPILE_FLAGS --coverage)
     set(_GCOV_C_LINK_FLAGS --coverage)
-elseif((CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC") AND NOT GCOV_COMPILE_FLAGS)
-    message(WARNING "Gcov: C compiler '${CMAKE_C_COMPILER_ID}' does not support gcov/gcovr. "
-                    "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
-                    "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool.")
+elseif(
+    (
+        CMAKE_C_COMPILER_ID
+            STREQUAL
+            "MSVC"
+        OR CMAKE_C_COMPILER_FRONTEND_VARIANT
+            STREQUAL
+            "MSVC"
+    )
+    AND NOT GCOV_COMPILE_FLAGS
+)
+    message(
+        WARNING
+        "Gcov: C compiler '${CMAKE_C_COMPILER_ID}' does not support gcov/gcovr. "
+        "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
+        "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool."
+    )
     set(_GCOV_C_COMPILE_FLAGS "")
     set(_GCOV_C_LINK_FLAGS "")
 else()
@@ -190,10 +203,23 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
     set(_GCOV_CXX_COMPILE_FLAGS --coverage)
     set(_GCOV_CXX_LINK_FLAGS --coverage)
-elseif((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC") AND NOT GCOV_COMPILE_FLAGS)
-    message(WARNING "Gcov: C++ compiler '${CMAKE_CXX_COMPILER_ID}' does not support gcov/gcovr. "
-                    "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
-                    "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool.")
+elseif(
+    (
+        CMAKE_CXX_COMPILER_ID
+            STREQUAL
+            "MSVC"
+        OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT
+            STREQUAL
+            "MSVC"
+    )
+    AND NOT GCOV_COMPILE_FLAGS
+)
+    message(
+        WARNING
+        "Gcov: C++ compiler '${CMAKE_CXX_COMPILER_ID}' does not support gcov/gcovr. "
+        "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
+        "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool."
+    )
     set(_GCOV_CXX_COMPILE_FLAGS "")
     set(_GCOV_CXX_LINK_FLAGS "")
 else()
@@ -202,7 +228,14 @@ else()
 endif()
 
 # Link flags: Use --coverage if any compiler supports it
-if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$" OR CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+if(
+    CMAKE_C_COMPILER_ID
+        MATCHES
+        "^(GNU|Clang|AppleClang)$"
+    OR CMAKE_CXX_COMPILER_ID
+        MATCHES
+        "^(GNU|Clang|AppleClang)$"
+)
     set(_GCOV_LINK_FLAGS --coverage)
 else()
     set(_GCOV_LINK_FLAGS "")
@@ -219,23 +252,11 @@ include(GcovrSchema)
 # Internal State Variables
 # ==============================================================================
 
-set(_GCOVR_CONFIG_MODE
-    ""
-    CACHE INTERNAL
-    "Gcovr configuration mode: SCHEMA or CONFIG_FILE"
-)
+set(_GCOVR_CONFIG_MODE "" CACHE INTERNAL "Gcovr configuration mode: SCHEMA or CONFIG_FILE")
 
-set(_GCOVR_SCHEMA_VERSION
-    ""
-    CACHE INTERNAL
-    "Detected gcovr schema version"
-)
+set(_GCOVR_SCHEMA_VERSION "" CACHE INTERNAL "Detected gcovr schema version")
 
-set(_GCOVR_INITIALIZED
-    FALSE
-    CACHE INTERNAL
-    "Whether Gcovr module has been initialized"
-)
+set(_GCOVR_INITIALIZED FALSE CACHE INTERNAL "Whether Gcovr module has been initialized")
 
 # ==============================================================================
 # Cache Variables (preserved from original + new)
@@ -253,11 +274,7 @@ set(GCOVR_OUTPUT_DIR
     "Directory for coverage output files"
 )
 
-set(GCOVR_ROOT_DIR
-    "${CMAKE_SOURCE_DIR}"
-    CACHE PATH
-    "Root directory for coverage analysis"
-)
+set(GCOVR_ROOT_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Root directory for coverage analysis")
 
 # Manual overrides: If set, bypass automatic detection
 set(GCOV_COMPILE_FLAGS
@@ -273,7 +290,13 @@ set(GCOV_LINK_FLAGS
 )
 
 # Mark internal LUT variables as advanced (not for user modification)
-mark_as_advanced(_GCOV_C_COMPILE_FLAGS _GCOV_C_LINK_FLAGS _GCOV_CXX_COMPILE_FLAGS _GCOV_CXX_LINK_FLAGS _GCOV_LINK_FLAGS)
+mark_as_advanced(
+    _GCOV_C_COMPILE_FLAGS
+    _GCOV_C_LINK_FLAGS
+    _GCOV_CXX_COMPILE_FLAGS
+    _GCOV_CXX_LINK_FLAGS
+    _GCOV_LINK_FLAGS
+)
 
 # Backward compatibility alias
 set(GCOV_OUTPUT_FILE
@@ -312,25 +335,29 @@ function(Gcovr_Initialize)
     if(DETECTED_VERSION)
         set(_GCOVR_SCHEMA_VERSION "${DETECTED_VERSION}" CACHE INTERNAL "" FORCE)
         set(_GCOVR_CONFIG_MODE "SCHEMA" CACHE INTERNAL "" FORCE)
-        
+
         # Load schema defaults
         GcovrSchema_SetDefaults("${DETECTED_VERSION}")
         GcovrSchema_Validate()
         if(DEFINED GCOVR_SCHEMA_VALID AND NOT GCOVR_SCHEMA_VALID)
-            message(WARNING "Gcovr_Initialize: Some gcovr settings are invalid. Check earlier warnings.")
+            message(
+                WARNING
+                "Gcovr_Initialize: Some gcovr settings are invalid. Check earlier warnings."
+            )
         endif()
-        
+
         message(STATUS "Gcovr_Initialize: Using SCHEMA mode with gcovr ${DETECTED_VERSION}")
     else()
         set(_GCOVR_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "" FORCE)
-        
+
         # In CONFIG_FILE mode without a file, check for default location
         set(DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/gcovr.cfg")
         if(EXISTS "${DEFAULT_CONFIG}")
             set(GCOVR_CONFIG_FILE "${DEFAULT_CONFIG}" CACHE FILEPATH "" FORCE)
             message(STATUS "Gcovr_Initialize: Found config file at ${DEFAULT_CONFIG}")
         else()
-            message(WARNING 
+            message(
+                WARNING
                 "Gcovr_Initialize: Unsupported gcovr version and no config file found.\n"
                 "Please either:\n"
                 "  1. Update to a supported gcovr version (see GcovrSchema_GetSupportedVersions())\n"
@@ -375,7 +402,8 @@ function(_Gcovr_GetConfigFile OUTPUT_VAR)
     else()
         # Use provided config file
         if(NOT GCOVR_CONFIG_FILE OR NOT EXISTS "${GCOVR_CONFIG_FILE}")
-            message(FATAL_ERROR 
+            message(
+                FATAL_ERROR
                 "_Gcovr_GetConfigFile: CONFIG_FILE mode requires GCOVR_CONFIG_FILE to be set "
                 "and point to an existing file. Current value: '${GCOVR_CONFIG_FILE}'"
             )
@@ -416,7 +444,7 @@ function(Gcov_AddToTarget TARGET SCOPE)
                 $<$<COMPILE_LANGUAGE:C>:${_GCOV_C_COMPILE_FLAGS}>
             )
         endif()
-        
+
         if(_GCOV_CXX_COMPILE_FLAGS)
             target_compile_options(
                 ${TARGET}
@@ -458,7 +486,7 @@ file(MAKE_DIRECTORY "${GCOVR_OUTPUT_DIR}")
 # ==============================================================================
 # Generate Config File at Configure Time (SCHEMA mode)
 # ==============================================================================
-# 
+#
 # In SCHEMA mode, the config file is generated at configure time from the
 # GCOVR_* cache variables. This ensures all user-configured values are included.
 # The file will be regenerated on each cmake configure.
@@ -471,8 +499,13 @@ if(_GCOVR_CONFIG_MODE STREQUAL "SCHEMA")
     set(_GCOVR_ACTIVE_CONFIG_FILE "${_GCOVR_GENERATED_CONFIG_FILE}")
 
     set(_gcovr_thresholds "")
-    foreach(var GCOVR_FAIL_UNDER_LINE GCOVR_FAIL_UNDER_BRANCH
-                GCOVR_FAIL_UNDER_FUNCTION GCOVR_FAIL_UNDER_DECISION)
+    foreach(
+        var
+        GCOVR_FAIL_UNDER_LINE
+        GCOVR_FAIL_UNDER_BRANCH
+        GCOVR_FAIL_UNDER_FUNCTION
+        GCOVR_FAIL_UNDER_DECISION
+    )
         if(DEFINED ${var} AND NOT "${${var}}" STREQUAL "0")
             list(APPEND _gcovr_thresholds "${var}=${${var}}")
         endif()
@@ -480,20 +513,30 @@ if(_GCOVR_CONFIG_MODE STREQUAL "SCHEMA")
 
     if(GCOVR_ENFORCE_THRESHOLDS)
         if(_gcovr_thresholds)
-            list(JOIN _gcovr_thresholds ", " _gcovr_thresholds_str)
+            list(
+                JOIN _gcovr_thresholds
+                ", "
+                _gcovr_thresholds_str
+            )
             message(STATUS "Gcovr: Enforcing coverage thresholds (${_gcovr_thresholds_str}).")
         else()
             message(STATUS "Gcovr: Threshold enforcement enabled, but no thresholds are set.")
         endif()
     else()
         if(_gcovr_thresholds)
-            message(STATUS "Gcovr: Thresholds configured but enforcement disabled (set GCOVR_ENFORCE_THRESHOLDS=ON to enforce).")
+            message(
+                STATUS
+                "Gcovr: Thresholds configured but enforcement disabled (set GCOVR_ENFORCE_THRESHOLDS=ON to enforce)."
+            )
         endif()
     endif()
 else()
     set(_GCOVR_ACTIVE_CONFIG_FILE "${GCOVR_CONFIG_FILE}")
     if(GCOVR_ENFORCE_THRESHOLDS)
-        message(WARNING "Gcovr: GCOVR_ENFORCE_THRESHOLDS is ignored in CONFIG_FILE mode. Use fail-under options in the config file.")
+        message(
+            WARNING
+            "Gcovr: GCOVR_ENFORCE_THRESHOLDS is ignored in CONFIG_FILE mode. Use fail-under options in the config file."
+        )
     endif()
 endif()
 
@@ -510,9 +553,11 @@ if(NOT TARGET gcovr)
     # Build gcovr command arguments
     set(_gcovr_args
         "${Gcovr_EXECUTABLE}"
-        --config "${_GCOVR_ACTIVE_CONFIG_FILE}"
-        --root "${GCOVR_ROOT_DIR}"
-        --print-summary  # Always print text summary
+        --config
+        "${_GCOVR_ACTIVE_CONFIG_FILE}"
+        --root
+        "${GCOVR_ROOT_DIR}"
+        --print-summary # Always print text summary
     )
 
     # Collect output files for comment
@@ -522,55 +567,95 @@ if(NOT TARGET gcovr)
     if("html" IN_LIST GCOVR_OUTPUT_FORMATS)
         set(_gcovr_html_output "${GCOVR_OUTPUT_DIR}/coverage.html")
         if(GCOVR_HTML_NESTED)
-            list(APPEND _gcovr_args --html-nested "${_gcovr_html_output}")
+            list(
+                APPEND _gcovr_args
+                --html-nested
+                "${_gcovr_html_output}"
+            )
         elseif(GCOVR_HTML_DETAILS)
-            list(APPEND _gcovr_args --html-details "${_gcovr_html_output}")
+            list(
+                APPEND _gcovr_args
+                --html-details
+                "${_gcovr_html_output}"
+            )
         else()
-            list(APPEND _gcovr_args --html "${_gcovr_html_output}")
+            list(
+                APPEND _gcovr_args
+                --html
+                "${_gcovr_html_output}"
+            )
         endif()
         list(APPEND _gcovr_outputs "HTML")
     endif()
 
     # XML/Cobertura output
     if("xml" IN_LIST GCOVR_OUTPUT_FORMATS OR "cobertura" IN_LIST GCOVR_OUTPUT_FORMATS)
-        list(APPEND _gcovr_args --xml "${GCOVR_OUTPUT_DIR}/coverage.xml")
+        list(
+            APPEND _gcovr_args
+            --xml
+            "${GCOVR_OUTPUT_DIR}/coverage.xml"
+        )
         list(APPEND _gcovr_outputs "XML")
     endif()
 
     # JSON output
     if("json" IN_LIST GCOVR_OUTPUT_FORMATS)
-        list(APPEND _gcovr_args --json "${GCOVR_OUTPUT_DIR}/coverage.json")
+        list(
+            APPEND _gcovr_args
+            --json
+            "${GCOVR_OUTPUT_DIR}/coverage.json"
+        )
         list(APPEND _gcovr_outputs "JSON")
     endif()
 
     # LCOV output
     if("lcov" IN_LIST GCOVR_OUTPUT_FORMATS)
-        list(APPEND _gcovr_args --lcov "${GCOVR_OUTPUT_DIR}/coverage.lcov")
+        list(
+            APPEND _gcovr_args
+            --lcov
+            "${GCOVR_OUTPUT_DIR}/coverage.lcov"
+        )
         list(APPEND _gcovr_outputs "LCOV")
     endif()
 
     # CSV output
     if("csv" IN_LIST GCOVR_OUTPUT_FORMATS)
-        list(APPEND _gcovr_args --csv "${GCOVR_OUTPUT_DIR}/coverage.csv")
+        list(
+            APPEND _gcovr_args
+            --csv
+            "${GCOVR_OUTPUT_DIR}/coverage.csv"
+        )
         list(APPEND _gcovr_outputs "CSV")
     endif()
 
     # Coveralls output
     if("coveralls" IN_LIST GCOVR_OUTPUT_FORMATS)
-        list(APPEND _gcovr_args --coveralls "${GCOVR_OUTPUT_DIR}/coveralls.json")
+        list(
+            APPEND _gcovr_args
+            --coveralls
+            "${GCOVR_OUTPUT_DIR}/coveralls.json"
+        )
         list(APPEND _gcovr_outputs "Coveralls")
     endif()
 
     # Build comment string
-    list(JOIN _gcovr_outputs ", " _gcovr_outputs_str)
+    list(
+        JOIN _gcovr_outputs
+        ", "
+        _gcovr_outputs_str
+    )
     if(_gcovr_outputs_str)
-        set(_gcovr_comment "Generate coverage report (${_gcovr_outputs_str}) -> ${GCOVR_OUTPUT_DIR}")
+        set(_gcovr_comment
+            "Generate coverage report (${_gcovr_outputs_str}) -> ${GCOVR_OUTPUT_DIR}"
+        )
     else()
         set(_gcovr_comment "Generate coverage summary (text only)")
     endif()
 
-    add_custom_target(gcovr
-        COMMAND ${_gcovr_args}
+    add_custom_target(
+        gcovr
+        COMMAND
+            ${_gcovr_args}
         WORKING_DIRECTORY "${GCOVR_ROOT_DIR}"
         COMMENT "${_gcovr_comment}"
     )

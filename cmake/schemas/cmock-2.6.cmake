@@ -137,8 +137,7 @@ ${TREAT_AS_YAML}  :when_no_prototypes: ${CMOCK_WHEN_NO_PROTOTYPES}
     # Add optional includes if provided
     if(CMOCK_INCLUDES_H_PRE_ORIG_HEADER)
         string(
-            APPEND
-            YAML_CONTENT
+            APPEND YAML_CONTENT
             "
   :includes_h_pre_orig_header: \"${CMOCK_INCLUDES_H_PRE_ORIG_HEADER}\""
         )
@@ -146,8 +145,7 @@ ${TREAT_AS_YAML}  :when_no_prototypes: ${CMOCK_WHEN_NO_PROTOTYPES}
 
     if(CMOCK_INCLUDES_H_POST_ORIG_HEADER)
         string(
-            APPEND
-            YAML_CONTENT
+            APPEND YAML_CONTENT
             "
   :includes_h_post_orig_header: \"${CMOCK_INCLUDES_H_POST_ORIG_HEADER}\""
         )
@@ -155,8 +153,7 @@ ${TREAT_AS_YAML}  :when_no_prototypes: ${CMOCK_WHEN_NO_PROTOTYPES}
 
     if(CMOCK_INCLUDES_C_PRE_HEADER)
         string(
-            APPEND
-            YAML_CONTENT
+            APPEND YAML_CONTENT
             "
   :includes_c_pre_header: \"${CMOCK_INCLUDES_C_PRE_HEADER}\""
         )
@@ -164,8 +161,7 @@ ${TREAT_AS_YAML}  :when_no_prototypes: ${CMOCK_WHEN_NO_PROTOTYPES}
 
     if(CMOCK_INCLUDES_C_POST_HEADER)
         string(
-            APPEND
-            YAML_CONTENT
+            APPEND YAML_CONTENT
             "
   :includes_c_post_header: \"${CMOCK_INCLUDES_C_POST_HEADER}\""
         )

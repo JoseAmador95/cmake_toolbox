@@ -48,7 +48,8 @@ endif()
 
 # Execute jq with OUTPUT_FILE to redirect output portably (no shell redirection needed)
 execute_process(
-    COMMAND ${JQ_EXECUTABLE} -f "${JQ_SCRIPT}" "${INPUT_FILE}"
+    COMMAND
+        ${JQ_EXECUTABLE} -f "${JQ_SCRIPT}" "${INPUT_FILE}"
     OUTPUT_FILE "${OUTPUT_FILE}"
     RESULT_VARIABLE result
     ERROR_VARIABLE error_msg
@@ -56,7 +57,10 @@ execute_process(
 
 # Check for errors and provide helpful messages
 if(NOT result EQUAL 0)
-    message(FATAL_ERROR "TrimCompileCommandsHelper: jq command failed with exit code ${result}\n${error_msg}")
+    message(
+        FATAL_ERROR
+        "TrimCompileCommandsHelper: jq command failed with exit code ${result}\n${error_msg}"
+    )
 endif()
 
 # Verify output file was created

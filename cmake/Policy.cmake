@@ -27,15 +27,15 @@
 #
 # USAGE EXAMPLE:
 #   # Register a policy
-#   Policy_Register(NAME CMP0001 
+#   Policy_Register(NAME CMP0001
 #                   DESCRIPTION "Modern target_link_libraries usage"
-#                   DEFAULT OLD 
+#                   DEFAULT OLD
 #                   INTRODUCED_VERSION 3.0
 #                   WARNING "Use PUBLIC/PRIVATE/INTERFACE keywords")
-#   
+#
 #   # Set policy value
 #   Policy_Set(POLICY CMP0001 VALUE NEW)
-#   
+#
 #   # Get policy value (with automatic warning if unset)
 #   Policy_Get(POLICY CMP0001 OUTVAR my_policy_value)
 #
@@ -213,11 +213,17 @@ function(Policy_Get POLICY OUTVAR)
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}"
+        )
     endif()
     _policy_record_unpack("${_entry}" _fields)
     if(NOT _fields)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}"
+        )
     endif()
     list(LENGTH _fields _field_len)
     if(_field_len LESS 3)
@@ -273,10 +279,7 @@ function(Policy_Version)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT ARG_MINIMUM)
-        message(
-            FATAL_ERROR
-            "${CMAKE_CURRENT_FUNCTION}: MINIMUM parameter is required"
-        )
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: MINIMUM parameter is required")
     endif()
 
     set(min_version "${ARG_MINIMUM}")
@@ -284,7 +287,7 @@ function(Policy_Version)
     if(ARG_MAXIMUM)
         set(max_version "${ARG_MAXIMUM}")
         set(do_max 1)
-        
+
         # Validate that MAXIMUM >= MINIMUM
         _policy_version_compare_gte("${max_version}" "${min_version}" _max_gte_min)
         if(NOT _max_gte_min)
@@ -301,11 +304,14 @@ function(Policy_Version)
             _policy_record_unpack("${_entry}" _fields)
             list(LENGTH _fields _field_len)
             if(_field_len LESS 4)
-                message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry entry too short (fields: ${_fields})")
+                message(
+                    FATAL_ERROR
+                    "${CMAKE_CURRENT_FUNCTION}: Registry entry too short (fields: ${_fields})"
+                )
             endif()
             list(GET _fields 0 pname)
             list(GET _fields 3 introver)
-            
+
             if(do_max)
                 # With MAXIMUM: set to NEW if min <= introver <= max (range semantics)
                 _policy_version_compare_gte("${introver}" "${min_version}" _intro_gte_min)
@@ -354,11 +360,17 @@ function(Policy_Info POLICY)
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}"
+        )
     endif()
     _policy_record_unpack("${_entry}" _fields)
     if(NOT _fields)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}"
+        )
     endif()
     list(LENGTH _fields _field_len)
     if(_field_len LESS 4)
@@ -454,11 +466,17 @@ function(Policy_GetFields POLICY PREFIX)
     _policy_registry_get(_policy_registry)
     list(GET _policy_registry ${_idx} _entry)
     if("${_entry}" STREQUAL "")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Registry is corrupted or empty for ${POLICY}"
+        )
     endif()
     _policy_record_unpack("${_entry}" _fields)
     if(NOT _fields)
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: Policy entry malformed for ${POLICY}: ${_entry}"
+        )
     endif()
     list(LENGTH _fields _field_len)
     if(_field_len LESS 4)
@@ -521,7 +539,7 @@ endfunction()
 #
 # Function Overview:
 #   _policy_check_newold     - Validates NEW/OLD values
-#   _policy_read/_policy_write - Policy value storage/retrieval  
+#   _policy_read/_policy_write - Policy value storage/retrieval
 #   _policy_registry_*       - Policy registry management
 #   _policy_record_unpack    - Parse stored policy records
 #   _policy_find             - Locate policy in registry
@@ -665,7 +683,7 @@ endfunction()
 # Warning Types:
 #   - REMOVED: Policy was removed, always warn once regardless of set status
 #   - DEPRECATED_UNSET: Policy deprecated and not explicitly set
-#   - DEPRECATED_SET: Policy deprecated but explicitly set (shorter message)  
+#   - DEPRECATED_SET: Policy deprecated but explicitly set (shorter message)
 #   - CURRENT: Current policy with warning, only when unset
 #
 # Tracking: Uses separate global properties for each warning scenario to

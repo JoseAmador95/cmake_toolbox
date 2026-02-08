@@ -17,7 +17,9 @@ endfunction()
 function(create_mock_test_executable exe_path)
     get_filename_component(exe_dir "${exe_path}" DIRECTORY)
     file(MAKE_DIRECTORY "${exe_dir}")
-    file(WRITE "${exe_path}" "#!/bin/sh
+    file(
+        WRITE "${exe_path}"
+        "#!/bin/sh
 if [ \"$1\" = \"-l\" ]; then
   echo \"suite\"
   echo \"test_one\"
@@ -25,9 +27,11 @@ if [ \"$1\" = \"-l\" ]; then
   exit 0
 fi
 exit 1
-")
+"
+    )
     execute_process(
-        COMMAND chmod +x "${exe_path}"
+        COMMAND
+            chmod +x "${exe_path}"
         RESULT_VARIABLE chmod_result
     )
     if(NOT chmod_result EQUAL 0)
@@ -37,12 +41,9 @@ endfunction()
 
 function(run_discover exe_path work_dir out_file)
     execute_process(
-        COMMAND ${CMAKE_COMMAND}
-            -D "TEST_EXECUTABLE=${exe_path}"
-            -D "TEST_WORKING_DIR=${work_dir}"
-            -D "TEST_SUITE=suite"
-            -D "TEST_FILE=${out_file}"
-            -P "${DISCOVER_TESTS_MODULE}"
+        COMMAND
+            ${CMAKE_COMMAND} -D "TEST_EXECUTABLE=${exe_path}" -D "TEST_WORKING_DIR=${work_dir}" -D
+            "TEST_SUITE=suite" -D "TEST_FILE=${out_file}" -P "${DISCOVER_TESTS_MODULE}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error

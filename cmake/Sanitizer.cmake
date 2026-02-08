@@ -144,22 +144,22 @@ endif()
 # that are supported by the compiler.
 function(_sanitizer_build_flags SUPPORTED_LIST PREFIX IS_MSVC OUTPUT_VAR)
     set(_FLAGS "")
-    
+
     if(ENABLE_SANITIZER_ADDRESS AND "address" IN_LIST SUPPORTED_LIST)
         string(APPEND _FLAGS "${${PREFIX}_ADDRESS_ARG},")
     endif()
-    
+
     if(ENABLE_SANITIZER_UNDEFINED AND "undefined" IN_LIST SUPPORTED_LIST)
         string(APPEND _FLAGS "${${PREFIX}_UNDEFINED_ARG},")
     endif()
-    
+
     if(ENABLE_SANITIZER_LEAK AND "leak" IN_LIST SUPPORTED_LIST)
         string(APPEND _FLAGS "${${PREFIX}_LEAK_ARG},")
     endif()
-    
+
     # Remove trailing comma
     string(REGEX REPLACE ",$" "" _FLAGS "${_FLAGS}")
-    
+
     # Prepend appropriate compiler flag prefix
     if(_FLAGS)
         if(IS_MSVC)
@@ -168,7 +168,7 @@ function(_sanitizer_build_flags SUPPORTED_LIST PREFIX IS_MSVC OUTPUT_VAR)
             string(PREPEND _FLAGS "-fsanitize=")
         endif()
     endif()
-    
+
     set(${OUTPUT_VAR} "${_FLAGS}" PARENT_SCOPE)
 endfunction()
 
@@ -187,10 +187,20 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT 
 endif()
 
 # Build C language flags (filters by enabled + supported sanitizers)
-_sanitizer_build_flags("${_SUPPORTED_C_SANITIZERS}" "_SANITIZER_C" "${_C_IS_MSVC}" _SANITIZER_C_FLAGS)
+_sanitizer_build_flags(
+    "${_SUPPORTED_C_SANITIZERS}"
+    "_SANITIZER_C"
+    "${_C_IS_MSVC}"
+    _SANITIZER_C_FLAGS
+)
 
 # Build CXX language flags
-_sanitizer_build_flags("${_SUPPORTED_CXX_SANITIZERS}" "_SANITIZER_CXX" "${_CXX_IS_MSVC}" _SANITIZER_CXX_FLAGS)
+_sanitizer_build_flags(
+    "${_SUPPORTED_CXX_SANITIZERS}"
+    "_SANITIZER_CXX"
+    "${_CXX_IS_MSVC}"
+    _SANITIZER_CXX_FLAGS
+)
 
 # Link flags: Merge supported sanitizers from both languages
 set(_SUPPORTED_LINK_SANITIZERS "")
@@ -252,11 +262,21 @@ set(SANITIZER_ENV_VARS
 
 # Mark internal LUT and compatibility variables as advanced (not for user modification)
 mark_as_advanced(
-    _SUPPORTED_C_SANITIZERS _SANITIZER_C_ADDRESS_ARG _SANITIZER_C_UNDEFINED_ARG _SANITIZER_C_LEAK_ARG
-    _SUPPORTED_CXX_SANITIZERS _SANITIZER_CXX_ADDRESS_ARG _SANITIZER_CXX_UNDEFINED_ARG _SANITIZER_CXX_LEAK_ARG
+    _SUPPORTED_C_SANITIZERS
+    _SANITIZER_C_ADDRESS_ARG
+    _SANITIZER_C_UNDEFINED_ARG
+    _SANITIZER_C_LEAK_ARG
+    _SUPPORTED_CXX_SANITIZERS
+    _SANITIZER_CXX_ADDRESS_ARG
+    _SANITIZER_CXX_UNDEFINED_ARG
+    _SANITIZER_CXX_LEAK_ARG
     _SUPPORTED_LINK_SANITIZERS
-    _C_IS_MSVC _CXX_IS_MSVC _LINK_IS_MSVC
-    _SANITIZER_C_FLAGS _SANITIZER_CXX_FLAGS _SANITIZER_LINK_FLAGS
+    _C_IS_MSVC
+    _CXX_IS_MSVC
+    _LINK_IS_MSVC
+    _SANITIZER_C_FLAGS
+    _SANITIZER_CXX_FLAGS
+    _SANITIZER_LINK_FLAGS
 )
 
 # ==============================================================================
@@ -271,7 +291,10 @@ mark_as_advanced(
 #
 function(Sanitizer_AddToTarget)
     set(options "")
-    set(oneValueArgs TARGET SCOPE)
+    set(oneValueArgs
+        TARGET
+        SCOPE
+    )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -304,7 +327,7 @@ function(Sanitizer_AddToTarget)
                 $<$<COMPILE_LANGUAGE:C>:${_SANITIZER_C_FLAGS}>
             )
         endif()
-        
+
         if(_SANITIZER_CXX_FLAGS)
             target_compile_options(
                 ${ARG_TARGET}
@@ -335,7 +358,8 @@ function(Sanitizer_AddToTarget)
     set_target_properties(
         ${ARG_TARGET}
         PROPERTIES
-            ENVIRONMENT "${SANITIZER_ENV_VARS}"
+            ENVIRONMENT
+                "${SANITIZER_ENV_VARS}"
     )
 endfunction()
 

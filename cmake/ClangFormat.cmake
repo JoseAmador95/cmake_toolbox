@@ -127,20 +127,23 @@ function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
         set(${ARG_OUTPUT_VAR} "" PARENT_SCOPE)
         return()
     endif()
-    
+
     # Convert relative paths to absolute paths
     if(NOT IS_ABSOLUTE "${ARG_CONFIG_FILE}")
         set(ABSOLUTE_CONFIG_FILE "${CMAKE_SOURCE_DIR}/${ARG_CONFIG_FILE}")
     else()
         set(ABSOLUTE_CONFIG_FILE "${ARG_CONFIG_FILE}")
     endif()
-    
+
     # Check if path exists and is a file (not a directory)
     if(EXISTS "${ABSOLUTE_CONFIG_FILE}")
         if(NOT IS_DIRECTORY "${ABSOLUTE_CONFIG_FILE}")
             set(${ARG_OUTPUT_VAR} "--style=file:${ABSOLUTE_CONFIG_FILE}" PARENT_SCOPE)
         else()
-            message(WARNING "ClangFormat config file is a directory, not a file: ${ABSOLUTE_CONFIG_FILE}")
+            message(
+                WARNING
+                "ClangFormat config file is a directory, not a file: ${ABSOLUTE_CONFIG_FILE}"
+            )
             set(${ARG_OUTPUT_VAR} "" PARENT_SCOPE)
         endif()
     else()
@@ -285,7 +288,10 @@ endfunction()
 function(ClangFormat_AddTargets)
     # Parse arguments
     set(options "")
-    set(oneValueArgs TARGET_PREFIX CONFIG_FILE)
+    set(oneValueArgs
+        TARGET_PREFIX
+        CONFIG_FILE
+    )
     set(multiValueArgs
         SOURCE_DIRS
         EXTENSIONS
@@ -299,7 +305,10 @@ function(ClangFormat_AddTargets)
     endif()
 
     if(NOT ClangFormat_FOUND)
-        message(WARNING "${CMAKE_CURRENT_FUNCTION}: ClangFormat not found, skipping targets for ${ARG_TARGET_PREFIX}")
+        message(
+            WARNING
+            "${CMAKE_CURRENT_FUNCTION}: ClangFormat not found, skipping targets for ${ARG_TARGET_PREFIX}"
+        )
         return()
     endif()
 
@@ -339,7 +348,10 @@ function(ClangFormat_AddTargets)
     endif()
 
     list(LENGTH ALL_SOURCE_FILES SOURCE_FILE_COUNT)
-    message(STATUS "${CMAKE_CURRENT_FUNCTION}: Found ${SOURCE_FILE_COUNT} source files for ${ARG_TARGET_PREFIX} clang-format")
+    message(
+        STATUS
+        "${CMAKE_CURRENT_FUNCTION}: Found ${SOURCE_FILE_COUNT} source files for ${ARG_TARGET_PREFIX} clang-format"
+    )
 
     # ===========================================================================
     # Create Formatting Commands

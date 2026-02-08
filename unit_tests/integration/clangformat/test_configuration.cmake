@@ -2,7 +2,10 @@
 # Verifies ClangFormat target generation and exclusion patterns
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH
+    "${REPO_ROOT}/cmake"
+    ${CMAKE_MODULE_PATH}
+)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_BINARY_DIR}/integration_clangformat")
@@ -15,12 +18,13 @@ endfunction()
 
 function(test_basic_configuration)
     message(STATUS "Test 1: Basic ClangFormat configuration with SOURCE_DIRS")
-    
+
     set(src_dir "${TEST_ROOT}/basic/src")
     set(build_dir "${TEST_ROOT}/basic/build")
     file(MAKE_DIRECTORY "${src_dir}/lib")
-    
-    set(test_script "
+
+    set(test_script
+        "
 cmake_minimum_required(VERSION 3.22)
 project(ClangFormatBasicTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
@@ -49,38 +53,41 @@ else()
 endif()
 
 add_library(mylib STATIC lib/lib.c)
-")
-    
+"
+    )
+
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
-    
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
     )
-    
+
     if(NOT result EQUAL 0)
         message(STATUS "  ✗ Basic configuration failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ Basic ClangFormat configuration works")
 endfunction()
 
 function(test_exclude_patterns)
     message(STATUS "Test 2: ClangFormat with EXCLUDE_PATTERNS")
-    
+
     set(src_dir "${TEST_ROOT}/exclude/src")
     set(build_dir "${TEST_ROOT}/exclude/build")
     file(MAKE_DIRECTORY "${src_dir}/lib")
     file(MAKE_DIRECTORY "${src_dir}/generated")
-    
-    set(test_script "
+
+    set(test_script
+        "
 cmake_minimum_required(VERSION 3.22)
 project(ClangFormatExcludeTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
@@ -105,38 +112,41 @@ else()
 endif()
 
 add_library(mylib STATIC lib/lib.c generated/gen.c)
-")
-    
+"
+    )
+
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
     file(WRITE "${src_dir}/generated/gen.c" "// Generated file\nint gen_func(void){return 1;}")
     file(WRITE "${src_dir}/.clang-format" "BasedOnStyle: LLVM\n")
-    
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
     )
-    
+
     if(NOT result EQUAL 0)
         message(STATUS "  ✗ Exclude patterns test failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     message(STATUS "  ✓ ClangFormat EXCLUDE_PATTERNS works")
 endfunction()
 
 function(test_tool_not_found)
     message(STATUS "Test 3: ClangFormat gracefully handles missing tool")
-    
+
     set(src_dir "${TEST_ROOT}/no_tool/src")
     set(build_dir "${TEST_ROOT}/no_tool/build")
     file(MAKE_DIRECTORY "${src_dir}/lib")
-    
-    set(test_script "
+
+    set(test_script
+        "
 cmake_minimum_required(VERSION 3.22)
 project(ClangFormatNoToolTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
@@ -160,41 +170,47 @@ endif()
 
 add_library(mylib STATIC lib/lib.c)
 message(STATUS \"ClangFormat gracefully handled missing tool\")
-")
-    
+"
+    )
+
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/lib/lib.c" "int lib_func(void) { return 42; }")
-    
+
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        COMMAND
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
     )
-    
+
     if(NOT result EQUAL 0)
         message(STATUS "  ✗ Should not fail when clang-format missing: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
-    
+
     # Check for warning in output
-    string(FIND "${output}${error}" "clang-format" has_warning)
+    string(
+        FIND "${output}${error}"
+        "clang-format"
+        has_warning
+    )
     # Warning is optional - main thing is it didn't fail
-    
+
     message(STATUS "  ✓ ClangFormat gracefully handles missing tool")
 endfunction()
 
 function(run_all_tests)
     message(STATUS "=== ClangFormat Integration Tests ===")
-    
+
     setup_test_environment()
-    
+
     test_basic_configuration()
     test_exclude_patterns()
     test_tool_not_found()
-    
+
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "ClangFormat tests failed with ${ERROR_COUNT} error(s)")

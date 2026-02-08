@@ -70,7 +70,10 @@ find_package(Jq QUIET)
 #
 function(CompileCommands_Trim)
     set(options "")
-    set(oneValueArgs INPUT OUTPUT)
+    set(oneValueArgs
+        INPUT
+        OUTPUT
+    )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -91,21 +94,17 @@ function(CompileCommands_Trim)
         ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/prune_compile_commands/prune_compile_commands.jq
     )
 
-    set(HELPER_SCRIPT
-        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/internal/TrimCompileCommandsHelper.cmake
-    )
+    set(HELPER_SCRIPT ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/internal/TrimCompileCommandsHelper.cmake)
 
     cmake_path(GET ARG_OUTPUT PARENT_PATH output_dir)
     file(MAKE_DIRECTORY ${output_dir})
 
     add_custom_command(
-        OUTPUT ${ARG_OUTPUT}
+        OUTPUT
+            ${ARG_OUTPUT}
         COMMAND
-            ${CMAKE_COMMAND} -P ${HELPER_SCRIPT}
-            -DJQ_EXECUTABLE=${Jq_EXECUTABLE}
-            -DINPUT_FILE=${ARG_INPUT}
-            -DOUTPUT_FILE=${ARG_OUTPUT}
-            -DJQ_SCRIPT=${JQ_SCRIPT}
+            ${CMAKE_COMMAND} -P ${HELPER_SCRIPT} -DJQ_EXECUTABLE=${Jq_EXECUTABLE}
+            -DINPUT_FILE=${ARG_INPUT} -DOUTPUT_FILE=${ARG_OUTPUT} -DJQ_SCRIPT=${JQ_SCRIPT}
         DEPENDS
             ${ARG_INPUT}
             ${JQ_SCRIPT}

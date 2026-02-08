@@ -81,7 +81,10 @@ function(CMockSchema_DetectVersion CMOCK_EXE TAG OUTPUT_VAR)
     if(NOT DETECTED_VERSION)
         if(TAG MATCHES "^v?([0-9]+)\\.([0-9]+)")
             set(DETECTED_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Version detected from git tag: ${DETECTED_VERSION}")
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Version detected from git tag: ${DETECTED_VERSION}"
+            )
         else()
             message(WARNING "${CMAKE_CURRENT_FUNCTION}: Could not parse version from tag: ${TAG}")
         endif()
@@ -92,10 +95,16 @@ function(CMockSchema_DetectVersion CMOCK_EXE TAG OUTPUT_VAR)
         CMockSchema_GetSupportedVersions(SUPPORTED_VERSIONS)
         if(DETECTED_VERSION IN_LIST SUPPORTED_VERSIONS)
             set(${OUTPUT_VAR} "${DETECTED_VERSION}" PARENT_SCOPE)
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Using CMock schema version: ${DETECTED_VERSION}")
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Using CMock schema version: ${DETECTED_VERSION}"
+            )
         else()
             set(${OUTPUT_VAR} "" PARENT_SCOPE)
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Unsupported CMock version ${DETECTED_VERSION}")
+            message(
+                STATUS
+                "${CMAKE_CURRENT_FUNCTION}: Unsupported CMock version ${DETECTED_VERSION}"
+            )
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: Supported versions: ${SUPPORTED_VERSIONS}")
             message(STATUS "${CMAKE_CURRENT_FUNCTION}: Falling back to CONFIG_FILE mode")
         endif()
@@ -122,9 +131,9 @@ function(CMockSchema_SetDefaults VERSION)
     set(SCHEMA_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/schemas/cmock-${VERSION}.cmake")
     if(EXISTS "${SCHEMA_FILE}")
         include("${SCHEMA_FILE}")
-    message(STATUS "${CMAKE_CURRENT_FUNCTION}: Applied defaults for CMock ${VERSION}")
+        message(STATUS "${CMAKE_CURRENT_FUNCTION}: Applied defaults for CMock ${VERSION}")
     else()
-    message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Schema file not found: ${SCHEMA_FILE}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Schema file not found: ${SCHEMA_FILE}")
     endif()
 endfunction()
 
@@ -153,18 +162,14 @@ function(CMockSchema_GenerateConfigFile CONFIG_FILE)
         "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/schemas/cmock-${_CMOCK_SCHEMA_VERSION}.cmake"
     )
     if(NOT EXISTS "${SCHEMA_FILE}")
-    message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Schema file not found: ${SCHEMA_FILE}")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Schema file not found: ${SCHEMA_FILE}")
     endif()
 
     # Include schema to get generation function
     include("${SCHEMA_FILE}")
 
     # Call version-specific generation function
-    cmake_language(
-        CALL
-            "CMockSchema_${_CMOCK_SCHEMA_VERSION}_GenerateYAML"
-            "${CONFIG_FILE}"
-    )
+    cmake_language(CALL "CMockSchema_${_CMOCK_SCHEMA_VERSION}_GenerateYAML" "${CONFIG_FILE}")
 
     message(
         STATUS
