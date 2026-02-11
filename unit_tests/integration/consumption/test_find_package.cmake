@@ -11,7 +11,10 @@ endif()
 # Integration Test: installed package consumption via find_package
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH
+    "${REPO_ROOT}/cmake"
+    ${CMAKE_MODULE_PATH}
+)
 include(TestHelpers)
 
 set(ERROR_COUNT 0)
@@ -49,7 +52,7 @@ include(ClangFormat)
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)
  target_link_libraries(consumer_app PRIVATE consumer_lib)
- file(GENERATE OUTPUT \${CMAKE_BINARY_DIR}/consumer_app.target_path CONTENT $<TARGET_FILE:consumer_app>)
+  file(GENERATE OUTPUT \${CMAKE_BINARY_DIR}/$<CONFIG>/consumer_app.target_path CONTENT $<TARGET_FILE:consumer_app>)
  "
     )
 
@@ -63,8 +66,7 @@ include(ClangFormat)
     TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${REPO_ROOT}" -B "${toolbox_build_dir}"
-            ${configure_args}
+            ${CMAKE_COMMAND} -S "${REPO_ROOT}" -B "${toolbox_build_dir}" ${configure_args}
             -DCMAKE_TOOLBOX_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_LIBDIR=lib
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
@@ -131,8 +133,7 @@ include(ClangFormat)
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${consumer_src_dir}" -B "${consumer_build_dir}"
-            ${configure_args}
+            ${CMAKE_COMMAND} -S "${consumer_src_dir}" -B "${consumer_build_dir}" ${configure_args}
             -DCMAKE_PREFIX_PATH=${toolbox_install_prefix}
         RESULT_VARIABLE consumer_result
         OUTPUT_VARIABLE consumer_output
@@ -165,17 +166,31 @@ include(ClangFormat)
         return()
     endif()
 
-    if(NOT EXISTS "${consumer_build_dir}/consumer_app.target_path")
+    set(target_path_file "")
+    if(EXISTS "${consumer_build_dir}/consumer_app.target_path")
+        set(target_path_file "${consumer_build_dir}/consumer_app.target_path")
+    else()
+        file(GLOB config_target_files "${consumer_build_dir}/*/consumer_app.target_path")
+        list(LENGTH config_target_files config_target_count)
+        if(config_target_count GREATER 0)
+            list(GET config_target_files 0 target_path_file)
+        endif()
+    endif()
+
+    if(target_path_file STREQUAL "")
         message(STATUS "  [FAIL] find_package target path metadata was not generated")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    file(READ "${consumer_build_dir}/consumer_app.target_path" consumer_app_path)
+    file(READ "${target_path_file}" consumer_app_path)
     string(STRIP "${consumer_app_path}" consumer_app_path)
     if(consumer_app_path STREQUAL "" OR NOT EXISTS "${consumer_app_path}")
-        message(STATUS "  [FAIL] find_package linked consumer target was not produced at resolved path")
+        message(
+            STATUS
+            "  [FAIL] find_package linked consumer target was not produced at resolved path"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()

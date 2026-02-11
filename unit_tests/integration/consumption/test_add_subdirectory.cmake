@@ -11,7 +11,10 @@ endif()
 # Integration Test: cmake_toolbox consumption via add_subdirectory
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH
+    "${REPO_ROOT}/cmake"
+    ${CMAKE_MODULE_PATH}
+)
 include(TestHelpers)
 
 set(ERROR_COUNT 0)
@@ -47,7 +50,7 @@ include(ClangFormat)
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)
  target_link_libraries(consumer_app PRIVATE consumer_lib)
- file(GENERATE OUTPUT \${CMAKE_BINARY_DIR}/consumer_app.target_path CONTENT $<TARGET_FILE:consumer_app>)
+  file(GENERATE OUTPUT \${CMAKE_BINARY_DIR}/$<CONFIG>/consumer_app.target_path CONTENT $<TARGET_FILE:consumer_app>)
  "
     )
 
@@ -93,23 +96,40 @@ include(ClangFormat)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/consumer_app.target_path")
+    set(target_path_file "")
+    if(EXISTS "${build_dir}/consumer_app.target_path")
+        set(target_path_file "${build_dir}/consumer_app.target_path")
+    else()
+        file(GLOB config_target_files "${build_dir}/*/consumer_app.target_path")
+        list(LENGTH config_target_files config_target_count)
+        if(config_target_count GREATER 0)
+            list(GET config_target_files 0 target_path_file)
+        endif()
+    endif()
+
+    if(target_path_file STREQUAL "")
         message(STATUS "  [FAIL] add_subdirectory target path metadata was not generated")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    file(READ "${build_dir}/consumer_app.target_path" consumer_app_path)
+    file(READ "${target_path_file}" consumer_app_path)
     string(STRIP "${consumer_app_path}" consumer_app_path)
     if(consumer_app_path STREQUAL "" OR NOT EXISTS "${consumer_app_path}")
-        message(STATUS "  [FAIL] add_subdirectory linked consumer target was not produced at resolved path")
+        message(
+            STATUS
+            "  [FAIL] add_subdirectory linked consumer target was not produced at resolved path"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  [PASS] add_subdirectory consumption configures and builds linked consumer target")
+    message(
+        STATUS
+        "  [PASS] add_subdirectory consumption configures and builds linked consumer target"
+    )
 endfunction()
 
 function(run_all_tests)
