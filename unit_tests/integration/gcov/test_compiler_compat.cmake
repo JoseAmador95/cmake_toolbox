@@ -21,6 +21,11 @@ include(TestHelpers)
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_gcov_compiler")
 
+set(_exe_suffix "")
+if(WIN32)
+    set(_exe_suffix ".exe")
+endif()
+
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
@@ -70,7 +75,8 @@ target_link_libraries(mytest PRIVATE mylib)
     TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args} -DCMAKE_C_COMPILER=${GCC_C_COMPILER}
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
+            -DCMAKE_C_COMPILER=${GCC_C_COMPILER}
         RESULT_VARIABLE config_result
         OUTPUT_VARIABLE config_output
         ERROR_VARIABLE config_error
@@ -110,8 +116,8 @@ target_link_libraries(mytest PRIVATE mylib)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/mytest")
-        message(STATUS "  ✗ Expected test executable not found: ${build_dir}/mytest")
+    if(NOT EXISTS "${build_dir}/mytest${_exe_suffix}")
+        message(STATUS "  ✗ Expected test executable not found: ${build_dir}/mytest${_exe_suffix}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -163,8 +169,8 @@ target_link_libraries(mytest PRIVATE mylib)
     TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
-            ${configure_args} -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
+            -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
         RESULT_VARIABLE config_result
         OUTPUT_VARIABLE config_output
         ERROR_VARIABLE config_error
@@ -214,8 +220,11 @@ target_link_libraries(mytest PRIVATE mylib)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/mytest")
-        message(STATUS "  ✗ Expected Clang test executable not found: ${build_dir}/mytest")
+    if(NOT EXISTS "${build_dir}/mytest${_exe_suffix}")
+        message(
+            STATUS
+            "  ✗ Expected Clang test executable not found: ${build_dir}/mytest${_exe_suffix}"
+        )
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
