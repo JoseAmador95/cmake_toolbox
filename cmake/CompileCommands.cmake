@@ -52,6 +52,34 @@ Example
 
 include_guard(GLOBAL)
 
+get_property(_compilecommands_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(_compilecommands_multi_config)
+    message(
+        WARNING
+        "CompileCommands: Multi-config generators do not produce compile_commands.json. "
+        "Module disabled."
+    )
+
+    function(CompileCommands_Trim)
+        message(
+            WARNING
+            "${CMAKE_CURRENT_FUNCTION}: compile_commands.json is unavailable with multi-config generators"
+        )
+    endfunction()
+
+    function(compile_commands_trim)
+        message(
+            DEPRECATION
+            "compile_commands_trim() is deprecated, use CompileCommands_Trim() instead"
+        )
+        CompileCommands_Trim(${ARGN})
+    endfunction()
+
+    unset(_compilecommands_multi_config)
+    return()
+endif()
+unset(_compilecommands_multi_config)
+
 # ==============================================================================
 # Find jq (optional)
 # ==============================================================================

@@ -187,6 +187,19 @@ endfunction()
 function(run_all_tests)
     message(STATUS "=== CompileCommands Integration Tests ===")
 
+    if(DEFINED CMAKE_TOOLBOX_TEST_GENERATOR)
+        string(
+            REGEX MATCH
+            "(Visual Studio|Xcode|Ninja Multi-Config)"
+            _multi_config_match
+            "${CMAKE_TOOLBOX_TEST_GENERATOR}"
+        )
+        if(_multi_config_match)
+            message(STATUS "  ⊘ Multi-config generator detected, skipping CompileCommands tests")
+            return()
+        endif()
+    endif()
+
     setup_test_environment()
 
     test_trim_with_jq()
