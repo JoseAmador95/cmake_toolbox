@@ -245,6 +245,34 @@ endif()
 # Find Dependencies
 # ==============================================================================
 
+if(NOT _GCOV_LINK_FLAGS AND NOT GCOV_COMPILE_FLAGS AND NOT GCOV_LINK_FLAGS)
+    message(
+        WARNING
+        "Gcov: No supported compiler detected for gcov coverage. Module disabled. "
+        "For MSVC coverage, use Visual Studio Code Coverage or OpenCppCoverage instead. "
+        "Or set GCOV_COMPILE_FLAGS and GCOV_LINK_FLAGS to use a custom tool."
+    )
+
+    function(Gcovr_Initialize)
+        message(WARNING "Gcovr_Initialize: gcov support is disabled for this toolchain")
+    endfunction()
+
+    function(Gcov_AddToTarget TARGET SCOPE)
+        message(
+            WARNING
+            "${CMAKE_CURRENT_FUNCTION}: gcov not supported for this toolchain. "
+            "No instrumentation will be applied to target '${TARGET}'."
+        )
+    endfunction()
+
+    function(target_add_gcov _target _scope)
+        message(DEPRECATION "target_add_gcov() is deprecated, use Gcov_AddToTarget() instead")
+        Gcov_AddToTarget(${_target} ${_scope})
+    endfunction()
+
+    return()
+endif()
+
 find_package(Gcovr REQUIRED)
 include(GcovrSchema)
 
