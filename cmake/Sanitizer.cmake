@@ -333,6 +333,61 @@ set(SANITIZER_ENV_VARS
 )
 unset(_SANITIZER_ASAN_OPTIONS)
 
+set(_SANITIZER_MSVC_ASAN_DIR "")
+if(_LINK_IS_MSVC AND ENABLE_SANITIZER_ADDRESS)
+    set(_SANITIZER_VS_INSTALL_DIR "")
+    if(DEFINED CMAKE_VS_INSTALL_DIR AND EXISTS "${CMAKE_VS_INSTALL_DIR}")
+        set(_SANITIZER_VS_INSTALL_DIR "${CMAKE_VS_INSTALL_DIR}")
+    elseif(DEFINED ENV{VSINSTALLDIR} AND EXISTS "$ENV{VSINSTALLDIR}")
+        set(_SANITIZER_VS_INSTALL_DIR "$ENV{VSINSTALLDIR}")
+    endif()
+
+    if(_SANITIZER_VS_INSTALL_DIR)
+        file(GLOB _SANITIZER_MSVC_TOOLSET_DIRS "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/MSVC/*")
+        list(SORT _SANITIZER_MSVC_TOOLSET_DIRS DESC)
+        foreach(_SANITIZER_TOOLSET_DIR IN LISTS _SANITIZER_MSVC_TOOLSET_DIRS)
+            file(
+                GLOB _SANITIZER_ASAN_DLLS
+                "${_SANITIZER_TOOLSET_DIR}/bin/Host*/*/clang_rt.asan_dynamic-x86_64.dll"
+            )
+            if(_SANITIZER_ASAN_DLLS)
+                list(GET _SANITIZER_ASAN_DLLS 0 _SANITIZER_ASAN_DLL)
+                get_filename_component(_SANITIZER_MSVC_ASAN_DIR "${_SANITIZER_ASAN_DLL}" DIRECTORY)
+                break()
+            endif()
+        endforeach()
+    endif()
+endif()
+
+if(_SANITIZER_MSVC_ASAN_DIR)
+    set(_SANITIZER_HAS_PATH_ENV FALSE)
+    foreach(_SANITIZER_ENV_ENTRY IN LISTS SANITIZER_ENV_VARS)
+        if(_SANITIZER_ENV_ENTRY MATCHES "^PATH=")
+            set(_SANITIZER_HAS_PATH_ENV TRUE)
+            break()
+        endif()
+    endforeach()
+
+    if(NOT _SANITIZER_HAS_PATH_ENV)
+        set(_SANITIZER_ENV_PATH_VALUE "$ENV{PATH}")
+        string(REPLACE ";" "\\;" _SANITIZER_ENV_PATH_VALUE "${_SANITIZER_ENV_PATH_VALUE}")
+        set(_SANITIZER_ASAN_PATH_ENTRY
+            "PATH=${_SANITIZER_MSVC_ASAN_DIR}\\;${_SANITIZER_ENV_PATH_VALUE}"
+        )
+        list(APPEND SANITIZER_ENV_VARS "${_SANITIZER_ASAN_PATH_ENTRY}")
+        unset(_SANITIZER_ENV_PATH_VALUE)
+        unset(_SANITIZER_ASAN_PATH_ENTRY)
+    endif()
+    unset(_SANITIZER_HAS_PATH_ENV)
+endif()
+
+unset(_SANITIZER_MSVC_ASAN_DIR)
+unset(_SANITIZER_MSVC_TOOLSET_DIRS)
+unset(_SANITIZER_TOOLSET_DIR)
+unset(_SANITIZER_ASAN_DLLS)
+unset(_SANITIZER_ASAN_DLL)
+unset(_SANITIZER_VS_INSTALL_DIR)
+
 # Mark internal LUT and compatibility variables as advanced (not for user modification)
 mark_as_advanced(
     _SUPPORTED_C_SANITIZERS

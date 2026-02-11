@@ -170,6 +170,22 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.install_deps }}
 
+      - name: Add MSVC ASan runtime to PATH
+        if: matrix.name == 'windows-msvc-sanitizer'
+        shell: pwsh
+        run: |
+          $vswhere = "$Env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            $vsPath = & $vswhere -latest -products * -property installationPath
+          }
+          if ($vsPath) {
+            $asanDll = Get-ChildItem -Path "$vsPath\VC\Tools\MSVC" -Recurse -Filter "clang_rt.asan_dynamic-x86_64.dll" | Select-Object -First 1
+            if ($asanDll) {
+              $asanDir = $asanDll.Directory.FullName
+              "$asanDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            }
+          }
+
       - name: Configure
         run: cmake -S . -B build ${{ matrix.cmake_flags }}
 
