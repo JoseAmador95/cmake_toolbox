@@ -174,12 +174,28 @@ jobs:
         if: matrix.name == 'windows-msvc-sanitizer'
         shell: pwsh
         run: |
-          $vswhere = "$Env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-          if (Test-Path $vswhere) {
+          $programFilesX86 = ${Env:ProgramFiles(x86)}
+          if (-not $programFilesX86) {
+            $programFilesX86 = $Env:ProgramFiles
+          }
+          $vswhere = Join-Path $programFilesX86 "Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            $vswhere = (Get-Command vswhere.exe -ErrorAction SilentlyContinue).Source
+          }
+          if ($vswhere) {
             $vsPath = & $vswhere -latest -products * -property installationPath
           }
           if ($vsPath) {
-            $asanDll = Get-ChildItem -Path "$vsPath\VC\Tools\MSVC" -Recurse -Filter "clang_rt.asan_dynamic-x86_64.dll" | Select-Object -First 1
+            $asanDll = Get-ChildItem -Path "$vsPath\VC\Tools\Llvm" -Recurse -Filter "clang_rt.asan*_dynamic-x86_64.dll" | Select-Object -First 1
+            if (-not $asanDll) {
+              $asanDll = Get-ChildItem -Path "$vsPath\VC\Tools\MSVC" -Recurse -Filter "clang_rt.asan*_dynamic-x86_64.dll" | Select-Object -First 1
+            }
+            if (-not $asanDll) {
+              $asanDll = Get-ChildItem -Path "$vsPath\VC\Tools\Llvm" -Recurse -Filter "clang_rt.asan*_dynamic*.dll" | Select-Object -First 1
+            }
+            if (-not $asanDll) {
+              $asanDll = Get-ChildItem -Path "$vsPath\VC\Tools\MSVC" -Recurse -Filter "clang_rt.asan*_dynamic*.dll" | Select-Object -First 1
+            }
             if ($asanDll) {
               $asanDir = $asanDll.Directory.FullName
               "$asanDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
@@ -191,6 +207,47 @@ jobs:
 
       - name: Build
         run: cmake --build build ${{ matrix.build_config && format('--config {0}', matrix.build_config) || '' }}
+
+      - name: Diagnostics for MSVC ASan
+        if: matrix.name == 'windows-msvc-sanitizer'
+        shell: pwsh
+        run: |
+          Write-Host "ProgramFiles(x86): ${Env:ProgramFiles(x86)}"
+          Write-Host "ProgramFiles: $Env:ProgramFiles"
+          $programFilesX86 = ${Env:ProgramFiles(x86)}
+          if (-not $programFilesX86) {
+            $programFilesX86 = $Env:ProgramFiles
+          }
+          $vswhere = Join-Path $programFilesX86 "Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            $vswhere = (Get-Command vswhere.exe -ErrorAction SilentlyContinue).Source
+          }
+          Write-Host "vswhere: $vswhere"
+          if ($vswhere) {
+            $vsPath = & $vswhere -latest -products * -property installationPath
+          }
+          if ($vsPath) {
+            Write-Host "VS install: $vsPath"
+            $asanDlls = Get-ChildItem -Path "$vsPath\VC\Tools" -Recurse -Filter "clang_rt.asan*_dynamic*.dll"
+            Write-Host "Found ASan DLLs: $($asanDlls.Count)"
+            $asanDlls | Select-Object -First 10 | ForEach-Object { Write-Host $_.FullName }
+
+            $dumpbin = Get-ChildItem -Path "$vsPath\VC\Tools\MSVC" -Recurse -Filter "dumpbin.exe" | Select-Object -First 1
+            if ($dumpbin) {
+              Write-Host "dumpbin: $($dumpbin.FullName)"
+              $exampleTest = Get-ChildItem -Path "build" -Recurse -Filter "example_test.exe" | Select-Object -First 1
+              if ($exampleTest) {
+                Write-Host "example_test: $($exampleTest.FullName)"
+                & $dumpbin.FullName /dependents $exampleTest.FullName
+              } else {
+                Write-Host "example_test.exe not found in build"
+              }
+            } else {
+              Write-Host "dumpbin.exe not found"
+            }
+          } else {
+            Write-Host "VS install not found"
+          }
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}

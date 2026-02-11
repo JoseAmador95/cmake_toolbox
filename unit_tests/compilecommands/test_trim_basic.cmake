@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/compilecommands_basic_test")
@@ -26,9 +27,10 @@ function(setup_test_environment)
 endfunction()
 
 function(configure_project SRC_DIR BUILD_DIR RESULT_VAR COMBINED_LOG_VAR)
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${BUILD_DIR}"
+            ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${BUILD_DIR}" ${configure_args}
         RESULT_VARIABLE config_result
         OUTPUT_VARIABLE config_out
         ERROR_VARIABLE config_err

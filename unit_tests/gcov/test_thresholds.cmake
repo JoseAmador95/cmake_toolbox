@@ -23,17 +23,33 @@ get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(MODULE_DIR "${REPO_ROOT}/cmake")
 string(REGEX REPLACE "([][+.*()?^$\\\\])" "\\\\\\1" REPO_ROOT_REGEX "${REPO_ROOT}")
 
+set(CMAKE_MODULE_PATH
+    "${MODULE_DIR}"
+    ${CMAKE_MODULE_PATH}
+)
+include(TestHelpers)
+
 if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
     if(
-        DEFINED CMAKE_CURRENT_BINARY_DIR
-        AND NOT CMAKE_CURRENT_BINARY_DIR STREQUAL ""
-        AND NOT CMAKE_CURRENT_BINARY_DIR MATCHES "^${REPO_ROOT_REGEX}(/|$)"
+        DEFINED
+            CMAKE_CURRENT_BINARY_DIR
+        AND NOT CMAKE_CURRENT_BINARY_DIR
+            STREQUAL
+            ""
+        AND NOT CMAKE_CURRENT_BINARY_DIR
+            MATCHES
+            "^${REPO_ROOT_REGEX}(/|$)"
     )
         set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_CURRENT_BINARY_DIR}/test_artifacts")
     elseif(
-        DEFINED CMAKE_BINARY_DIR
-        AND NOT CMAKE_BINARY_DIR STREQUAL ""
-        AND NOT CMAKE_BINARY_DIR MATCHES "^${REPO_ROOT_REGEX}(/|$)"
+        DEFINED
+            CMAKE_BINARY_DIR
+        AND NOT CMAKE_BINARY_DIR
+            STREQUAL
+            ""
+        AND NOT CMAKE_BINARY_DIR
+            MATCHES
+            "^${REPO_ROOT_REGEX}(/|$)"
     )
         set(CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT "${CMAKE_BINARY_DIR}/test_artifacts")
     else()
@@ -46,6 +62,7 @@ endif()
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_thresholds")
+TestHelpers_GetConfigureArgs(_GCOV_CONFIGURE_ARGS)
 
 # ==============================================================================
 # Test Case: Basic LINE/BRANCH thresholds (existing)
@@ -81,7 +98,7 @@ function(
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -179,7 +196,7 @@ function(
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -297,7 +314,7 @@ function(run_case_zero_threshold NAME THRESHOLD_VAR)
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -364,7 +381,7 @@ function(run_case_100_threshold NAME THRESHOLD_VAR)
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -432,7 +449,7 @@ function(run_case_enforce_no_thresholds NAME)
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -507,7 +524,7 @@ function(run_case_status_message_format NAME)
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error
@@ -592,7 +609,7 @@ function(run_case_config_file_mode NAME)
 
     execute_process(
         COMMAND
-            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}"
+            "${CMAKE_COMMAND}" -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error

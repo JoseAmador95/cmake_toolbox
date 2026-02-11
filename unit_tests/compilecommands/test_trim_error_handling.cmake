@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/compilecommands_error_test")
@@ -24,9 +25,10 @@ set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/compilecommands_error_test")
 function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR EXPECTED_ERROR_SUBSTRING)
     message(STATUS "  Testing: ${DESCRIPTION}")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${BUILD_DIR}"
+            ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${BUILD_DIR}" ${configure_args}
         RESULT_VARIABLE cmd_result
         OUTPUT_VARIABLE cmd_output
         ERROR_VARIABLE cmd_error
@@ -38,7 +40,11 @@ function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR EXPECTED_ERROR_SUBSTRI
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
     else()
         set(combined_output "${cmd_output}\n${cmd_error}")
-        string(FIND "${combined_output}" "${EXPECTED_ERROR_SUBSTRING}" expected_pos)
+        string(
+            FIND "${combined_output}"
+            "${EXPECTED_ERROR_SUBSTRING}"
+            expected_pos
+        )
         if(expected_pos EQUAL -1)
             message(STATUS "    ✗ ${DESCRIPTION} - failed for unexpected reason")
             message(STATUS "      Expected substring: ${EXPECTED_ERROR_SUBSTRING}")
@@ -262,9 +268,10 @@ message(STATUS \"Unknown parameters were ignored\")
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
     file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error

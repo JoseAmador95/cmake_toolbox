@@ -52,8 +52,16 @@ Example
 
 include_guard(GLOBAL)
 
+set(COMPILECOMMANDS_AVAILABLE TRUE CACHE INTERNAL "Whether CompileCommands module is available")
+
 get_property(_compilecommands_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(_compilecommands_multi_config)
+    set(COMPILECOMMANDS_AVAILABLE
+        FALSE
+        CACHE INTERNAL
+        "Whether CompileCommands module is available"
+        FORCE
+    )
     message(
         WARNING
         "CompileCommands: Multi-config generators do not produce compile_commands.json. "

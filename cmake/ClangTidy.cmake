@@ -110,15 +110,29 @@ include(${CMAKE_CURRENT_LIST_DIR}/CompileCommands.cmake)
 
 function(_ClangTidy_GetCommand TRIM RETCMD RETCOMPILECOMMANDS)
     set(output_file ${CLANG_TIDY_COMPILE_COMMANDS})
+    set(use_trim ${TRIM})
 
-    if(TRIM AND JQ_EXECUTABLE)
+    if(DEFINED COMPILECOMMANDS_AVAILABLE AND NOT COMPILECOMMANDS_AVAILABLE)
+        if(use_trim)
+            message(STATUS "ClangTidy: compile command trimming is unavailable on this generator")
+        endif()
+        set(use_trim FALSE)
+    endif()
+
+    if(use_trim AND JQ_EXECUTABLE)
         set(output_file ${CMAKE_CURRENT_BINARY_DIR}/compile_commands_trimmed/compile_commands.json)
         CompileCommands_Trim(INPUT ${CLANG_TIDY_COMPILE_COMMANDS} OUTPUT ${output_file})
     endif()
 
     message(VERBOSE "ClangTidy using compile commands: ${output_file}")
     set(${RETCMD} "${ClangTidy_EXECUTABLE};-p;${output_file}" PARENT_SCOPE)
-    set(${RETCOMPILECOMMANDS} "${output_file}" PARENT_SCOPE)
+    if(use_trim)
+        set(${RETCOMPILECOMMANDS} "${output_file}" PARENT_SCOPE)
+    elseif(EXISTS "${output_file}")
+        set(${RETCOMPILECOMMANDS} "${output_file}" PARENT_SCOPE)
+    else()
+        set(${RETCOMPILECOMMANDS} "" PARENT_SCOPE)
+    endif()
 endfunction()
 
 # ==============================================================================

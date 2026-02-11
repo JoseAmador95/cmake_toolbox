@@ -16,17 +16,20 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_error_test")
+TestHelpers_GetConfigureArgs(_GCOV_CONFIGURE_ARGS)
 
 # Helper to test that a project configuration fails
 function(test_project_fails DESCRIPTION SRC_DIR BUILD_DIR)
     message(STATUS "  Testing: ${DESCRIPTION}")
 
+    TestHelpers_GetConfigureArgs(configure_args)
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${BUILD_DIR}"
+            ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${BUILD_DIR}" ${configure_args}
         RESULT_VARIABLE cmd_result
         OUTPUT_VARIABLE cmd_output
         ERROR_VARIABLE cmd_error
@@ -98,7 +101,7 @@ message(STATUS \"Gcov_AddToTarget with valid target succeeded\")
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -146,7 +149,7 @@ message(STATUS \"Multiple targets configured successfully\")
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -194,7 +197,7 @@ message(STATUS \"Compile options: \${compile_opts}\")
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error

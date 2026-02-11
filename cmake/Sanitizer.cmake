@@ -334,28 +334,110 @@ set(SANITIZER_ENV_VARS
 unset(_SANITIZER_ASAN_OPTIONS)
 
 set(_SANITIZER_MSVC_ASAN_DIR "")
+set(SANITIZER_MSVC_ASAN_DIR "" CACHE INTERNAL "MSVC ASan runtime directory" FORCE)
+set(SANITIZER_MSVC_ASAN_DLLS "" CACHE INTERNAL "MSVC ASan runtime DLLs" FORCE)
 if(_LINK_IS_MSVC AND ENABLE_SANITIZER_ADDRESS)
     set(_SANITIZER_VS_INSTALL_DIR "")
     if(DEFINED CMAKE_VS_INSTALL_DIR AND EXISTS "${CMAKE_VS_INSTALL_DIR}")
         set(_SANITIZER_VS_INSTALL_DIR "${CMAKE_VS_INSTALL_DIR}")
     elseif(DEFINED ENV{VSINSTALLDIR} AND EXISTS "$ENV{VSINSTALLDIR}")
         set(_SANITIZER_VS_INSTALL_DIR "$ENV{VSINSTALLDIR}")
+    else()
+        if(WIN32)
+            execute_process(
+                COMMAND
+                    powershell -NoProfile -Command
+                    "[Environment]::GetEnvironmentVariable('ProgramFiles(x86)')"
+                OUTPUT_VARIABLE _SANITIZER_PROGRAMFILES_X86
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+        endif()
+        if(NOT _SANITIZER_PROGRAMFILES_X86)
+            set(_SANITIZER_PROGRAMFILES_X86 "$ENV{ProgramFiles}")
+        endif()
+        if(_SANITIZER_PROGRAMFILES_X86)
+            set(_SANITIZER_VSWHERE
+                "${_SANITIZER_PROGRAMFILES_X86}/Microsoft Visual Studio/Installer/vswhere.exe"
+            )
+            if(EXISTS "${_SANITIZER_VSWHERE}")
+                execute_process(
+                    COMMAND
+                        "${_SANITIZER_VSWHERE}" -latest -products * -property installationPath
+                    OUTPUT_VARIABLE _SANITIZER_VSWHERE_OUTPUT
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                )
+                if(_SANITIZER_VSWHERE_OUTPUT AND EXISTS "${_SANITIZER_VSWHERE_OUTPUT}")
+                    set(_SANITIZER_VS_INSTALL_DIR "${_SANITIZER_VSWHERE_OUTPUT}")
+                endif()
+            endif()
+        endif()
+    endif()
+
+    set(_SANITIZER_TOOLSET_DIR "")
+    set(_SANITIZER_COMPILER_PATH "")
+    if(DEFINED CMAKE_C_COMPILER AND CMAKE_C_COMPILER)
+        set(_SANITIZER_COMPILER_PATH "${CMAKE_C_COMPILER}")
+    elseif(DEFINED CMAKE_CXX_COMPILER AND CMAKE_CXX_COMPILER)
+        set(_SANITIZER_COMPILER_PATH "${CMAKE_CXX_COMPILER}")
+    endif()
+    if(_SANITIZER_COMPILER_PATH)
+        get_filename_component(_SANITIZER_COMPILER_DIR "${_SANITIZER_COMPILER_PATH}" DIRECTORY)
+        get_filename_component(_SANITIZER_COMPILER_DIR "${_SANITIZER_COMPILER_DIR}" DIRECTORY)
+        get_filename_component(_SANITIZER_COMPILER_DIR "${_SANITIZER_COMPILER_DIR}" DIRECTORY)
+        get_filename_component(_SANITIZER_TOOLSET_DIR "${_SANITIZER_COMPILER_DIR}" DIRECTORY)
     endif()
 
     if(_SANITIZER_VS_INSTALL_DIR)
-        file(GLOB _SANITIZER_MSVC_TOOLSET_DIRS "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/MSVC/*")
-        list(SORT _SANITIZER_MSVC_TOOLSET_DIRS DESC)
-        foreach(_SANITIZER_TOOLSET_DIR IN LISTS _SANITIZER_MSVC_TOOLSET_DIRS)
+        set(_SANITIZER_ASAN_DLLS "")
+        if(_SANITIZER_TOOLSET_DIR)
             file(
                 GLOB _SANITIZER_ASAN_DLLS
-                "${_SANITIZER_TOOLSET_DIR}/bin/Host*/*/clang_rt.asan_dynamic-x86_64.dll"
+                "${_SANITIZER_TOOLSET_DIR}/bin/Host*/*/clang_rt.asan*_dynamic*.dll"
             )
-            if(_SANITIZER_ASAN_DLLS)
+        endif()
+        if(NOT _SANITIZER_ASAN_DLLS)
+            file(
+                GLOB _SANITIZER_ASAN_DLLS
+                "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/Llvm/x64/bin/clang_rt.asan*_dynamic*.dll"
+                "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/Llvm/bin/clang_rt.asan*_dynamic*.dll"
+                "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/Llvm/x64/lib/clang/*/lib/windows/clang_rt.asan*_dynamic*.dll"
+                "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/Llvm/lib/clang/*/lib/windows/clang_rt.asan*_dynamic*.dll"
+            )
+        endif()
+        if(NOT _SANITIZER_ASAN_DLLS)
+            file(GLOB _SANITIZER_MSVC_TOOLSET_DIRS "${_SANITIZER_VS_INSTALL_DIR}/VC/Tools/MSVC/*")
+            list(SORT _SANITIZER_MSVC_TOOLSET_DIRS DESC)
+            foreach(_SANITIZER_TOOLSET_DIR IN LISTS _SANITIZER_MSVC_TOOLSET_DIRS)
+                file(
+                    GLOB _SANITIZER_ASAN_DLLS
+                    "${_SANITIZER_TOOLSET_DIR}/bin/Host*/*/clang_rt.asan*_dynamic*.dll"
+                )
+                if(_SANITIZER_ASAN_DLLS)
+                    break()
+                endif()
+            endforeach()
+        endif()
+
+        if(_SANITIZER_ASAN_DLLS)
+            set(_SANITIZER_ASAN_X64_DLLS "")
+            foreach(_SANITIZER_ASAN_DLL_CANDIDATE IN LISTS _SANITIZER_ASAN_DLLS)
+                if(_SANITIZER_ASAN_DLL_CANDIDATE MATCHES "x86_64")
+                    list(APPEND _SANITIZER_ASAN_X64_DLLS "${_SANITIZER_ASAN_DLL_CANDIDATE}")
+                endif()
+            endforeach()
+            if(_SANITIZER_ASAN_X64_DLLS)
+                list(GET _SANITIZER_ASAN_X64_DLLS 0 _SANITIZER_ASAN_DLL)
+            else()
                 list(GET _SANITIZER_ASAN_DLLS 0 _SANITIZER_ASAN_DLL)
-                get_filename_component(_SANITIZER_MSVC_ASAN_DIR "${_SANITIZER_ASAN_DLL}" DIRECTORY)
-                break()
             endif()
-        endforeach()
+            get_filename_component(_SANITIZER_MSVC_ASAN_DIR "${_SANITIZER_ASAN_DLL}" DIRECTORY)
+            set(SANITIZER_MSVC_ASAN_DLLS
+                "${_SANITIZER_ASAN_DLLS}"
+                CACHE INTERNAL
+                "MSVC ASan runtime DLLs"
+                FORCE
+            )
+        endif()
     endif()
 endif()
 
@@ -381,9 +463,26 @@ if(_SANITIZER_MSVC_ASAN_DIR)
     unset(_SANITIZER_HAS_PATH_ENV)
 endif()
 
+if(SANITIZER_MSVC_ASAN_DLLS)
+    set(SANITIZER_MSVC_ASAN_DIR
+        "${_SANITIZER_MSVC_ASAN_DIR}"
+        CACHE INTERNAL
+        "MSVC ASan runtime directory"
+        FORCE
+    )
+endif()
+
 unset(_SANITIZER_MSVC_ASAN_DIR)
 unset(_SANITIZER_MSVC_TOOLSET_DIRS)
 unset(_SANITIZER_TOOLSET_DIR)
+unset(_SANITIZER_ASAN_X64_DLLS)
+unset(_SANITIZER_ASAN_DLL_CANDIDATE)
+unset(_SANITIZER_VSWHERE)
+unset(_SANITIZER_VSWHERE_OUTPUT)
+unset(_SANITIZER_PROGRAMFILES_X86)
+unset(_SANITIZER_TOOLSET_DIR)
+unset(_SANITIZER_COMPILER_PATH)
+unset(_SANITIZER_COMPILER_DIR)
 unset(_SANITIZER_ASAN_DLLS)
 unset(_SANITIZER_ASAN_DLL)
 unset(_SANITIZER_VS_INSTALL_DIR)
@@ -481,6 +580,17 @@ function(Sanitizer_AddToTarget)
                 ${_SANITIZER_LINK_FLAGS}
             )
         endif()
+    endif()
+
+    if(_LINK_IS_MSVC AND ENABLE_SANITIZER_ADDRESS AND SANITIZER_MSVC_ASAN_DLLS)
+        add_custom_command(
+            TARGET ${ARG_TARGET}
+            POST_BUILD
+            COMMAND
+                ${CMAKE_COMMAND} -E copy_if_different ${SANITIZER_MSVC_ASAN_DLLS}
+                $<TARGET_FILE_DIR:${ARG_TARGET}>
+            COMMENT "Copy MSVC ASan runtime DLLs to output directory"
+        )
     endif()
 endfunction()
 
