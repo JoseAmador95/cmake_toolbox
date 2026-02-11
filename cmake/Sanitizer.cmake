@@ -321,11 +321,17 @@ set(SANITIZER_LINK_FLAGS
     "Override sanitizer link flags (if empty, uses automatic detection)"
 )
 
+set(_SANITIZER_ASAN_OPTIONS "detect_leaks=1:abort_on_error=1")
+if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    set(_SANITIZER_ASAN_OPTIONS "abort_on_error=1")
+endif()
+
 set(SANITIZER_ENV_VARS
-    "ASAN_OPTIONS=detect_leaks=1:abort_on_error=1;UBSAN_OPTIONS=print_stacktrace=1"
+    "ASAN_OPTIONS=${_SANITIZER_ASAN_OPTIONS};UBSAN_OPTIONS=print_stacktrace=1"
     CACHE STRING
     "Sanitizer environment variables to use"
 )
+unset(_SANITIZER_ASAN_OPTIONS)
 
 # Mark internal LUT and compatibility variables as advanced (not for user modification)
 mark_as_advanced(
