@@ -57,6 +57,15 @@ foreach(_version RANGE ${_CLANGTIDY_MAX_VERSION} ${_CLANGTIDY_MIN_VERSION} -1)
     list(APPEND _CLANGTIDY_NAMES "clang-tidy-${_version}")
 endforeach()
 
+if(WIN32)
+    set(_CLANGTIDY_WINDOWS_NAMES "")
+    foreach(_name IN LISTS _CLANGTIDY_NAMES)
+        list(APPEND _CLANGTIDY_WINDOWS_NAMES "${_name}.bat")
+    endforeach()
+    list(APPEND _CLANGTIDY_NAMES ${_CLANGTIDY_WINDOWS_NAMES})
+    unset(_CLANGTIDY_WINDOWS_NAMES)
+endif()
+
 # Find clang-tidy executable
 find_program(CLANG_TIDY_EXECUTABLE NAMES ${_CLANGTIDY_NAMES} DOC "Path to clang-tidy executable")
 
