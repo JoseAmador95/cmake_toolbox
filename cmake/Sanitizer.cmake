@@ -62,7 +62,8 @@ Cache Variables
 ``SANITIZER_ENV_VARS``
   Environment variables for sanitizer runtime configuration.
   Default: ``ASAN_OPTIONS=detect_leaks=1:abort_on_error=1;UBSAN_OPTIONS=print_stacktrace=1``
-  Use with ``Sanitizer_ApplyEnvironmentToTests()``.
+  (``detect_leaks=0`` for MSVC/clang-cl; omitted for AppleClang) and used with
+  ``Sanitizer_ApplyEnvironmentToTests()``.
 
 Functions
 ^^^^^^^^^
@@ -324,6 +325,8 @@ set(SANITIZER_LINK_FLAGS
 set(_SANITIZER_ASAN_OPTIONS "detect_leaks=1:abort_on_error=1")
 if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     set(_SANITIZER_ASAN_OPTIONS "abort_on_error=1")
+elseif(_C_IS_MSVC OR _CXX_IS_MSVC)
+    set(_SANITIZER_ASAN_OPTIONS "detect_leaks=0:abort_on_error=1")
 endif()
 
 set(SANITIZER_ENV_VARS
