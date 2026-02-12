@@ -529,7 +529,13 @@ function(Sanitizer_AddToTarget)
         endif()
     endif()
 
-    if((_C_IS_MSVC OR _CXX_IS_MSVC) AND ENABLE_SANITIZER_ADDRESS AND _SANITIZER_MSVC_ASAN_DLLS)
+    set(_SANITIZER_TARGET_TYPE "")
+    get_target_property(_SANITIZER_TARGET_TYPE ${ARG_TARGET} TYPE)
+    if((_C_IS_MSVC OR _CXX_IS_MSVC)
+        AND ENABLE_SANITIZER_ADDRESS
+        AND _SANITIZER_MSVC_ASAN_DLLS
+        AND NOT _SANITIZER_TARGET_TYPE STREQUAL "INTERFACE_LIBRARY"
+    )
         add_custom_command(
             TARGET ${ARG_TARGET}
             POST_BUILD
@@ -539,6 +545,7 @@ function(Sanitizer_AddToTarget)
             COMMENT "Copy MSVC ASan runtime DLLs to output directory"
         )
     endif()
+    unset(_SANITIZER_TARGET_TYPE)
 endfunction()
 
 # ==============================================================================
