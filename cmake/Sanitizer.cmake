@@ -336,10 +336,8 @@ set(SANITIZER_ENV_VARS
 )
 unset(_SANITIZER_ASAN_OPTIONS)
 
-set(_SANITIZER_MSVC_ASAN_DIR "")
-set(SANITIZER_MSVC_ASAN_DIR "" CACHE INTERNAL "MSVC ASan runtime directory" FORCE)
-set(SANITIZER_MSVC_ASAN_DLLS "" CACHE INTERNAL "MSVC ASan runtime DLLs" FORCE)
-if(_LINK_IS_MSVC AND ENABLE_SANITIZER_ADDRESS)
+set(_SANITIZER_MSVC_ASAN_DLLS "")
+if((_C_IS_MSVC OR _CXX_IS_MSVC) AND ENABLE_SANITIZER_ADDRESS)
     set(_SANITIZER_VS_INSTALL_DIR "")
     if(DEFINED CMAKE_VS_INSTALL_DIR AND EXISTS "${CMAKE_VS_INSTALL_DIR}")
         set(_SANITIZER_VS_INSTALL_DIR "${CMAKE_VS_INSTALL_DIR}")
@@ -422,64 +420,11 @@ if(_LINK_IS_MSVC AND ENABLE_SANITIZER_ADDRESS)
         endif()
 
         if(_SANITIZER_ASAN_DLLS)
-            set(_SANITIZER_ASAN_X64_DLLS "")
-            foreach(_SANITIZER_ASAN_DLL_CANDIDATE IN LISTS _SANITIZER_ASAN_DLLS)
-                if(_SANITIZER_ASAN_DLL_CANDIDATE MATCHES "x86_64")
-                    list(APPEND _SANITIZER_ASAN_X64_DLLS "${_SANITIZER_ASAN_DLL_CANDIDATE}")
-                endif()
-            endforeach()
-            if(_SANITIZER_ASAN_X64_DLLS)
-                list(GET _SANITIZER_ASAN_X64_DLLS 0 _SANITIZER_ASAN_DLL)
-            else()
-                list(GET _SANITIZER_ASAN_DLLS 0 _SANITIZER_ASAN_DLL)
-            endif()
-            get_filename_component(_SANITIZER_MSVC_ASAN_DIR "${_SANITIZER_ASAN_DLL}" DIRECTORY)
-            set(SANITIZER_MSVC_ASAN_DLLS
-                "${_SANITIZER_ASAN_DLLS}"
-                CACHE INTERNAL
-                "MSVC ASan runtime DLLs"
-                FORCE
-            )
+            set(_SANITIZER_MSVC_ASAN_DLLS "${_SANITIZER_ASAN_DLLS}")
         endif()
     endif()
 endif()
-
-if(_SANITIZER_MSVC_ASAN_DIR)
-    set(_SANITIZER_HAS_PATH_ENV FALSE)
-    foreach(_SANITIZER_ENV_ENTRY IN LISTS SANITIZER_ENV_VARS)
-        if(_SANITIZER_ENV_ENTRY MATCHES "^PATH=")
-            set(_SANITIZER_HAS_PATH_ENV TRUE)
-            break()
-        endif()
-    endforeach()
-
-    if(NOT _SANITIZER_HAS_PATH_ENV)
-        set(_SANITIZER_ENV_PATH_VALUE "$ENV{PATH}")
-        string(REPLACE ";" "\\;" _SANITIZER_ENV_PATH_VALUE "${_SANITIZER_ENV_PATH_VALUE}")
-        set(_SANITIZER_ASAN_PATH_ENTRY
-            "PATH=${_SANITIZER_MSVC_ASAN_DIR}\\;${_SANITIZER_ENV_PATH_VALUE}"
-        )
-        list(APPEND SANITIZER_ENV_VARS "${_SANITIZER_ASAN_PATH_ENTRY}")
-        unset(_SANITIZER_ENV_PATH_VALUE)
-        unset(_SANITIZER_ASAN_PATH_ENTRY)
-    endif()
-    unset(_SANITIZER_HAS_PATH_ENV)
-endif()
-
-if(SANITIZER_MSVC_ASAN_DLLS)
-    set(SANITIZER_MSVC_ASAN_DIR
-        "${_SANITIZER_MSVC_ASAN_DIR}"
-        CACHE INTERNAL
-        "MSVC ASan runtime directory"
-        FORCE
-    )
-endif()
-
-unset(_SANITIZER_MSVC_ASAN_DIR)
 unset(_SANITIZER_MSVC_TOOLSET_DIRS)
-unset(_SANITIZER_TOOLSET_DIR)
-unset(_SANITIZER_ASAN_X64_DLLS)
-unset(_SANITIZER_ASAN_DLL_CANDIDATE)
 unset(_SANITIZER_VSWHERE)
 unset(_SANITIZER_VSWHERE_OUTPUT)
 unset(_SANITIZER_PROGRAMFILES_X86)
@@ -487,7 +432,6 @@ unset(_SANITIZER_TOOLSET_DIR)
 unset(_SANITIZER_COMPILER_PATH)
 unset(_SANITIZER_COMPILER_DIR)
 unset(_SANITIZER_ASAN_DLLS)
-unset(_SANITIZER_ASAN_DLL)
 unset(_SANITIZER_VS_INSTALL_DIR)
 
 # Mark internal LUT and compatibility variables as advanced (not for user modification)
@@ -585,12 +529,12 @@ function(Sanitizer_AddToTarget)
         endif()
     endif()
 
-    if(_LINK_IS_MSVC AND ENABLE_SANITIZER_ADDRESS AND SANITIZER_MSVC_ASAN_DLLS)
+    if((_C_IS_MSVC OR _CXX_IS_MSVC) AND ENABLE_SANITIZER_ADDRESS AND _SANITIZER_MSVC_ASAN_DLLS)
         add_custom_command(
             TARGET ${ARG_TARGET}
             POST_BUILD
             COMMAND
-                ${CMAKE_COMMAND} -E copy_if_different ${SANITIZER_MSVC_ASAN_DLLS}
+                ${CMAKE_COMMAND} -E copy_if_different ${_SANITIZER_MSVC_ASAN_DLLS}
                 $<TARGET_FILE_DIR:${ARG_TARGET}>
             COMMENT "Copy MSVC ASan runtime DLLs to output directory"
         )
