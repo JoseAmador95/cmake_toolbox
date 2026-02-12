@@ -616,11 +616,3 @@ function(Sanitizer_ApplyEnvironmentToTests)
     endif()
 endfunction()
 
-# ==============================================================================
-# Backward Compatibility Alias
-# ==============================================================================
-
-function(target_add_sanitizer _target _scope)
-    message(DEPRECATION "target_add_sanitizer() is deprecated, use Sanitizer_AddToTarget() instead")
-    Sanitizer_AddToTarget(TARGET ${_target} SCOPE ${_scope})
-endfunction()

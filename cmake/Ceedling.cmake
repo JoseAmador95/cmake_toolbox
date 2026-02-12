@@ -597,11 +597,3 @@ function(Ceedling_AddUnitTest)
     endif()
 endfunction()
 
-# ==============================================================================
-# Backward Compatibility Alias
-# ==============================================================================
-
-function(add_unit_test)
-    message(DEPRECATION "add_unit_test() is deprecated, use Ceedling_AddUnitTest() instead")
-    Ceedling_AddUnitTest(${ARGN})
-endfunction()

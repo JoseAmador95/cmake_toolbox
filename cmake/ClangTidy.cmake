@@ -200,19 +200,3 @@ function(ClangTidy_ConfigureTarget)
     endif()
 endfunction()
 
-# ==============================================================================
-# Backward Compatibility Aliases
-# ==============================================================================
-
-function(set_clang_tidy)
-    message(DEPRECATION "set_clang_tidy() is deprecated, use ClangTidy_Configure() instead")
-    ClangTidy_Configure(${ARGN})
-endfunction()
-
-function(target_set_clang_tidy)
-    message(
-        DEPRECATION
-        "target_set_clang_tidy() is deprecated, use ClangTidy_ConfigureTarget() instead"
-    )
-    ClangTidy_ConfigureTarget(${ARGN})
-endfunction()
