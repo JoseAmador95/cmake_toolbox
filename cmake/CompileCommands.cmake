@@ -150,11 +150,3 @@ function(CompileCommands_Trim)
     )
 endfunction()
 
-# ==============================================================================
-# Backward Compatibility Alias
-# ==============================================================================
-
-function(compile_commands_trim)
-    message(DEPRECATION "compile_commands_trim() is deprecated, use CompileCommands_Trim() instead")
-    CompileCommands_Trim(${ARGN})
-endfunction()

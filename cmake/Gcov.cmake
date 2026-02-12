@@ -807,17 +807,3 @@ if(NOT TARGET gcovr)
     )
 endif()
 
-# ==============================================================================
-# Backward Compatibility
-# ==============================================================================
-
-# Deprecated alias for old config variable
-if(DEFINED GCOV_CONFIG_FILE AND NOT GCOVR_CONFIG_FILE)
-    set(GCOVR_CONFIG_FILE "${GCOV_CONFIG_FILE}" CACHE FILEPATH "" FORCE)
-    message(DEPRECATION "GCOV_CONFIG_FILE is deprecated, use GCOVR_CONFIG_FILE instead")
-endif()
-
-function(target_add_gcov _target _scope)
-    message(DEPRECATION "target_add_gcov() is deprecated, use Gcov_AddToTarget() instead")
-    Gcov_AddToTarget(${_target} ${_scope})
-endfunction()
