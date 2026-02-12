@@ -250,7 +250,7 @@ jobs:
           }
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
+        run: ctest --test-dir build --output-on-failure -j ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
 
       - name: Verify tests do not mutate source tree
         shell: pwsh
