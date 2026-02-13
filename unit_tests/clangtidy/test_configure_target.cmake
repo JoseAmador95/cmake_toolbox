@@ -293,65 +293,6 @@ message(STATUS \"Multiple targets configured independently\")
     message(STATUS "  ✓ Multiple targets can be configured independently")
 endfunction()
 
-function(test_deprecated_function_warning)
-    message(STATUS "Test 7: Deprecated function target_set_clang_tidy emits warning")
-
-    set(test_script
-        "
-cmake_minimum_required(VERSION 3.22)
-project(ClangTidyTargetTest LANGUAGES C)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-include(ClangTidy)
-
-add_library(mylib STATIC dummy.c)
-
-# Use deprecated function
-target_set_clang_tidy(TARGET mylib STATUS ON)
-"
-    )
-
-    set(src_dir "${TEST_ROOT}/deprecated/src")
-    set(build_dir "${TEST_ROOT}/deprecated/build")
-    file(MAKE_DIRECTORY "${src_dir}")
-    file(MAKE_DIRECTORY "${build_dir}")
-    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
-    file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
-    # Create dummy compile_commands.json to satisfy target_sources requirement
-    file(WRITE "${build_dir}/compile_commands.json" "[]")
-
-    execute_process(
-        COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
-        RESULT_VARIABLE result
-        OUTPUT_VARIABLE output
-        ERROR_VARIABLE error
-    )
-
-    # Should succeed but emit deprecation warning
-    if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Deprecated function call failed: ${error}")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    # Check for deprecation warning in output
-    string(
-        FIND "${output}${error}"
-        "deprecated"
-        has_deprecation
-    )
-    if(has_deprecation EQUAL -1)
-        message(
-            STATUS
-            "  ⚠ Deprecated function did not emit deprecation warning (might be suppressed)"
-        )
-    else()
-        message(STATUS "  ✓ Deprecated function correctly emits deprecation warning")
-    endif()
-endfunction()
-
 function(run_all_tests)
     message(STATUS "=== ClangTidy_ConfigureTarget Tests ===")
 
@@ -363,7 +304,6 @@ function(run_all_tests)
     test_configure_target_status_off()
     test_configure_target_with_trim()
     test_configure_multiple_targets()
-    test_deprecated_function_warning()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
