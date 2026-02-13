@@ -74,15 +74,6 @@ if(_compilecommands_multi_config)
             "${CMAKE_CURRENT_FUNCTION}: compile_commands.json is unavailable with multi-config generators"
         )
     endfunction()
-
-    function(compile_commands_trim)
-        message(
-            DEPRECATION
-            "compile_commands_trim() is deprecated, use CompileCommands_Trim() instead"
-        )
-        CompileCommands_Trim(${ARGN})
-    endfunction()
-
     unset(_compilecommands_multi_config)
     return()
 endif()

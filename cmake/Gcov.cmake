@@ -265,12 +265,6 @@ if(NOT _GCOV_LINK_FLAGS AND NOT GCOV_COMPILE_FLAGS AND NOT GCOV_LINK_FLAGS)
             "No instrumentation will be applied to target '${TARGET}'."
         )
     endfunction()
-
-    function(target_add_gcov _target _scope)
-        message(DEPRECATION "target_add_gcov() is deprecated, use Gcov_AddToTarget() instead")
-        Gcov_AddToTarget(${_target} ${_scope})
-    endfunction()
-
     return()
 endif()
 
