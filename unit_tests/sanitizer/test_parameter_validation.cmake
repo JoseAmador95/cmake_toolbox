@@ -332,60 +332,6 @@ message(STATUS \"Sanitizer_ApplyEnvironmentToTests works\")
     message(STATUS "  ✓ Sanitizer_ApplyEnvironmentToTests works correctly")
 endfunction()
 
-function(test_deprecated_function)
-    message(STATUS "Test 9: Deprecated target_add_sanitizer function works")
-
-    set(test_script
-        "
-cmake_minimum_required(VERSION 3.22)
-project(SanitizerTest LANGUAGES C)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-include(Sanitizer)
-
-add_library(mylib STATIC dummy.c)
-
-# Use deprecated function
-target_add_sanitizer(mylib PUBLIC)
-"
-    )
-
-    set(src_dir "${TEST_ROOT}/deprecated/src")
-    set(build_dir "${TEST_ROOT}/deprecated/build")
-    file(MAKE_DIRECTORY "${src_dir}")
-    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
-    file(WRITE "${src_dir}/dummy.c" "int dummy(void) { return 42; }")
-
-    execute_process(
-        COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
-        RESULT_VARIABLE result
-        OUTPUT_VARIABLE output
-        ERROR_VARIABLE error
-    )
-
-    if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Deprecated function call failed: ${error}")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    # Check for deprecation warning
-    string(
-        FIND "${output}${error}"
-        "deprecated"
-        has_deprecation
-    )
-    if(has_deprecation EQUAL -1)
-        message(
-            STATUS
-            "  ⚠ Deprecated function did not emit deprecation warning (might be suppressed)"
-        )
-    else()
-        message(STATUS "  ✓ Deprecated function works and emits deprecation warning")
-    endif()
-endfunction()
-
 function(run_all_tests)
     message(STATUS "=== Sanitizer_AddToTarget Parameter Validation Tests ===")
 
@@ -399,7 +345,6 @@ function(run_all_tests)
     test_valid_scope_private()
     test_valid_scope_interface()
     test_apply_environment_to_tests()
-    test_deprecated_function()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)

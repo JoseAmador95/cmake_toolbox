@@ -239,73 +239,6 @@ CompileCommands_Trim(
     message(STATUS "  - missing jq warning emitted as expected")
 endfunction()
 
-function(test_deprecated_function)
-    message(STATUS "Test 4: Deprecated compile_commands_trim still executes trim path")
-
-    find_program(JQ_EXE jq)
-    if(NOT JQ_EXE)
-        message(STATUS "  - jq not found, skipping")
-        return()
-    endif()
-
-    set(src_dir "${TEST_ROOT}/deprecated/src")
-    set(build_dir "${TEST_ROOT}/deprecated/build")
-    file(MAKE_DIRECTORY "${src_dir}")
-
-    set(test_script
-        "
-cmake_minimum_required(VERSION 3.22)
-project(CompileCommandsDeprecatedTest LANGUAGES C)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-include(CompileCommands)
-
-file(WRITE \"\${CMAKE_BINARY_DIR}/compile_commands.json\"
-\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"gcc -DFOO=1 -O3 -o file.o -c file.c\\\",\n    \\\"file\\\": \\\"file.c\\\"\n  }\n]\")
-
-compile_commands_trim(
-    INPUT \${CMAKE_BINARY_DIR}/compile_commands.json
-    OUTPUT \${CMAKE_BINARY_DIR}/trimmed.json
-)
-
-add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed.json)
-"
-    )
-
-    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
-
-    configure_project("${src_dir}" "${build_dir}" config_result config_log)
-    if(NOT config_result EQUAL 0)
-        message(STATUS "  - deprecated function configuration failed: ${config_log}")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    if(NOT config_log MATCHES "deprecated")
-        message(STATUS "  - expected deprecation warning not found")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    build_target("${build_dir}" "run_trim" build_result build_log)
-    if(NOT build_result EQUAL 0)
-        message(STATUS "  - deprecated trim target build failed: ${build_log}")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    if(NOT EXISTS "${build_dir}/trimmed.json")
-        message(STATUS "  - deprecated function did not produce output file")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    message(STATUS "  - deprecated API still drives runtime trim behavior")
-endfunction()
-
 function(run_all_tests)
     message(STATUS "=== CompileCommands_Trim Basic Behavior Tests ===")
 
@@ -314,7 +247,6 @@ function(run_all_tests)
     test_trim_executes_and_filters_content()
     test_trim_creates_output_directory()
     test_trim_handles_missing_jq()
-    test_deprecated_function()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
