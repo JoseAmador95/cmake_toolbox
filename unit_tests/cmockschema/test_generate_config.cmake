@@ -31,6 +31,8 @@ endfunction()
 function(test_generate_creates_file)
     message(STATUS "Test 1: GenerateConfigFile creates output file")
 
+    set(config_file "${TEST_ROOT}/generated_config.yml")
+
     set(test_script
         "
 cmake_minimum_required(VERSION 3.22)
@@ -39,7 +41,6 @@ include(CMockSchema)
 
 CMockSchema_SetDefaults()
 
-set(config_file \"${TEST_ROOT}/generated_config.yml\")
 CMockSchema_GenerateConfigFile(\"${config_file}\")
 
 if(NOT EXISTS \"${config_file}\")
