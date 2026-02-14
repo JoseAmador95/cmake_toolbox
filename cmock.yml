@@ -1,3 +1,5 @@
+# Template for CMake configure_file(@ONLY); do not use directly.
+# Render via CMockSchema_GenerateConfigFile before invoking CMock.
 :cmock:
   # Core configuration
   :plugins: # What plugins should be used by CMock?
@@ -6,7 +8,7 @@
   :when_no_prototypes: @CMOCK_WHEN_NO_PROTOTYPES_YAML@ # the options being :ignore, :warn, or :error
 
   # File configuration
-  :mock_path: "@CMOCK_MOCK_SUBDIR@" # Path to store mocks when generated
+  :mock_path: "@CMOCK_MOCK_PATH_YAML@" # Path to store mocks when generated
   :skeleton_path: "" # Subdirectory to store stubs when generated (default: '')
   :mock_prefix: "@CMOCK_MOCK_PREFIX@" # Prefix to append to filenames for mocks
   :mock_suffix: "@CMOCK_MOCK_SUFFIX@" # Suffix to append to filenames for mocks
@@ -36,10 +38,10 @@
 
   # Mock generation configuration
   :weak: "" # Symbol to use to declare weak functions
-  :enforce_strict_ordering: @CMOCK_ENFORCE_STRICT_ORDERING@ # Do we want cmock to enforce ordering of all function calls?
+  :enforce_strict_ordering: @CMOCK_ENFORCE_STRICT_ORDERING_YAML@ # Do we want cmock to enforce ordering of all function calls?
   :fail_on_unexpected_calls: true # Do we want cmock to fail when it encounters a function call that wasn't expected?
-  :callback_include_count: @CMOCK_CALLBACK_INCLUDE_COUNT@ # Do we want cmock to include the number of calls to this callback, when using callbacks?
-  :callback_after_arg_check: @CMOCK_CALLBACK_AFTER_ARG_CHECK@ # Do we want cmock to enforce an argument check first when using a callback?
+  :callback_include_count: @CMOCK_CALLBACK_INCLUDE_COUNT_YAML@ # Do we want cmock to include the number of calls to this callback, when using callbacks?
+  :callback_after_arg_check: @CMOCK_CALLBACK_AFTER_ARG_CHECK_YAML@ # Do we want cmock to enforce an argument check first when using a callback?
   :includes:
 @CMOCK_INCLUDES_YAML@
 @CMOCK_INCLUDES_H_PRE_ORIG_HEADER_YAML@
@@ -52,7 +54,7 @@
 
 :unity:
   :cmdline_args: @TB_EXTRACT_FUNCTIONS_TF@ # Allow extraction of test functions as separate tests
-  :enforce_strict_ordering: @CMOCK_ENFORCE_STRICT_ORDERING@
+  :enforce_strict_ordering: @CMOCK_ENFORCE_STRICT_ORDERING_YAML@
   :plugins:
 @CMOCK_PLUGINS_YAML@
   :mock_prefix: "@CMOCK_MOCK_PREFIX@"

@@ -40,10 +40,10 @@ include(CMockSchema)
 CMockSchema_SetDefaults()
 
 set(config_file \"${TEST_ROOT}/generated_config.yml\")
-CMockSchema_GenerateConfigFile(\"${TEST_ROOT}/generated_config.yml\")
+CMockSchema_GenerateConfigFile(\"${config_file}\")
 
-if(NOT EXISTS \"${TEST_ROOT}/generated_config.yml\")
-    message(FATAL_ERROR \"Config file was not created: ${TEST_ROOT}/generated_config.yml\")
+if(NOT EXISTS \"${config_file}\")
+    message(FATAL_ERROR \"Config file was not created: ${config_file}\")
 endif()
 "
     )
@@ -405,6 +405,68 @@ CMockSchema_GenerateConfigFile(\"${config_file}\")
     endif()
 endfunction()
 
+function(test_template_override)
+    message(STATUS "Test 8: Template override renders custom template")
+
+    set(config_file "${TEST_ROOT}/template_override.yml")
+    set(template_file "${TEST_ROOT}/custom_template.yml")
+
+    set(test_script
+        "
+cmake_minimum_required(VERSION 3.22)
+set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+include(CMockSchema)
+
+set(SENTINEL \"template-override\")
+set(template_file \"${template_file}\")
+file(WRITE \"${template_file}\" \":cmock:\\n  :sentinel: \\\"@SENTINEL@\\\"\\n\")
+
+CMockSchema_GenerateConfigFile(\"${config_file}\" TEMPLATE_FILE \"${template_file}\")
+"
+    )
+
+    set(script_file "${TEST_ROOT}/test_template_override.cmake")
+    file(WRITE "${script_file}" "${test_script}")
+
+    execute_process(
+        COMMAND
+            ${CMAKE_COMMAND} -P "${script_file}"
+        RESULT_VARIABLE result
+        OUTPUT_VARIABLE output
+        ERROR_VARIABLE error
+    )
+
+    if(NOT result EQUAL 0)
+        message(STATUS "  ✗ Template override generation failed: ${error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    if(EXISTS "${config_file}")
+        file(READ "${config_file}" yaml_content)
+
+        string(
+            FIND "${yaml_content}"
+            "template-override"
+            has_override
+        )
+
+        if(has_override EQUAL -1)
+            message(STATUS "  ✗ Template override sentinel not found in YAML")
+            math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+            set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+            return()
+        endif()
+
+        message(STATUS "  ✓ Template override applied")
+    else()
+        message(STATUS "  ✗ Config file not found")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
+endfunction()
+
 function(run_all_tests)
     message(STATUS "=== CMockSchema_GenerateConfigFile Tests ===")
 
@@ -417,6 +479,7 @@ function(run_all_tests)
     test_yaml_contains_plugins()
     test_custom_values_in_yaml()
     test_yaml_placeholders_replaced()
+    test_template_override()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)

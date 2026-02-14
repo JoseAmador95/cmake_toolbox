@@ -407,8 +407,8 @@ function(Ceedling_AddUnitTest)
     )
 
     # Setup build directory
-    set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}.dir)
-    file(MAKE_DIRECTORY ${TEST_BINARY_DIR})
+    set(TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}.dir")
+    file(MAKE_DIRECTORY "${TEST_BINARY_DIR}")
 
     # Set default mock subdirectory if not defined
     if(NOT DEFINED CMOCK_MOCK_SUBDIR)
@@ -418,14 +418,14 @@ function(Ceedling_AddUnitTest)
     # Look for optional config file
     set(default_config "")
     set(config_locations
-        ${CMAKE_SOURCE_DIR}/cmock.yml
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
-        ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
+        "${CMAKE_SOURCE_DIR}/cmock.yml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmock.yml"
     )
 
-    foreach(config_path ${config_locations})
-        if(EXISTS ${config_path})
-            set(default_config ${config_path})
+    foreach(config_path IN LISTS config_locations)
+        if(EXISTS "${config_path}")
+            set(default_config "${config_path}")
             break()
         endif()
     endforeach()
@@ -435,7 +435,7 @@ function(Ceedling_AddUnitTest)
     if(default_config)
         set(config_file_arg
             CONFIG_FILE
-            ${default_config}
+            "${default_config}"
         )
     else()
         message(

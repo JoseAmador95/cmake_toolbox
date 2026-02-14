@@ -42,9 +42,9 @@ function(CMockSchema_SetDefaults)
     )
 
     set(CMOCK_WHEN_NO_PROTOTYPES
-        "warn"
+        ":warn"
         CACHE STRING
-        "Action when no function prototypes found: ignore, warn, or error"
+        "Action when no function prototypes found: :ignore, :warn, or :error"
     )
 
     set(CMOCK_ENFORCE_STRICT_ORDERING OFF CACHE BOOL "Enforce strict call ordering in mocks")
@@ -149,7 +149,7 @@ function(CMockSchema_GenerateConfigFile CONFIG_FILE)
         set(_cmock_mock_subdir "mocks")
     endif()
 
-    set(CMOCK_MOCK_SUBDIR "${output_dir}/${_cmock_mock_subdir}")
+    set(CMOCK_MOCK_PATH_YAML "${output_dir}/${_cmock_mock_subdir}")
 
     set(CMOCK_INCLUDES_YAML "")
     if(CMOCK_INCLUDES)
@@ -186,15 +186,15 @@ function(CMockSchema_GenerateConfigFile CONFIG_FILE)
 
     _CMockSchema_BoolToYaml(
         "${CMOCK_ENFORCE_STRICT_ORDERING}"
-        CMOCK_ENFORCE_STRICT_ORDERING
+        CMOCK_ENFORCE_STRICT_ORDERING_YAML
     )
     _CMockSchema_BoolToYaml(
         "${CMOCK_CALLBACK_INCLUDE_COUNT}"
-        CMOCK_CALLBACK_INCLUDE_COUNT
+        CMOCK_CALLBACK_INCLUDE_COUNT_YAML
     )
     _CMockSchema_BoolToYaml(
         "${CMOCK_CALLBACK_AFTER_ARG_CHECK}"
-        CMOCK_CALLBACK_AFTER_ARG_CHECK
+        CMOCK_CALLBACK_AFTER_ARG_CHECK_YAML
     )
 
     _CMockSchema_NormalizeSymbol(
