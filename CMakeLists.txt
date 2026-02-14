@@ -29,6 +29,12 @@ install(
     PATTERN "*.jq"
 )
 
+install(
+    FILES
+        ${CMAKE_CURRENT_LIST_DIR}/cmock.yml
+    DESTINATION ${CMAKE_TOOLBOX_INSTALL_CMAKEDIR}
+)
+
 configure_package_config_file(
     ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_toolboxConfig.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake_toolboxConfig.cmake

@@ -1,185 +1,240 @@
 # SPDX-License-Identifier: MIT
 # ==============================================================================
-# CMock Schema Management
+# CMock Configuration Management
 # ==============================================================================
 #
-# This module provides version-aware CMock configuration schema management.
-# It handles different CMock versions and generates appropriate YAML configurations
-# from cached CMake variables.
+# This module provides template-based CMock configuration generation.
+# It renders the cmock.yml template using cached CMake variables and
+# produces a configuration file for CMock.
 #
 # FEATURES:
-#   - Auto-detection of CMock version from tag
-#   - Version-specific schema handling
-#   - Cached variable to YAML generation
-#   - Sensible defaults per version
+#   - Template-based configuration (cmock.yml)
+#   - Cached variable defaults
+#   - YAML generation with overrides
 #
 # ==============================================================================
 
 include_guard(GLOBAL)
 
-# ==============================================================================
-# CMockSchema_GetSupportedVersions
-# ==============================================================================
-#
-# Get list of supported CMock versions
-#
-# Parameters:
-#   OUTPUT_VAR - Variable name to store the list of supported versions
-#
-function(CMockSchema_GetSupportedVersions OUTPUT_VAR)
-    set(SUPPORTED_VERSIONS "2.6")
-    set(${OUTPUT_VAR} "${SUPPORTED_VERSIONS}" PARENT_SCOPE)
+function(CMockSchema_SetDefaults)
+    set(CMOCK_MOCK_PREFIX "mock_" CACHE STRING "Prefix for generated mock file names")
+
+    set(CMOCK_MOCK_SUFFIX "" CACHE STRING "Suffix for generated mock file names")
+
+    set(CMOCK_MOCK_PATH "mocks" CACHE STRING "Subdirectory name for generated mock files")
+
+    set(CMOCK_INCLUDES
+        "unity.h"
+        CACHE STRING
+        "Semicolon-separated list of header files to include in mocks"
+    )
+
+    set(CMOCK_PLUGINS
+        "ignore;callback"
+        CACHE STRING
+        "Semicolon-separated list of CMock plugins to enable"
+    )
+
+    set(CMOCK_TREAT_AS
+        ""
+        CACHE STRING
+        "Type treatment mappings in TYPE:TREATMENT format (e.g., uint8:HEX8;size_t:HEX32)"
+    )
+
+    set(CMOCK_WHEN_NO_PROTOTYPES
+        "warn"
+        CACHE STRING
+        "Action when no function prototypes found: ignore, warn, or error"
+    )
+
+    set(CMOCK_ENFORCE_STRICT_ORDERING OFF CACHE BOOL "Enforce strict call ordering in mocks")
+
+    set(CMOCK_CALLBACK_INCLUDE_COUNT ON CACHE BOOL "Include call count in callback functions")
+
+    set(CMOCK_CALLBACK_AFTER_ARG_CHECK OFF CACHE BOOL "Call callbacks after argument validation")
+
+    set(CMOCK_INCLUDES_H_PRE_ORIG_HEADER
+        ""
+        CACHE STRING
+        "Header content to insert before original header inclusion"
+    )
+
+    set(CMOCK_INCLUDES_H_POST_ORIG_HEADER
+        ""
+        CACHE STRING
+        "Header content to insert after original header inclusion"
+    )
+
+    set(CMOCK_INCLUDES_C_PRE_HEADER
+        ""
+        CACHE STRING
+        "Source content to insert before header inclusion"
+    )
+
+    set(CMOCK_INCLUDES_C_POST_HEADER
+        ""
+        CACHE STRING
+        "Source content to insert after header inclusion"
+    )
 endfunction()
 
-# ==============================================================================
-# CMockSchema_DetectVersion
-# ==============================================================================
-#
-# Detect CMock version from executable or fallback to git tag
-#
-# Parameters:
-#   CMOCK_EXE  - Path to CMock Ruby executable
-#   TAG        - CMock git tag (fallback, e.g., "v2.6.0", "v2.5.3")
-#   OUTPUT_VAR - Variable name to store the detected schema version
-#
-function(CMockSchema_DetectVersion CMOCK_EXE TAG OUTPUT_VAR)
-    set(DETECTED_VERSION "")
-
-    # First try to get version from CMock executable
-    if(EXISTS "${CMOCK_EXE}")
-        find_program(Ruby_EXECUTABLE ruby)
-        if(Ruby_EXECUTABLE)
-            execute_process(
-                COMMAND
-                    ${Ruby_EXECUTABLE} "${CMOCK_EXE}" --version
-                OUTPUT_VARIABLE cmock_version_output
-                ERROR_VARIABLE cmock_version_error
-                RESULT_VARIABLE cmock_version_result
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                ERROR_STRIP_TRAILING_WHITESPACE
-            )
-
-            if(cmock_version_result EQUAL 0 AND cmock_version_output)
-                # Try to extract version from output (common formats: "CMock 2.6.0" or "2.6.0")
-                if(cmock_version_output MATCHES "([0-9]+)\\.([0-9]+)")
-                    set(DETECTED_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
-                    message(
-                        STATUS
-                        "${CMAKE_CURRENT_FUNCTION}: Version detected from executable: ${DETECTED_VERSION}"
-                    )
-                endif()
-            else()
-                message(
-                    STATUS
-                    "${CMAKE_CURRENT_FUNCTION}: Could not query CMock executable version: ${cmock_version_error}"
-                )
-            endif()
-        endif()
-    endif()
-
-    # Fallback to git tag parsing if executable query failed
-    if(NOT DETECTED_VERSION)
-        if(TAG MATCHES "^v?([0-9]+)\\.([0-9]+)")
-            set(DETECTED_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
-            message(
-                STATUS
-                "${CMAKE_CURRENT_FUNCTION}: Version detected from git tag: ${DETECTED_VERSION}"
-            )
-        else()
-            message(WARNING "${CMAKE_CURRENT_FUNCTION}: Could not parse version from tag: ${TAG}")
-        endif()
-    endif()
-
-    # Check if detected version is supported
-    if(DETECTED_VERSION)
-        CMockSchema_GetSupportedVersions(SUPPORTED_VERSIONS)
-        # Use list(FIND) instead of IN_LIST to keep script-mode compatibility
-        # without relying on CMP0057 policy state.
-        list(
-            FIND SUPPORTED_VERSIONS
-            "${DETECTED_VERSION}"
-            _detected_version_index
-        )
-        if(NOT _detected_version_index EQUAL -1)
-            set(${OUTPUT_VAR} "${DETECTED_VERSION}" PARENT_SCOPE)
-            message(
-                STATUS
-                "${CMAKE_CURRENT_FUNCTION}: Using CMock schema version: ${DETECTED_VERSION}"
-            )
-        else()
-            set(${OUTPUT_VAR} "" PARENT_SCOPE)
-            message(
-                STATUS
-                "${CMAKE_CURRENT_FUNCTION}: Unsupported CMock version ${DETECTED_VERSION}"
-            )
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Supported versions: ${SUPPORTED_VERSIONS}")
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}: Falling back to CONFIG_FILE mode")
-        endif()
+function(_CMockSchema_BoolToYaml INPUT OUTPUT_VAR)
+    if(INPUT)
+        set(${OUTPUT_VAR} "true" PARENT_SCOPE)
     else()
-        set(${OUTPUT_VAR} "" PARENT_SCOPE)
-        message(
-            STATUS
-            "${CMAKE_CURRENT_FUNCTION}: Could not detect CMock version, falling back to CONFIG_FILE mode"
-        )
+        set(${OUTPUT_VAR} "false" PARENT_SCOPE)
     endif()
 endfunction()
 
-# ==============================================================================
-# CMockSchema_SetDefaults
-# ==============================================================================
-#
-# Set version-specific default values for CMock configuration variables
-#
-# Parameters:
-#   VERSION - CMock schema version (e.g., "2.6")
-#
-function(CMockSchema_SetDefaults VERSION)
-    # Load version-specific schema
-    set(SCHEMA_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/schemas/cmock-${VERSION}.cmake")
-    if(EXISTS "${SCHEMA_FILE}")
-        include("${SCHEMA_FILE}")
-        message(STATUS "${CMAKE_CURRENT_FUNCTION}: Applied defaults for CMock ${VERSION}")
-    else()
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Schema file not found: ${SCHEMA_FILE}")
-    endif()
-endfunction()
+function(_CMockSchema_FindTemplate OUTPUT_VAR)
+    set(template_file "")
+    set(template_candidates
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/cmock.yml"
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../cmock.yml"
+        "${CMAKE_SOURCE_DIR}/cmock.yml"
+    )
 
-# ==============================================================================
-# CMockSchema_GenerateConfigFile
-# ==============================================================================
-#
-# Generates a CMock configuration file using the currently detected schema version.
-#
-# Parameters:
-#   CONFIG_FILE - Full path where the YAML configuration file should be generated
-#
-function(CMockSchema_GenerateConfigFile CONFIG_FILE)
-    if(NOT _CMOCK_SCHEMA_VERSION)
+    foreach(candidate IN LISTS template_candidates)
+        if(EXISTS "${candidate}")
+            set(template_file "${candidate}")
+            break()
+        endif()
+    endforeach()
+
+    if(NOT template_file)
         message(
             FATAL_ERROR
-            "${CMAKE_CURRENT_FUNCTION}: No CMock schema version detected. Call CMockSchema_DetectVersion() first."
+            "${CMAKE_CURRENT_FUNCTION}: cmock.yml template not found. "
+            "Provide CONFIG_FILE to Unity functions or add cmock.yml to the project."
         )
     endif()
 
-    cmake_path(GET CONFIG_FILE PARENT_PATH output_dir)
-    file(MAKE_DIRECTORY "${output_dir}")
+    set(${OUTPUT_VAR} "${template_file}" PARENT_SCOPE)
+endfunction()
 
-    # Load version-specific schema
-    set(SCHEMA_FILE
-        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/schemas/cmock-${_CMOCK_SCHEMA_VERSION}.cmake"
-    )
-    if(NOT EXISTS "${SCHEMA_FILE}")
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Schema file not found: ${SCHEMA_FILE}")
+function(CMockSchema_GenerateConfigFile CONFIG_FILE)
+    if(NOT CONFIG_FILE)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: CONFIG_FILE must be provided")
     endif()
 
-    # Include schema to get generation function
-    include("${SCHEMA_FILE}")
+    set(options "")
+    set(oneValueArgs TEMPLATE_FILE)
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    # Call version-specific generation function
-    cmake_language(CALL "CMockSchema_${_CMOCK_SCHEMA_VERSION}_GenerateYAML" "${CONFIG_FILE}")
+    CMockSchema_SetDefaults()
 
-    message(
-        STATUS
-        "${CMAKE_CURRENT_FUNCTION}: Generated CMock ${_CMOCK_SCHEMA_VERSION} configuration: ${CONFIG_FILE}"
+    cmake_path(GET CONFIG_FILE PARENT_PATH output_dir)
+    if(NOT output_dir)
+        set(output_dir "${CMAKE_CURRENT_BINARY_DIR}")
+    endif()
+    file(MAKE_DIRECTORY "${output_dir}")
+
+    if(DEFINED CMOCK_MOCK_SUBDIR AND NOT CMOCK_MOCK_SUBDIR STREQUAL "")
+        set(_cmock_mock_subdir "${CMOCK_MOCK_SUBDIR}")
+    elseif(DEFINED CMOCK_MOCK_PATH AND NOT CMOCK_MOCK_PATH STREQUAL "")
+        set(_cmock_mock_subdir "${CMOCK_MOCK_PATH}")
+    else()
+        set(_cmock_mock_subdir "mocks")
+    endif()
+
+    set(CMOCK_MOCK_SUBDIR "${output_dir}/${_cmock_mock_subdir}")
+
+    set(CMOCK_INCLUDES_YAML "")
+    if(CMOCK_INCLUDES)
+        string(REPLACE ";" "\n    - " includes_yaml "${CMOCK_INCLUDES}")
+        set(CMOCK_INCLUDES_YAML "    - ${includes_yaml}")
+    else()
+        set(CMOCK_INCLUDES_YAML "    []")
+    endif()
+
+    set(CMOCK_PLUGINS_YAML "")
+    if(CMOCK_PLUGINS)
+        string(REPLACE ";" "\n    - " plugins_yaml "${CMOCK_PLUGINS}")
+        set(CMOCK_PLUGINS_YAML "    - ${plugins_yaml}")
+    else()
+        set(CMOCK_PLUGINS_YAML "    []")
+    endif()
+
+    set(CMOCK_TREAT_AS_YAML "")
+    if(CMOCK_TREAT_AS)
+        set(CMOCK_TREAT_AS_YAML "  :treat_as:\n")
+        foreach(mapping IN LISTS CMOCK_TREAT_AS)
+            if(mapping MATCHES "^([^:]+):([^:]+)$")
+                set(type "${CMAKE_MATCH_1}")
+                set(treatment "${CMAKE_MATCH_2}")
+                string(APPEND CMOCK_TREAT_AS_YAML "    ${type}: ${treatment}\n")
+            else()
+                message(
+                    WARNING
+                    "${CMAKE_CURRENT_FUNCTION}: Invalid CMOCK_TREAT_AS mapping: ${mapping}"
+                )
+            endif()
+        endforeach()
+    endif()
+
+    _CMockSchema_BoolToYaml(
+        "${CMOCK_ENFORCE_STRICT_ORDERING}"
+        CMOCK_ENFORCE_STRICT_ORDERING
     )
+    _CMockSchema_BoolToYaml(
+        "${CMOCK_CALLBACK_INCLUDE_COUNT}"
+        CMOCK_CALLBACK_INCLUDE_COUNT
+    )
+    _CMockSchema_BoolToYaml(
+        "${CMOCK_CALLBACK_AFTER_ARG_CHECK}"
+        CMOCK_CALLBACK_AFTER_ARG_CHECK
+    )
+
+    set(CMOCK_INCLUDES_H_PRE_ORIG_HEADER_YAML "")
+    if(CMOCK_INCLUDES_H_PRE_ORIG_HEADER)
+        set(
+            CMOCK_INCLUDES_H_PRE_ORIG_HEADER_YAML
+            "  :includes_h_pre_orig_header: \"${CMOCK_INCLUDES_H_PRE_ORIG_HEADER}\""
+        )
+    endif()
+
+    set(CMOCK_INCLUDES_H_POST_ORIG_HEADER_YAML "")
+    if(CMOCK_INCLUDES_H_POST_ORIG_HEADER)
+        set(
+            CMOCK_INCLUDES_H_POST_ORIG_HEADER_YAML
+            "  :includes_h_post_orig_header: \"${CMOCK_INCLUDES_H_POST_ORIG_HEADER}\""
+        )
+    endif()
+
+    set(CMOCK_INCLUDES_C_PRE_HEADER_YAML "")
+    if(CMOCK_INCLUDES_C_PRE_HEADER)
+        set(
+            CMOCK_INCLUDES_C_PRE_HEADER_YAML
+            "  :includes_c_pre_header: \"${CMOCK_INCLUDES_C_PRE_HEADER}\""
+        )
+    endif()
+
+    set(CMOCK_INCLUDES_C_POST_HEADER_YAML "")
+    if(CMOCK_INCLUDES_C_POST_HEADER)
+        set(
+            CMOCK_INCLUDES_C_POST_HEADER_YAML
+            "  :includes_c_post_header: \"${CMOCK_INCLUDES_C_POST_HEADER}\""
+        )
+    endif()
+
+    if(DEFINED _CEEDLING_EXTRACT_FUNCTIONS AND _CEEDLING_EXTRACT_FUNCTIONS)
+        set(TB_EXTRACT_FUNCTIONS_TF "true")
+    else()
+        set(TB_EXTRACT_FUNCTIONS_TF "false")
+    endif()
+
+    if(ARG_TEMPLATE_FILE)
+        set(template_file "${ARG_TEMPLATE_FILE}")
+        if(NOT EXISTS "${template_file}")
+            message(
+                FATAL_ERROR
+                "${CMAKE_CURRENT_FUNCTION}: Template file does not exist: ${template_file}"
+            )
+        endif()
+    else()
+        _CMockSchema_FindTemplate(template_file)
+    endif()
+
+    configure_file("${template_file}" "${CONFIG_FILE}" @ONLY)
 endfunction()
