@@ -4,14 +4,12 @@ Unit tests for the `CMockSchema.cmake` module.
 
 ## Module Under Test
 
-`cmake/CMockSchema.cmake` - Provides version-aware CMock configuration schema management.
+`cmake/CMockSchema.cmake` - Provides template-based CMock configuration generation.
 
 ## Functions Tested
 
 | Function | Test File |
 |----------|-----------|
-| `CMockSchema_GetSupportedVersions` | `test_supported_versions.cmake` |
-| `CMockSchema_DetectVersion` | `test_detect_version.cmake` |
 | `CMockSchema_SetDefaults` | `test_set_defaults.cmake` |
 | `CMockSchema_GenerateConfigFile` | `test_generate_config.cmake` |
 
@@ -22,7 +20,7 @@ Unit tests for the `CMockSchema.cmake` module.
 ctest -R "cmockschema_"
 
 # Run a specific test
-ctest -R "cmockschema_detect_version" -V
+ctest -R "cmockschema_generate_config" -V
 
 # Run with verbose output
 ctest -R "cmockschema_" --output-on-failure
@@ -32,4 +30,4 @@ ctest -R "cmockschema_" --output-on-failure
 
 - **Happy paths**: Valid inputs produce expected outputs
 - **Error paths**: Invalid inputs correctly trigger FATAL_ERROR
-- **Edge cases**: Version parsing from tags and executables
+- **Edge cases**: Template rendering and custom overrides

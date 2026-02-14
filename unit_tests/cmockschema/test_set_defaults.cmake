@@ -9,7 +9,7 @@ if(NOT DEFINED CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT)
 endif()
 
 # Test: CMockSchema_SetDefaults
-# Validates that version-specific defaults are correctly applied
+# Validates that defaults are correctly applied
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(CMAKE_MODULE_PATH
@@ -22,43 +22,14 @@ include(CMockSchema)
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/cmockschema_defaults_test")
 
-# Helper to test that a command fails (FATAL_ERROR)
-function(test_command_fails DESCRIPTION COMMAND_STRING)
-    message(STATUS "  Testing: ${DESCRIPTION}")
-
-    string(MD5 temp_script_id "${DESCRIPTION};${COMMAND_STRING}")
-    set(temp_script "${TEST_ROOT}/temp_test_${temp_script_id}.cmake")
-    file(WRITE "${temp_script}" "${COMMAND_STRING}")
-
-    execute_process(
-        COMMAND
-            ${CMAKE_COMMAND} -P "${temp_script}"
-        RESULT_VARIABLE cmd_result
-        OUTPUT_VARIABLE cmd_output
-        ERROR_VARIABLE cmd_error
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
-
-    file(REMOVE "${temp_script}")
-
-    if(cmd_result EQUAL 0)
-        message(STATUS "    ✗ ${DESCRIPTION} - should have failed but succeeded")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-    else()
-        message(STATUS "    ✓ ${DESCRIPTION} - correctly failed")
-    endif()
-endfunction()
-
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
 endfunction()
 
-function(test_valid_version_sets_defaults)
-    message(STATUS "Test 1: Valid version (2.6) sets cache defaults")
+function(test_defaults_set)
+    message(STATUS "Test 1: SetDefaults applies cache defaults")
 
     set(test_script
         "
@@ -66,13 +37,11 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 include(CMockSchema)
 
-# Unset any cached variables before testing
 unset(CMOCK_MOCK_PREFIX CACHE)
 unset(CMOCK_PLUGINS CACHE)
 
-CMockSchema_SetDefaults(\"2.6\")
+CMockSchema_SetDefaults()
 
-# Verify defaults were set
 if(NOT DEFINED CMOCK_MOCK_PREFIX)
     message(FATAL_ERROR \"CMOCK_MOCK_PREFIX not set\")
 endif()
@@ -98,41 +67,17 @@ message(STATUS \"CMOCK_PLUGINS = \${CMOCK_PLUGINS}\")
     )
 
     if(NOT result EQUAL 0)
-        message(STATUS "  ✗ SetDefaults(2.6) failed: ${error}")
+        message(STATUS "  ✗ SetDefaults failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  ✓ SetDefaults(2.6) correctly applied defaults")
+    message(STATUS "  ✓ Defaults correctly applied")
 endfunction()
 
-function(test_invalid_version_fails)
-    message(STATUS "Test 2: Invalid version causes FATAL_ERROR")
-
-    test_command_fails(
-        "SetDefaults with unsupported version 99.99"
-        "cmake_minimum_required(VERSION 3.22)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-include(CMockSchema)
-CMockSchema_SetDefaults(\"99.99\")"
-    )
-endfunction()
-
-function(test_empty_version_fails)
-    message(STATUS "Test 3: Empty version causes FATAL_ERROR")
-
-    test_command_fails(
-        "SetDefaults with empty version"
-        "cmake_minimum_required(VERSION 3.22)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-include(CMockSchema)
-CMockSchema_SetDefaults(\"\")"
-    )
-endfunction()
-
-function(test_schema_file_loaded)
-    message(STATUS "Test 4: Verify schema variables are properly initialized")
+function(test_schema_variables_defined)
+    message(STATUS "Test 2: Verify schema variables are initialized")
 
     set(test_script
         "
@@ -140,9 +85,8 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 include(CMockSchema)
 
-CMockSchema_SetDefaults(\"2.6\")
+CMockSchema_SetDefaults()
 
-# Check that expected variables exist
 set(expected_vars
     CMOCK_MOCK_PREFIX
     CMOCK_MOCK_SUFFIX
@@ -185,7 +129,7 @@ endforeach()
 endfunction()
 
 function(test_default_mock_prefix)
-    message(STATUS "Test 5: Verify default mock prefix is 'mock_'")
+    message(STATUS "Test 3: Verify default mock prefix is 'mock_'")
 
     set(test_script
         "
@@ -193,10 +137,10 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 include(CMockSchema)
 
-CMockSchema_SetDefaults(\"2.6\")
+CMockSchema_SetDefaults()
 
 if(NOT CMOCK_MOCK_PREFIX STREQUAL \"mock_\")
-    message(FATAL_ERROR \"CMOCK_MOCK_PREFIX should be 'mock_', got '\${CMOCK_MOCK_PREFIX}'\")
+    message(FATAL_ERROR \"CMOCK_MOCK_PREFIX should be 'mock_', got \${CMOCK_MOCK_PREFIX}\")
 endif()
 "
     )
@@ -223,7 +167,7 @@ endif()
 endfunction()
 
 function(test_default_plugins)
-    message(STATUS "Test 6: Verify default plugins include 'ignore' and 'callback'")
+    message(STATUS "Test 4: Verify default plugins include 'ignore' and 'callback'")
 
     set(test_script
         "
@@ -231,7 +175,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 include(CMockSchema)
 
-CMockSchema_SetDefaults(\"2.6\")
+CMockSchema_SetDefaults()
 
 list(FIND CMOCK_PLUGINS \"ignore\" ignore_plugin_idx)
 if(ignore_plugin_idx EQUAL -1)
@@ -271,10 +215,8 @@ function(run_all_tests)
 
     setup_test_environment()
 
-    test_valid_version_sets_defaults()
-    test_invalid_version_fails()
-    test_empty_version_fails()
-    test_schema_file_loaded()
+    test_defaults_set()
+    test_schema_variables_defined()
     test_default_mock_prefix()
     test_default_plugins()
 

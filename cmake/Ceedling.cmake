@@ -415,29 +415,20 @@ function(Ceedling_AddUnitTest)
         set(CMOCK_MOCK_SUBDIR "mocks")
     endif()
 
-    # Only look for config file when NOT in schema mode
+    # Look for optional config file
     set(default_config "")
-    if(NOT _CMOCK_CONFIG_MODE STREQUAL "SCHEMA")
-        set(config_locations
-            ${CMAKE_SOURCE_DIR}/cmock.yml
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
-            ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
-        )
+    set(config_locations
+        ${CMAKE_SOURCE_DIR}/cmock.yml
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmock.yml
+        ${CMAKE_CURRENT_BINARY_DIR}/cmock.yml
+    )
 
-        foreach(config_path ${config_locations})
-            if(EXISTS ${config_path})
-                set(default_config ${config_path})
-                break()
-            endif()
-        endforeach()
-
-        if(NOT default_config)
-            message(
-                FATAL_ERROR
-                "${CMAKE_CURRENT_FUNCTION}: No cmock.yml configuration file found in expected locations"
-            )
+    foreach(config_path ${config_locations})
+        if(EXISTS ${config_path})
+            set(default_config ${config_path})
+            break()
         endif()
-    endif()
+    endforeach()
 
     # Build optional CONFIG_FILE argument
     set(config_file_arg "")
@@ -445,6 +436,11 @@ function(Ceedling_AddUnitTest)
         set(config_file_arg
             CONFIG_FILE
             ${default_config}
+        )
+    else()
+        message(
+            STATUS
+            "${CMAKE_CURRENT_FUNCTION}: No cmock.yml found; using generated defaults"
         )
     endif()
 
