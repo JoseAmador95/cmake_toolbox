@@ -8,6 +8,17 @@ project(GcovModuleTest)
 # Add parent cmake directory to module path
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
+# Test helpers for mock tools
+include(TestHelpers)
+
+# Provide a mock gcovr if none is specified
+if(NOT GCOVR_EXECUTABLE)
+    set(_gcovr_mock_dir "${CMAKE_CURRENT_BINARY_DIR}/mock_gcovr")
+    TestHelpers_CreateMockGcovr(_gcovr_mock OUTPUT_DIR "${_gcovr_mock_dir}")
+    file(TO_CMAKE_PATH "${_gcovr_mock}" _gcovr_mock_path)
+    set(GCOVR_EXECUTABLE "${_gcovr_mock_path}" CACHE FILEPATH "" FORCE)
+endif()
+
 # Load the module under test
 include(Gcov)
 

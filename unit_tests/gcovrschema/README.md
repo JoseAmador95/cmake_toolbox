@@ -4,14 +4,13 @@ Unit tests for the `GcovrSchema.cmake` module.
 
 ## Module Under Test
 
-`cmake/GcovrSchema.cmake` - Provides version-aware gcovr configuration schema management.
+`cmake/GcovrSchema.cmake` - Provides capability-based gcovr configuration schema management.
 
 ## Functions Tested
 
 | Function | Test File |
 |----------|-----------|
-| `GcovrSchema_GetSupportedVersions` | `test_supported_versions.cmake` |
-| `GcovrSchema_DetectVersion` | `test_detect_version.cmake` |
+| `GcovrSchema_DetectCapabilities` | `test_supported_versions.cmake` |
 | `GcovrSchema_SetDefaults` | `test_set_defaults.cmake` |
 | `GcovrSchema_GenerateConfigFile` | `test_generate_config.cmake` |
 | `GcovrSchema_Validate` | `test_validate.cmake` |

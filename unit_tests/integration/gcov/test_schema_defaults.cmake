@@ -25,6 +25,9 @@ function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
+    TestHelpers_CreateMockGcovr(mock_gcovr OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+    file(TO_CMAKE_PATH "${mock_gcovr}" mock_gcovr_path)
+    set(GCOVR_MOCK_PATH "${mock_gcovr_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_schema_defaults_gcc)
@@ -37,6 +40,8 @@ project(GcovSchemaTest LANGUAGES C CXX)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 set(CMAKE_C_COMPILER_ID \"GNU\")
 set(CMAKE_CXX_COMPILER_ID \"GNU\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 
@@ -115,6 +120,8 @@ project(GcovSchemaTest LANGUAGES C CXX)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 set(CMAKE_C_COMPILER_ID \"Clang\")
 set(CMAKE_CXX_COMPILER_ID \"Clang\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 

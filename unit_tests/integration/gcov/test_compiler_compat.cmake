@@ -30,6 +30,9 @@ function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
+    TestHelpers_CreateMockGcovr(mock_gcovr OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+    file(TO_CMAKE_PATH "${mock_gcovr}" mock_gcovr_path)
+    set(GCOVR_MOCK_PATH "${mock_gcovr_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_build_with_coverage_gcc)
@@ -53,6 +56,8 @@ function(test_build_with_coverage_gcc)
 cmake_minimum_required(VERSION 3.22)
 project(GcovGccTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 
@@ -147,6 +152,8 @@ function(test_build_with_coverage_clang)
 cmake_minimum_required(VERSION 3.22)
 project(GcovClangTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 

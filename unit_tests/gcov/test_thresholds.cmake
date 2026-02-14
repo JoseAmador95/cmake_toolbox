@@ -86,6 +86,34 @@ function(
     string(APPEND cmake_lists "cmake_minimum_required(VERSION 3.22)\n")
     string(APPEND cmake_lists "project(GcovThresholdsTest)\n")
     string(APPEND cmake_lists "list(APPEND CMAKE_MODULE_PATH \"${MODULE_DIR}\")\n")
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
+    string(
+        APPEND cmake_lists
+        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
+    )
     string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_LINE \"${LINE}\" CACHE STRING \"\" FORCE)\n")
     string(
         APPEND cmake_lists
@@ -659,6 +687,8 @@ endfunction()
 
 file(REMOVE_RECURSE "${TEST_ROOT}")
 file(MAKE_DIRECTORY "${TEST_ROOT}")
+TestHelpers_CreateMockGcovr(_gcovr_mock OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+file(TO_CMAKE_PATH "${_gcovr_mock}" GCOVR_MOCK_PATH)
 
 message(STATUS "=== Gcovr Threshold Enforcement Tests ===")
 

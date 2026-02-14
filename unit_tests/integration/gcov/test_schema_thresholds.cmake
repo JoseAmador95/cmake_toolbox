@@ -25,6 +25,9 @@ function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
+    TestHelpers_CreateMockGcovr(mock_gcovr OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+    file(TO_CMAKE_PATH "${mock_gcovr}" mock_gcovr_path)
+    set(GCOVR_MOCK_PATH "${mock_gcovr_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_thresholds_enforcement_on)
@@ -35,6 +38,8 @@ function(test_thresholds_enforcement_on)
 cmake_minimum_required(VERSION 3.22)
 project(GcovThresholdsTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 # Enable threshold enforcement with specific values
 set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
@@ -153,6 +158,8 @@ cmake_minimum_required(VERSION 3.22)
 project(GcovThresholdsTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+
 # Disable threshold enforcement but set values
 set(GCOVR_ENFORCE_THRESHOLDS OFF CACHE BOOL \"\" FORCE)
 set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
@@ -220,6 +227,8 @@ function(test_threshold_zero_excluded)
 cmake_minimum_required(VERSION 3.22)
 project(GcovThresholdsTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
 set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
