@@ -50,6 +50,9 @@ function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
+    TestHelpers_CreateMockGcovr(mock_gcovr OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+    file(TO_CMAKE_PATH "${mock_gcovr}" mock_gcovr_path)
+    set(GCOVR_MOCK_PATH "${mock_gcovr_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_nonexistent_target_fails)
@@ -60,6 +63,7 @@ function(test_nonexistent_target_fails)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 # Target doesn't exist
@@ -84,6 +88,7 @@ function(test_valid_target_succeeds)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 add_library(mylib STATIC dummy.c)
@@ -125,6 +130,7 @@ function(test_multiple_targets)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 add_library(lib1 STATIC lib1.c)
@@ -173,6 +179,8 @@ function(test_custom_flags_override)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 # Set custom flags before including module
 set(GCOV_COMPILE_FLAGS \"--coverage\" CACHE STRING \"\" FORCE)

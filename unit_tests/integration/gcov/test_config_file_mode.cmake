@@ -25,6 +25,9 @@ function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
+    TestHelpers_CreateMockGcovr(mock_gcovr OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+    file(TO_CMAKE_PATH "${mock_gcovr}" mock_gcovr_path)
+    set(GCOVR_MOCK_PATH "${mock_gcovr_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_config_file_mode_uses_external)
@@ -50,6 +53,8 @@ html-details = yes
 cmake_minimum_required(VERSION 3.22)
 project(GcovConfigFileTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 # Use external config file
 set(GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/my_gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
@@ -107,6 +112,8 @@ function(test_config_file_mode_warns_enforce)
 cmake_minimum_required(VERSION 3.22)
 project(GcovConfigFileTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 set(GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
 set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)

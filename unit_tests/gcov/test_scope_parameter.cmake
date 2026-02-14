@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH
     "${REPO_ROOT}/cmake"
     ${CMAKE_MODULE_PATH}
 )
+include(TestHelpers)
 
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_scope_test")
@@ -24,6 +25,9 @@ function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
     file(MAKE_DIRECTORY "${TEST_ROOT}")
+    TestHelpers_CreateMockGcovr(mock_gcovr OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
+    file(TO_CMAKE_PATH "${mock_gcovr}" mock_gcovr_path)
+    set(GCOVR_MOCK_PATH "${mock_gcovr_path}" PARENT_SCOPE)
 endfunction()
 
 function(test_scope_variation SCOPE_VALUE)
@@ -34,6 +38,7 @@ function(test_scope_variation SCOPE_VALUE)
 cmake_minimum_required(VERSION 3.22)
 project(GcovScopeTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 add_library(mylib STATIC dummy.c)
@@ -86,6 +91,7 @@ function(test_scope_propagation)
 cmake_minimum_required(VERSION 3.22)
 project(GcovScopeTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 # Base library with PUBLIC scope - flags should propagate to consumers
@@ -138,6 +144,7 @@ function(test_interface_library)
 cmake_minimum_required(VERSION 3.22)
 project(GcovInterfaceTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 # Interface library with INTERFACE scope
@@ -184,6 +191,7 @@ function(test_executable_target)
 cmake_minimum_required(VERSION 3.22)
 project(GcovExeTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
+set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 add_executable(myexe main.c)

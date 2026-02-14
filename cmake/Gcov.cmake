@@ -39,12 +39,13 @@ Configuration Modes
 
 This module supports two configuration modes:
 
-**SCHEMA Mode** (default when gcovr version is supported):
+**SCHEMA Mode** (default when gcovr capabilities are detected):
   Configuration is managed through CMake cache variables (``GCOVR_*``).
-  A configuration file is auto-generated from these variables.
+  A configuration file is auto-generated from these variables, skipping options
+  unsupported by the installed gcovr.
   No external config file is required.
 
-**CONFIG_FILE Mode** (fallback for unsupported gcovr versions):
+**CONFIG_FILE Mode** (explicit override):
   Uses an external configuration file specified by ``GCOVR_CONFIG_FILE``.
 
 Dependencies
@@ -57,7 +58,7 @@ Cache Variables (SCHEMA Mode)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When in SCHEMA mode, the following variables control gcovr behavior.
-See ``cmake/schemas/gcovr-<version>.cmake`` for the complete list.
+See ``cmake/GcovrSchema.cmake`` for the complete list.
 
 ``GCOVR_FAIL_UNDER_LINE``
   Minimum line coverage percentage (0-100). Default: 0
@@ -132,14 +133,14 @@ Functions
 
     Gcovr_Initialize()
 
-  Detects gcovr version and sets up appropriate configuration mode.
+  Detects gcovr capabilities and sets up appropriate configuration mode.
 
 Targets
 ^^^^^^^
 
 ``gcovr``
   Custom target to generate coverage reports. Always prints text summary.
-  Generates all formats specified in ``GCOVR_OUTPUT_FORMATS`` (html, xml, json, lcov, csv, coveralls).
+  Generates all formats specified in ``GCOVR_OUTPUT_FORMATS`` (filtered by gcovr capabilities).
 
 Example
 ^^^^^^^
@@ -282,8 +283,6 @@ include(GcovrSchema)
 
 set(_GCOVR_CONFIG_MODE "" CACHE INTERNAL "Gcovr configuration mode: SCHEMA or CONFIG_FILE")
 
-set(_GCOVR_SCHEMA_VERSION "" CACHE INTERNAL "Detected gcovr schema version")
-
 set(_GCOVR_INITIALIZED FALSE CACHE INTERNAL "Whether Gcovr module has been initialized")
 
 # ==============================================================================
@@ -357,40 +356,36 @@ function(Gcovr_Initialize)
         return()
     endif()
 
-    # Try to detect version and use SCHEMA mode
-    GcovrSchema_DetectVersion("${Gcovr_EXECUTABLE}" DETECTED_VERSION)
+    # Detect capabilities and prefer SCHEMA mode
+    set(_GCOVR_CONFIG_MODE "SCHEMA" CACHE INTERNAL "" FORCE)
 
-    if(DETECTED_VERSION)
-        set(_GCOVR_SCHEMA_VERSION "${DETECTED_VERSION}" CACHE INTERNAL "" FORCE)
-        set(_GCOVR_CONFIG_MODE "SCHEMA" CACHE INTERNAL "" FORCE)
+    GcovrSchema_SetDefaults()
+    GcovrSchema_DetectCapabilities("${Gcovr_EXECUTABLE}" DETECTED_FLAGS)
 
-        # Load schema defaults
-        GcovrSchema_SetDefaults("${DETECTED_VERSION}")
-        GcovrSchema_Validate()
-        if(DEFINED GCOVR_SCHEMA_VALID AND NOT GCOVR_SCHEMA_VALID)
-            message(
-                WARNING
-                "Gcovr_Initialize: Some gcovr settings are invalid. Check earlier warnings."
-            )
-        endif()
-
-        message(STATUS "Gcovr_Initialize: Using SCHEMA mode with gcovr ${DETECTED_VERSION}")
-    else()
-        set(_GCOVR_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "" FORCE)
-
+    if(DEFINED _GCOVR_CAPABILITIES_DETECTED AND NOT _GCOVR_CAPABILITIES_DETECTED)
         # In CONFIG_FILE mode without a file, check for default location
         set(DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/gcovr.cfg")
         if(EXISTS "${DEFAULT_CONFIG}")
+            set(_GCOVR_CONFIG_MODE "CONFIG_FILE" CACHE INTERNAL "" FORCE)
             set(GCOVR_CONFIG_FILE "${DEFAULT_CONFIG}" CACHE FILEPATH "" FORCE)
             message(STATUS "Gcovr_Initialize: Found config file at ${DEFAULT_CONFIG}")
         else()
             message(
                 WARNING
-                "Gcovr_Initialize: Unsupported gcovr version and no config file found.\n"
-                "Please either:\n"
-                "  1. Update to a supported gcovr version (see GcovrSchema_GetSupportedVersions())\n"
-                "  2. Provide a config file via GCOVR_CONFIG_FILE\n"
-                "  3. Create ${DEFAULT_CONFIG}"
+                "Gcovr_Initialize: Unable to detect gcovr capabilities; assuming all known flags are supported.\n"
+                "Provide GCOVR_CONFIG_FILE to use an external config."
+            )
+        endif()
+    else()
+        message(STATUS "Gcovr_Initialize: Using SCHEMA mode with gcovr capabilities detection")
+    endif()
+
+    if(_GCOVR_CONFIG_MODE STREQUAL "SCHEMA")
+        GcovrSchema_Validate()
+        if(DEFINED GCOVR_SCHEMA_VALID AND NOT GCOVR_SCHEMA_VALID)
+            message(
+                WARNING
+                "Gcovr_Initialize: Some gcovr settings are invalid. Check earlier warnings."
             )
         endif()
     endif()
@@ -573,7 +568,7 @@ endif()
 # ==============================================================================
 #
 # Single 'gcovr' target that generates all configured output formats.
-# Always prints text summary to console.
+# Prints text summary to console when supported.
 # Output formats are controlled by GCOVR_OUTPUT_FORMATS variable.
 #
 
@@ -585,120 +580,208 @@ if(NOT TARGET gcovr)
         "${_GCOVR_ACTIVE_CONFIG_FILE}"
         --root
         "${GCOVR_ROOT_DIR}"
-        --print-summary # Always print text summary
     )
+
+    set(_gcovr_output_formats "${GCOVR_OUTPUT_FORMATS}")
+    GcovrSchema_FilterOutputFormats("${_gcovr_output_formats}" _gcovr_output_formats)
+
+    GcovrSchema_IsFlagSupported("--print-summary" _gcovr_has_print_summary)
+    if(_gcovr_has_print_summary)
+        list(APPEND _gcovr_args --print-summary)
+    else()
+        message(WARNING "Gcovr: gcovr does not support --print-summary; skipping text summary")
+    endif()
 
     # Collect output files for comment
     set(_gcovr_outputs "")
 
     # HTML output
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "html"
         _fmt_html_idx
     )
     if(NOT _fmt_html_idx EQUAL -1)
-        set(_gcovr_html_output "${GCOVR_OUTPUT_DIR}/coverage.html")
+        GcovrSchema_IsFlagSupported("--html" _gcovr_has_html)
+        GcovrSchema_IsFlagSupported("--html-details" _gcovr_has_html_details)
+        GcovrSchema_IsFlagSupported("--html-nested" _gcovr_has_html_nested)
+
+        set(_gcovr_html_flag "")
         if(GCOVR_HTML_NESTED)
-            list(
-                APPEND _gcovr_args
-                --html-nested
-                "${_gcovr_html_output}"
-            )
+            if(_gcovr_has_html_nested)
+                set(_gcovr_html_flag "--html-nested")
+            elseif(_gcovr_has_html_details)
+                message(WARNING "Gcovr: --html-nested not supported, falling back to --html-details")
+                set(_gcovr_html_flag "--html-details")
+            elseif(_gcovr_has_html)
+                message(WARNING "Gcovr: --html-nested not supported, falling back to --html")
+                set(_gcovr_html_flag "--html")
+            else()
+                message(
+                    WARNING
+                    "Gcovr: HTML output requested but gcovr does not support HTML flags; skipping"
+                )
+            endif()
         elseif(GCOVR_HTML_DETAILS)
-            list(
-                APPEND _gcovr_args
-                --html-details
-                "${_gcovr_html_output}"
-            )
+            if(_gcovr_has_html_details)
+                set(_gcovr_html_flag "--html-details")
+            elseif(_gcovr_has_html)
+                message(WARNING "Gcovr: --html-details not supported, falling back to --html")
+                set(_gcovr_html_flag "--html")
+            elseif(_gcovr_has_html_nested)
+                message(WARNING "Gcovr: --html-details not supported, falling back to --html-nested")
+                set(_gcovr_html_flag "--html-nested")
+            else()
+                message(
+                    WARNING
+                    "Gcovr: HTML output requested but gcovr does not support HTML flags; skipping"
+                )
+            endif()
         else()
+            if(_gcovr_has_html)
+                set(_gcovr_html_flag "--html")
+            elseif(_gcovr_has_html_details)
+                message(WARNING "Gcovr: --html not supported, falling back to --html-details")
+                set(_gcovr_html_flag "--html-details")
+            elseif(_gcovr_has_html_nested)
+                message(WARNING "Gcovr: --html not supported, falling back to --html-nested")
+                set(_gcovr_html_flag "--html-nested")
+            else()
+                message(
+                    WARNING
+                    "Gcovr: HTML output requested but gcovr does not support HTML flags; skipping"
+                )
+            endif()
+        endif()
+
+        if(_gcovr_html_flag)
+            set(_gcovr_html_output "${GCOVR_OUTPUT_DIR}/coverage.html")
             list(
                 APPEND _gcovr_args
-                --html
+                ${_gcovr_html_flag}
                 "${_gcovr_html_output}"
             )
+            list(APPEND _gcovr_outputs "HTML")
         endif()
-        list(APPEND _gcovr_outputs "HTML")
     endif()
 
     # XML/Cobertura output
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "xml"
         _fmt_xml_idx
     )
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "cobertura"
         _fmt_cobertura_idx
     )
     if(NOT _fmt_xml_idx EQUAL -1 OR NOT _fmt_cobertura_idx EQUAL -1)
-        list(
-            APPEND _gcovr_args
-            --xml
-            "${GCOVR_OUTPUT_DIR}/coverage.xml"
-        )
-        list(APPEND _gcovr_outputs "XML")
+        GcovrSchema_IsFlagSupported("--xml" _gcovr_has_xml)
+        GcovrSchema_IsFlagSupported("--cobertura" _gcovr_has_cobertura)
+        set(_gcovr_xml_flag "")
+        if(_gcovr_has_xml)
+            set(_gcovr_xml_flag "--xml")
+        elseif(_gcovr_has_cobertura)
+            set(_gcovr_xml_flag "--cobertura")
+        else()
+            message(
+                WARNING
+                "Gcovr: XML/Cobertura output requested but gcovr does not support --xml/--cobertura; skipping"
+            )
+        endif()
+
+        if(_gcovr_xml_flag)
+            list(
+                APPEND _gcovr_args
+                ${_gcovr_xml_flag}
+                "${GCOVR_OUTPUT_DIR}/coverage.xml"
+            )
+            list(APPEND _gcovr_outputs "XML")
+        endif()
     endif()
 
     # JSON output
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "json"
         _fmt_json_idx
     )
     if(NOT _fmt_json_idx EQUAL -1)
-        list(
-            APPEND _gcovr_args
-            --json
-            "${GCOVR_OUTPUT_DIR}/coverage.json"
-        )
-        list(APPEND _gcovr_outputs "JSON")
+        GcovrSchema_IsFlagSupported("--json" _gcovr_has_json)
+        if(_gcovr_has_json)
+            list(
+                APPEND _gcovr_args
+                --json
+                "${GCOVR_OUTPUT_DIR}/coverage.json"
+            )
+            list(APPEND _gcovr_outputs "JSON")
+        else()
+            message(WARNING "Gcovr: JSON output requested but gcovr does not support --json; skipping")
+        endif()
     endif()
 
     # LCOV output
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "lcov"
         _fmt_lcov_idx
     )
     if(NOT _fmt_lcov_idx EQUAL -1)
-        list(
-            APPEND _gcovr_args
-            --lcov
-            "${GCOVR_OUTPUT_DIR}/coverage.lcov"
-        )
-        list(APPEND _gcovr_outputs "LCOV")
+        GcovrSchema_IsFlagSupported("--lcov" _gcovr_has_lcov)
+        if(_gcovr_has_lcov)
+            list(
+                APPEND _gcovr_args
+                --lcov
+                "${GCOVR_OUTPUT_DIR}/coverage.lcov"
+            )
+            list(APPEND _gcovr_outputs "LCOV")
+        else()
+            message(WARNING "Gcovr: LCOV output requested but gcovr does not support --lcov; skipping")
+        endif()
     endif()
 
     # CSV output
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "csv"
         _fmt_csv_idx
     )
     if(NOT _fmt_csv_idx EQUAL -1)
-        list(
-            APPEND _gcovr_args
-            --csv
-            "${GCOVR_OUTPUT_DIR}/coverage.csv"
-        )
-        list(APPEND _gcovr_outputs "CSV")
+        GcovrSchema_IsFlagSupported("--csv" _gcovr_has_csv)
+        if(_gcovr_has_csv)
+            list(
+                APPEND _gcovr_args
+                --csv
+                "${GCOVR_OUTPUT_DIR}/coverage.csv"
+            )
+            list(APPEND _gcovr_outputs "CSV")
+        else()
+            message(WARNING "Gcovr: CSV output requested but gcovr does not support --csv; skipping")
+        endif()
     endif()
 
     # Coveralls output
     list(
-        FIND GCOVR_OUTPUT_FORMATS
+        FIND _gcovr_output_formats
         "coveralls"
         _fmt_coveralls_idx
     )
     if(NOT _fmt_coveralls_idx EQUAL -1)
-        list(
-            APPEND _gcovr_args
-            --coveralls
-            "${GCOVR_OUTPUT_DIR}/coveralls.json"
-        )
-        list(APPEND _gcovr_outputs "Coveralls")
+        GcovrSchema_IsFlagSupported("--coveralls" _gcovr_has_coveralls)
+        if(_gcovr_has_coveralls)
+            list(
+                APPEND _gcovr_args
+                --coveralls
+                "${GCOVR_OUTPUT_DIR}/coveralls.json"
+            )
+            list(APPEND _gcovr_outputs "Coveralls")
+        else()
+            message(
+                WARNING
+                "Gcovr: Coveralls output requested but gcovr does not support --coveralls; skipping"
+            )
+        endif()
     endif()
 
     # Build comment string
