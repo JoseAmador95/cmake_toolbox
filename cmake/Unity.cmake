@@ -240,7 +240,7 @@ function(Unity_GenerateMock)
     endif()
 
     # Generate configuration file (template or user-provided)
-    set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
+    set(GENERATED_CONFIG_FILE "${ARG_OUTPUT_DIR}/cmock.yml")
     if(ARG_CONFIG_FILE)
         if(NOT EXISTS "${ARG_CONFIG_FILE}")
             message(
@@ -249,12 +249,12 @@ function(Unity_GenerateMock)
             )
         endif()
         CMockSchema_GenerateConfigFile(
-            ${GENERATED_CONFIG_FILE}
+            "${GENERATED_CONFIG_FILE}"
             TEMPLATE_FILE
-            ${ARG_CONFIG_FILE}
+            "${ARG_CONFIG_FILE}"
         )
     else()
-        CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
+        CMockSchema_GenerateConfigFile("${GENERATED_CONFIG_FILE}")
     endif()
 
     # Set defaults for optional parameters
@@ -288,12 +288,12 @@ function(Unity_GenerateMock)
     cmake_path(GET ARG_HEADER STEM header_name)
 
     # Create mock directory
-    set(MOCK_DIR ${ARG_OUTPUT_DIR}/${ARG_MOCK_SUBDIR})
-    file(MAKE_DIRECTORY ${MOCK_DIR})
+    set(MOCK_DIR "${ARG_OUTPUT_DIR}/${ARG_MOCK_SUBDIR}")
+    file(MAKE_DIRECTORY "${MOCK_DIR}")
 
     # Generate mock file paths
-    set(MOCK_SOURCE ${MOCK_DIR}/${ARG_MOCK_PREFIX}${header_name}${ARG_MOCK_SUFFIX}.c)
-    set(MOCK_HEADER ${MOCK_DIR}/${ARG_MOCK_PREFIX}${header_name}${ARG_MOCK_SUFFIX}.h)
+    set(MOCK_SOURCE "${MOCK_DIR}/${ARG_MOCK_PREFIX}${header_name}${ARG_MOCK_SUFFIX}.c")
+    set(MOCK_HEADER "${MOCK_DIR}/${ARG_MOCK_PREFIX}${header_name}${ARG_MOCK_SUFFIX}.h")
 
     # Create custom command to generate mock files
     add_custom_command(
@@ -366,7 +366,7 @@ function(Unity_GenerateRunner)
     endif()
 
     # Generate configuration file (template or user-provided)
-    set(GENERATED_CONFIG_FILE ${ARG_OUTPUT_DIR}/cmock.yml)
+    set(GENERATED_CONFIG_FILE "${ARG_OUTPUT_DIR}/cmock.yml")
     if(ARG_CONFIG_FILE)
         if(NOT EXISTS "${ARG_CONFIG_FILE}")
             message(
@@ -375,23 +375,23 @@ function(Unity_GenerateRunner)
             )
         endif()
         CMockSchema_GenerateConfigFile(
-            ${GENERATED_CONFIG_FILE}
+            "${GENERATED_CONFIG_FILE}"
             TEMPLATE_FILE
-            ${ARG_CONFIG_FILE}
+            "${ARG_CONFIG_FILE}"
         )
     else()
-        CMockSchema_GenerateConfigFile(${GENERATED_CONFIG_FILE})
+        CMockSchema_GenerateConfigFile("${GENERATED_CONFIG_FILE}")
     endif()
 
     # Extract test filename without extension
     cmake_path(GET ARG_TEST_SOURCE STEM test_name)
 
     # Create runner directory
-    set(RUNNER_DIR ${ARG_OUTPUT_DIR}/runners)
-    file(MAKE_DIRECTORY ${RUNNER_DIR})
+    set(RUNNER_DIR "${ARG_OUTPUT_DIR}/runners")
+    file(MAKE_DIRECTORY "${RUNNER_DIR}")
 
     # Generate runner file path
-    set(RUNNER_SOURCE ${RUNNER_DIR}/${test_name}_runner.c)
+    set(RUNNER_SOURCE "${RUNNER_DIR}/${test_name}_runner.c")
 
     # Create custom command to generate runner file
     add_custom_command(
