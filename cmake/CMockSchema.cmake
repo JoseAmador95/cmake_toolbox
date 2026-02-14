@@ -86,6 +86,17 @@ function(_CMockSchema_BoolToYaml INPUT OUTPUT_VAR)
     endif()
 endfunction()
 
+function(_CMockSchema_NormalizeSymbol INPUT OUTPUT_VAR)
+    string(STRIP "${INPUT}" value)
+    if(value STREQUAL "")
+        set(${OUTPUT_VAR} "" PARENT_SCOPE)
+    elseif(value MATCHES "^:")
+        set(${OUTPUT_VAR} "${value}" PARENT_SCOPE)
+    else()
+        set(${OUTPUT_VAR} ":${value}" PARENT_SCOPE)
+    endif()
+endfunction()
+
 function(_CMockSchema_FindTemplate OUTPUT_VAR)
     set(template_file "")
     set(template_candidates
@@ -184,6 +195,11 @@ function(CMockSchema_GenerateConfigFile CONFIG_FILE)
     _CMockSchema_BoolToYaml(
         "${CMOCK_CALLBACK_AFTER_ARG_CHECK}"
         CMOCK_CALLBACK_AFTER_ARG_CHECK
+    )
+
+    _CMockSchema_NormalizeSymbol(
+        "${CMOCK_WHEN_NO_PROTOTYPES}"
+        CMOCK_WHEN_NO_PROTOTYPES_YAML
     )
 
     set(CMOCK_INCLUDES_H_PRE_ORIG_HEADER_YAML "")
