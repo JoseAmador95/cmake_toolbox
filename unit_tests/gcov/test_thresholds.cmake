@@ -90,30 +90,6 @@ function(
         APPEND cmake_lists
         "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
     )
-    string(
-        APPEND cmake_lists
-        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
-    )
-    string(
-        APPEND cmake_lists
-        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
-    )
-    string(
-        APPEND cmake_lists
-        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
-    )
-    string(
-        APPEND cmake_lists
-        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
-    )
-    string(
-        APPEND cmake_lists
-        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
-    )
-    string(
-        APPEND cmake_lists
-        "set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)\n"
-    )
     string(APPEND cmake_lists "set(GCOVR_FAIL_UNDER_LINE \"${LINE}\" CACHE STRING \"\" FORCE)\n")
     string(
         APPEND cmake_lists
