@@ -37,6 +37,22 @@ ctest --test-dir build --output-on-failure -R "integration_clangformat"
 ctest --test-dir build --output-on-failure -R "integration_gcov"
 ```
 
+## Labels and JUnit Output
+
+- Ceedling tests default to label `unit` (plus any `LABELS` passed to `Ceedling_AddUnitTest`).
+- Script-mode tests use labels `script` and the module name.
+- Integration tests use labels `integration` and the module name.
+
+```bash
+ctest --test-dir build -L unit
+ctest --test-dir build -LE unit
+ctest --test-dir build -L integration
+ctest --test-dir build --output-junit build/junit.xml
+```
+
+JUnit output is captured without truncation by injecting `CTEST_FULL_OUTPUT` into each test's output
+via the `CTestFullOutput.cmake` wrapper, with large size limits as a safety net.
+
 ## CI Enforcement
 
 GitHub Actions runs on every pull request and push to `main` with the following matrix:

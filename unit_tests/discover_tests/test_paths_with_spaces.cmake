@@ -74,10 +74,19 @@ exit 1
 endfunction()
 
 function(run_discover exe_path work_dir out_file)
+    set(test_labels "")
+    if(ARGC GREATER 3)
+        set(test_labels "${ARGV3}")
+    endif()
+    set(label_args "")
+    if(NOT test_labels STREQUAL "")
+        string(REPLACE ";" "\\;" test_labels_escaped "${test_labels}")
+        set(label_args -D "TEST_LABELS=${test_labels_escaped}")
+    endif()
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} -D "TEST_EXECUTABLE=${exe_path}" -D "TEST_WORKING_DIR=${work_dir}" -D
-            "TEST_SUITE=suite" -D "TEST_FILE=${out_file}" -P "${DISCOVER_TESTS_MODULE}"
+            "TEST_SUITE=suite" -D "TEST_FILE=${out_file}" ${label_args} -P "${DISCOVER_TESTS_MODULE}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -176,12 +185,37 @@ function(test_nonexistent_executable)
     endif()
 endfunction()
 
+function(test_labels_propagation)
+    message(STATUS "Test 5: labels are applied to discovered tests")
+
+    set(exe_path "${TEST_ROOT}/labels/test_app")
+    set(work_dir "${TEST_ROOT}/labels")
+    set(out_file "${TEST_ROOT}/labels/tests.cmake")
+
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}" "unit;fast")
+
+    if(NOT DISCOVER_RESULT EQUAL 0)
+        fail("DiscoverTests failed for label propagation: ${DISCOVER_ERROR}")
+        return()
+    endif()
+
+    file(READ "${out_file}" content)
+    if(NOT content MATCHES "set_tests_properties\\(\\\"suite/test_one\\\" PROPERTIES LABELS \\\"unit;fast\\\"\\)")
+        fail("Missing label properties in generated output")
+        return()
+    endif()
+
+    message(STATUS "  PASS: labels applied in generated output")
+endfunction()
+
 message(STATUS "DiscoverTests path handling tests")
 reset_test_root()
 test_normal_path()
 test_executable_with_spaces()
 test_workdir_with_spaces()
 test_nonexistent_executable()
+test_labels_propagation()
 
 if(ERROR_COUNT EQUAL 0)
     message(STATUS "All tests passed")

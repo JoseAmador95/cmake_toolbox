@@ -18,6 +18,8 @@ integration/
 │   └── test_configuration.cmake       # Global/per-target config, tool missing
 ├── clangformat/
 │   └── test_configuration.cmake       # Basic config, exclusions, tool missing
+├── ctest/
+│   └── test_junit_output.cmake         # JUnit output captures full stdout/stderr
 ├── compilecommands/
 │   └── test_trim.cmake                # jq trim, jq missing scenarios
 ├── findunity/
@@ -50,6 +52,7 @@ ctest -R "integration_consumption" --output-on-failure
 | Sanitizer | ✓ | ✓ | N/A | ASan/UBSan/LSan combinations |
 | ClangTidy | ✓ | ✓ | ✓ | Global/Per-target |
 | ClangFormat | ✓ | ✓ | ✓ | Exclusions |
+| CTest | ✓ | ✓ | N/A | JUnit output capture |
 | CompileCommands | - | - | ✓ (jq) | Trim |
 | FindUnity | ✓ | ✓ | N/A | Hint resolution / layout validation |
 | Unity | ✓ | ✓ | N/A | CMock memory definitions |
