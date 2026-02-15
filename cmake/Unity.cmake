@@ -149,11 +149,16 @@ function(Unity_Initialize)
     find_package(Unity REQUIRED)
 
     if(TARGET Unity::CMock)
+        get_target_property(_tb_cmock_target Unity::CMock ALIASED_TARGET)
+        if(NOT _tb_cmock_target OR _tb_cmock_target MATCHES "-NOTFOUND$")
+            set(_tb_cmock_target Unity::CMock)
+        endif()
+
         if(CMOCK_MEM_DYNAMIC)
-            target_compile_definitions(Unity::CMock PUBLIC CMOCK_MEM_DYNAMIC)
+            target_compile_definitions(${_tb_cmock_target} PUBLIC CMOCK_MEM_DYNAMIC)
         endif()
         if(DEFINED CMOCK_MEM_SIZE AND NOT CMOCK_MEM_SIZE STREQUAL "")
-            target_compile_definitions(Unity::CMock PUBLIC CMOCK_MEM_SIZE=${CMOCK_MEM_SIZE})
+            target_compile_definitions(${_tb_cmock_target} PUBLIC CMOCK_MEM_SIZE=${CMOCK_MEM_SIZE})
         endif()
     endif()
 
