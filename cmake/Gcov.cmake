@@ -353,6 +353,36 @@ function(Gcovr_Initialize)
     # Detect capabilities and prefer SCHEMA mode
     set(_GCOVR_CONFIG_MODE "SCHEMA" CACHE INTERNAL "" FORCE)
 
+    if(
+        (CMAKE_C_COMPILER_ID MATCHES "Clang|AppleClang")
+        OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+    )
+        if(NOT DEFINED GCOVR_GCOV_EXECUTABLE OR GCOVR_GCOV_EXECUTABLE STREQUAL "")
+            find_program(
+                _GCOVR_LLVM_COV
+                NAMES
+                    llvm-cov
+                    llvm-cov-18
+                    llvm-cov-17
+                    llvm-cov-16
+                    llvm-cov-15
+                    llvm-cov-14
+                    llvm-cov-13
+                    llvm-cov-12
+            )
+            if(_GCOVR_LLVM_COV)
+                set(
+                    GCOVR_GCOV_EXECUTABLE
+                    "${_GCOVR_LLVM_COV} gcov"
+                    CACHE STRING
+                    "Path or command for gcov executable (empty = auto-detect)"
+                )
+                message(STATUS "Gcovr_Initialize: Using llvm-cov gcov for Clang coverage")
+            endif()
+            unset(_GCOVR_LLVM_COV CACHE)
+        endif()
+    endif()
+
     GcovrSchema_SetDefaults()
     GcovrSchema_DetectCapabilities("${Gcovr_EXECUTABLE}" DETECTED_FLAGS)
 
@@ -800,4 +830,3 @@ if(NOT TARGET gcovr)
         COMMENT "${_gcovr_comment}"
     )
 endif()
-

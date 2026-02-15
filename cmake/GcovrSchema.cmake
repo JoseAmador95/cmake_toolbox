@@ -383,7 +383,12 @@ function(GcovrSchema_SetDefaults)
 
     set(GCOVR_HTML_SELF_CONTAINED ON CACHE BOOL "Generate self-contained HTML (inline CSS/JS)")
 
-    set(GCOVR_GCOV_EXECUTABLE "" CACHE FILEPATH "Path to gcov executable (empty = auto-detect)")
+    set(
+        GCOVR_GCOV_EXECUTABLE
+        ""
+        CACHE STRING
+        "Path or command for gcov executable (empty = auto-detect)"
+    )
 
     set(GCOVR_SEARCH_PATH "" CACHE STRING "Semicolon-separated list of search paths for .gcda files")
 
@@ -542,8 +547,15 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         _gcovr_append_if_supported("sort" GCOVR_SORT "--sort")
     endif()
 
-    if(GCOVR_GCOV_EXECUTABLE AND EXISTS "${GCOVR_GCOV_EXECUTABLE}")
-        _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+    if(GCOVR_GCOV_EXECUTABLE)
+        if(GCOVR_GCOV_EXECUTABLE MATCHES " " OR EXISTS "${GCOVR_GCOV_EXECUTABLE}")
+            _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+        else()
+            message(
+                WARNING
+                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+            )
+        endif()
     endif()
 
     if(GCOVR_DECISIONS)

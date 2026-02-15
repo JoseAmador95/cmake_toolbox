@@ -66,15 +66,6 @@ enable_testing()
 
 include(Ceedling)
 
-if(CEEDLING_EXTRACT_FUNCTIONS AND TARGET Unity::Unity)
-    get_target_property(_tb_unity_target Unity::Unity ALIASED_TARGET)
-    if(_tb_unity_target AND TARGET \${_tb_unity_target})
-        target_compile_definitions(\${_tb_unity_target} PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
-    else()
-        target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
-    endif()
-endif()
-
 add_library(testlib STATIC src/library.c)
 target_include_directories(testlib PUBLIC \"\${CMAKE_CURRENT_SOURCE_DIR}/include\")
 
@@ -141,7 +132,7 @@ function(detect_msvc build_dir output_var)
     set(is_msvc OFF)
     set(cache_file "${build_dir}/CMakeCache.txt")
     if(EXISTS "${cache_file}")
-        file(STRINGS "${cache_file}" compiler_id_line REGEX "^CMAKE_C_COMPILER_ID:STRING=")
+        file(STRINGS "${cache_file}" compiler_id_line REGEX "^CMAKE_C_COMPILER_ID:.*=")
         if(compiler_id_line MATCHES "MSVC")
             set(is_msvc ON)
         endif()
@@ -149,7 +140,7 @@ function(detect_msvc build_dir output_var)
             "${cache_file}"
             frontend_line
             REGEX
-                "^CMAKE_C_COMPILER_FRONTEND_VARIANT:STRING="
+                "^CMAKE_C_COMPILER_FRONTEND_VARIANT:.*="
         )
         if(frontend_line MATCHES "MSVC")
             set(is_msvc ON)

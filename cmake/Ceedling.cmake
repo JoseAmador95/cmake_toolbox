@@ -146,6 +146,15 @@ include(${CMAKE_CURRENT_LIST_DIR}/Unity.cmake)
 # Initialize Unity once for Ceedling
 Unity_Initialize()
 
+if(CEEDLING_EXTRACT_FUNCTIONS AND TARGET Unity::Unity)
+    get_target_property(_tb_unity_target Unity::Unity ALIASED_TARGET)
+    if(_tb_unity_target AND TARGET ${_tb_unity_target})
+        target_compile_definitions(${_tb_unity_target} PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+    else()
+        target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+    endif()
+endif()
+
 # ==============================================================================
 # _Ceedling_ParseMockIncludes (Internal)
 # ==============================================================================
