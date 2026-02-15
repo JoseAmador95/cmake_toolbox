@@ -617,16 +617,7 @@ function(Ceedling_AddUnitTest)
         )
     else()
         # Add the whole file as a single test
-        set(_tb_ctest_full_output_wrapper
-            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CTestFullOutput.cmake"
-        )
-        add_test(
-            NAME ${ARG_NAME}
-            COMMAND
-                ${CMAKE_COMMAND} -D "TEST_COMMAND=$<TARGET_FILE:${ARG_NAME}>" -D
-                "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -P
-                "${_tb_ctest_full_output_wrapper}"
-        )
+        add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
         if(_tb_test_labels_string)
             set_tests_properties(${ARG_NAME} PROPERTIES LABELS "${_tb_test_labels_string}")
         endif()
