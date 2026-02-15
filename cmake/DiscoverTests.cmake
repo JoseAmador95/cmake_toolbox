@@ -33,6 +33,9 @@ It requires the following variables to be defined:
 ``TEST_LABELS``
   Optional CTest labels to apply to each discovered test.
 
+``TEST_FIXTURES_REQUIRED``
+  Optional CTest fixtures required by each discovered test.
+
 Internal Function
 ^^^^^^^^^^^^^^^^^
 
@@ -65,6 +68,7 @@ function(DiscoverTests_Generate)
         TEST_FILE
         TEST_ENVIRONMENT
         TEST_LABELS
+        TEST_FIXTURES_REQUIRED
     )
     set(multiValueArgs "")
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${options}" "${oneValueArgs}" "${multiValueArgs}")
@@ -140,6 +144,12 @@ execute_process(
                     "set_tests_properties(\"${ARG_TEST_SUITE}/${test_name}\" PROPERTIES LABELS \"${ARG_TEST_LABELS}\")\n"
                 )
             endif()
+            if(ARG_TEST_FIXTURES_REQUIRED)
+                string(
+                    APPEND script
+                    "set_tests_properties(\"${ARG_TEST_SUITE}/${test_name}\" PROPERTIES FIXTURES_REQUIRED \"${ARG_TEST_FIXTURES_REQUIRED}\")\n"
+                )
+            endif()
         endif()
     endforeach()
 
@@ -161,5 +171,6 @@ if(CMAKE_SCRIPT_MODE_FILE)
         TEST_FILE ${TEST_FILE}
         TEST_ENVIRONMENT "${TEST_ENVIRONMENT}"
         TEST_LABELS "${TEST_LABELS}"
+        TEST_FIXTURES_REQUIRED "${TEST_FIXTURES_REQUIRED}"
     )
 endif()

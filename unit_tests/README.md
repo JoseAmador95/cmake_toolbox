@@ -6,7 +6,7 @@ This directory contains both script-mode unit tests and project-mode integration
 
 - `policy/`, `clangformat/`, `clangtidy/`, `compilecommands/`, `gcov/`, `gcovrschema/`, `cmockschema/`, `findunity/`, `sanitizer/`: module-focused unit tests (mostly `cmake -P` script mode)
 - `discover_tests/`: script-level verification for `DiscoverTests.cmake`, including paths with spaces and special characters
-- `integration/clangformat/`, `integration/compilecommands/`, `integration/gcov/`, `integration/sanitizer/`, `integration/clangtidy/`, `integration/consumption/`: project-mode integration tests that configure/build mini CMake projects and assert observable outputs
+- `integration/clangformat/`, `integration/compilecommands/`, `integration/ceedling/`, `integration/gcov/`, `integration/sanitizer/`, `integration/clangtidy/`, `integration/consumption/`: project-mode integration tests that configure/build mini CMake projects and assert observable outputs
 
 ## Testing Strategy
 
@@ -40,6 +40,7 @@ ctest --test-dir build --output-on-failure -R "integration_gcov"
 ## Labels and JUnit Output
 
 - Ceedling tests default to label `unit` (plus any `LABELS` passed to `Ceedling_AddUnitTest`).
+- When `CEEDLING_ENABLE_GCOV=ON`, gcovr runs after unit tests by default via CTest fixtures. Disable with `-DCEEDLING_GCOVR_POST_RUN=OFF`.
 - Script-mode tests use labels `script` and the module name.
 - Integration tests use labels `integration` and the module name.
 
