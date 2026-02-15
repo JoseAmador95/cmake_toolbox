@@ -22,6 +22,11 @@ Cache Variables
   Enable code coverage instrumentation.
   Default: OFF
 
+``CEEDLING_GCOVR_POST_RUN``
+  Run the gcovr target after unit tests via CTest fixtures.
+  Default: ON when ``CEEDLING_ENABLE_GCOV=ON``; otherwise OFF.
+  Set OFF to disable.
+
 ``CEEDLING_ENABLE_SANITIZER``
   Enable sanitizer instrumentation.
   Default: OFF
@@ -109,6 +114,20 @@ option(CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
 option(CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
 option(CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
 set(CEEDLING_TEST_LABELS "unit" CACHE STRING "Default labels for Ceedling tests")
+
+set(_ceedling_gcovr_post_run_default OFF)
+if(CEEDLING_ENABLE_GCOV)
+    set(_ceedling_gcovr_post_run_default ON)
+endif()
+if(NOT DEFINED CEEDLING_GCOVR_POST_RUN)
+    set(CEEDLING_GCOVR_POST_RUN ${_ceedling_gcovr_post_run_default})
+endif()
+set(CEEDLING_GCOVR_POST_RUN
+    "${CEEDLING_GCOVR_POST_RUN}"
+    CACHE BOOL
+    "Run gcovr after unit tests when coverage is enabled"
+)
+unset(_ceedling_gcovr_post_run_default)
 
 # ==============================================================================
 # Include Dependencies
@@ -572,6 +591,49 @@ function(Ceedling_AddUnitTest)
         string(REPLACE ";" "\\;" _tb_test_labels_escaped "${_tb_test_labels_string}")
     endif()
 
+    set(_tb_enable_gcovr_post_run OFF)
+    set(_tb_gcovr_fixture_required "")
+    if(CEEDLING_ENABLE_GCOV AND CEEDLING_GCOVR_POST_RUN AND TARGET gcovr)
+        set(_tb_enable_gcovr_post_run ON)
+        set(_tb_gcovr_fixture_required "gcovr_unit")
+
+        get_property(
+            _tb_gcovr_post_run_added
+            GLOBAL
+            PROPERTY
+                CEEDLING_GCOVR_POST_RUN_ADDED
+        )
+        if(NOT _tb_gcovr_post_run_added)
+            set(
+                _tb_gcovr_build_cmd
+                ${CMAKE_COMMAND}
+                --build
+                "${CMAKE_BINARY_DIR}"
+                --target
+                gcovr
+            )
+            get_property(_tb_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+            if(_tb_multi_config)
+                list(APPEND _tb_gcovr_build_cmd --config $<CONFIG>)
+            endif()
+
+            add_test(NAME gcovr_unit COMMAND ${_tb_gcovr_build_cmd})
+            set_property(TEST gcovr_unit PROPERTY FIXTURES_CLEANUP "gcovr_unit")
+
+            set(_tb_gcovr_labels "")
+            if(DEFINED CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
+                list(APPEND _tb_gcovr_labels ${CEEDLING_TEST_LABELS})
+            endif()
+            list(APPEND _tb_gcovr_labels gcovr)
+            if(_tb_gcovr_labels)
+                list(REMOVE_DUPLICATES _tb_gcovr_labels)
+                set_tests_properties(gcovr_unit PROPERTIES LABELS "${_tb_gcovr_labels}")
+            endif()
+
+            set_property(GLOBAL PROPERTY CEEDLING_GCOVR_POST_RUN_ADDED TRUE)
+        endif()
+    endif()
+
     # Disable linting for test targets
     set_target_properties(
         ${ARG_NAME}
@@ -594,6 +656,22 @@ function(Ceedling_AddUnitTest)
             set(_tb_test_labels_arg -D "TEST_LABELS=${_tb_test_labels_escaped}")
         endif()
 
+        set(_tb_test_fixtures_arg "")
+        if(_tb_gcovr_fixture_required)
+            string(
+                REPLACE
+                ";"
+                "\\;"
+                _tb_gcovr_fixture_required_escaped
+                "${_tb_gcovr_fixture_required}"
+            )
+            set(
+                _tb_test_fixtures_arg
+                -D
+                "TEST_FIXTURES_REQUIRED=${_tb_gcovr_fixture_required_escaped}"
+            )
+        endif()
+
         add_custom_command(
             TARGET ${ARG_NAME}
             POST_BUILD
@@ -603,7 +681,8 @@ function(Ceedling_AddUnitTest)
                 "${CMAKE_COMMAND}" -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>" -D
                 "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -D
                 "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${TB_UNITY_TEST_FILE}" -D
-                "TEST_ENVIRONMENT=${_tb_sanitizer_test_environment}" ${_tb_test_labels_arg} -P
+                "TEST_ENVIRONMENT=${_tb_sanitizer_test_environment}" ${_tb_test_labels_arg}
+                ${_tb_test_fixtures_arg} -P
                 "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
         )
@@ -620,6 +699,16 @@ function(Ceedling_AddUnitTest)
         add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
         if(_tb_test_labels_string)
             set_tests_properties(${ARG_NAME} PROPERTIES LABELS "${_tb_test_labels_string}")
+        endif()
+        if(_tb_gcovr_fixture_required)
+            set_property(
+                TEST
+                    ${ARG_NAME}
+                APPEND
+                PROPERTY
+                    FIXTURES_REQUIRED
+                        "${_tb_gcovr_fixture_required}"
+            )
         endif()
         if(_tb_sanitizer_test_environment)
             Sanitizer_ApplyEnvironmentToTests(TESTS ${ARG_NAME})

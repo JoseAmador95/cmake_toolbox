@@ -75,18 +75,28 @@ endfunction()
 
 function(run_discover exe_path work_dir out_file)
     set(test_labels "")
+    set(test_fixtures "")
     if(ARGC GREATER 3)
         set(test_labels "${ARGV3}")
+    endif()
+    if(ARGC GREATER 4)
+        set(test_fixtures "${ARGV4}")
     endif()
     set(label_args "")
     if(NOT test_labels STREQUAL "")
         string(REPLACE ";" "\\;" test_labels_escaped "${test_labels}")
         set(label_args -D "TEST_LABELS=${test_labels_escaped}")
     endif()
+    set(fixture_args "")
+    if(NOT test_fixtures STREQUAL "")
+        string(REPLACE ";" "\\;" test_fixtures_escaped "${test_fixtures}")
+        set(fixture_args -D "TEST_FIXTURES_REQUIRED=${test_fixtures_escaped}")
+    endif()
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} -D "TEST_EXECUTABLE=${exe_path}" -D "TEST_WORKING_DIR=${work_dir}" -D
-            "TEST_SUITE=suite" -D "TEST_FILE=${out_file}" ${label_args} -P "${DISCOVER_TESTS_MODULE}"
+            "TEST_SUITE=suite" -D "TEST_FILE=${out_file}" ${label_args} ${fixture_args} -P
+            "${DISCOVER_TESTS_MODULE}"
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -209,6 +219,82 @@ function(test_labels_propagation)
     message(STATUS "  PASS: labels applied in generated output")
 endfunction()
 
+function(test_fixtures_propagation)
+    message(STATUS "Test 6: fixtures are applied to discovered tests")
+
+    set(exe_path "${TEST_ROOT}/fixtures/test_app")
+    set(work_dir "${TEST_ROOT}/fixtures")
+    set(out_file "${TEST_ROOT}/fixtures/tests.cmake")
+
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}" "" "gcovr_unit")
+
+    if(NOT DISCOVER_RESULT EQUAL 0)
+        fail("DiscoverTests failed for fixture propagation: ${DISCOVER_ERROR}")
+        return()
+    endif()
+
+    file(READ "${out_file}" content)
+    if(NOT content MATCHES "set_tests_properties\\(\\\"suite/test_one\\\" PROPERTIES FIXTURES_REQUIRED \\\"gcovr_unit\\\"\\)")
+        fail("Missing fixture properties in generated output")
+        return()
+    endif()
+
+    message(STATUS "  PASS: fixtures applied in generated output")
+endfunction()
+
+function(test_multiple_fixtures)
+    message(STATUS "Test 7: multiple fixtures are applied to discovered tests")
+
+    set(exe_path "${TEST_ROOT}/multi_fixtures/test_app")
+    set(work_dir "${TEST_ROOT}/multi_fixtures")
+    set(out_file "${TEST_ROOT}/multi_fixtures/tests.cmake")
+
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}" "" "gcovr_unit;extra_fixture")
+
+    if(NOT DISCOVER_RESULT EQUAL 0)
+        fail("DiscoverTests failed for multiple fixtures: ${DISCOVER_ERROR}")
+        return()
+    endif()
+
+    file(READ "${out_file}" content)
+    if(NOT content MATCHES "set_tests_properties\\(\\\"suite/test_one\\\" PROPERTIES FIXTURES_REQUIRED \\\"gcovr_unit;extra_fixture\\\"\\)")
+        fail("Missing multiple fixture properties in generated output")
+        return()
+    endif()
+
+    message(STATUS "  PASS: multiple fixtures applied in generated output")
+endfunction()
+
+function(test_labels_and_fixtures)
+    message(STATUS "Test 8: labels and fixtures are applied together")
+
+    set(exe_path "${TEST_ROOT}/labels_and_fixtures/test_app")
+    set(work_dir "${TEST_ROOT}/labels_and_fixtures")
+    set(out_file "${TEST_ROOT}/labels_and_fixtures/tests.cmake")
+
+    create_mock_test_executable("${exe_path}" real_exe_path)
+    run_discover("${real_exe_path}" "${work_dir}" "${out_file}" "unit;fast" "gcovr_unit")
+
+    if(NOT DISCOVER_RESULT EQUAL 0)
+        fail("DiscoverTests failed for labels and fixtures: ${DISCOVER_ERROR}")
+        return()
+    endif()
+
+    file(READ "${out_file}" content)
+    if(NOT content MATCHES "set_tests_properties\\(\\\"suite/test_one\\\" PROPERTIES LABELS \\\"unit;fast\\\"\\)")
+        fail("Missing label properties when fixtures are applied")
+        return()
+    endif()
+    if(NOT content MATCHES "set_tests_properties\\(\\\"suite/test_one\\\" PROPERTIES FIXTURES_REQUIRED \\\"gcovr_unit\\\"\\)")
+        fail("Missing fixture properties when labels are applied")
+        return()
+    endif()
+
+    message(STATUS "  PASS: labels and fixtures applied in generated output")
+endfunction()
+
 message(STATUS "DiscoverTests path handling tests")
 reset_test_root()
 test_normal_path()
@@ -216,6 +302,9 @@ test_executable_with_spaces()
 test_workdir_with_spaces()
 test_nonexistent_executable()
 test_labels_propagation()
+test_fixtures_propagation()
+test_multiple_fixtures()
+test_labels_and_fixtures()
 
 if(ERROR_COUNT EQUAL 0)
     message(STATUS "All tests passed")

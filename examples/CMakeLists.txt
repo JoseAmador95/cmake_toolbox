@@ -388,6 +388,25 @@ foreach(test_file ${CTEST_INTEGRATION_TESTS})
     set_tests_properties(integration_ctest_${test_name} PROPERTIES LABELS "integration;ctest")
 endforeach()
 
+# Ceedling Integration Tests
+file(
+    GLOB CEEDLING_INTEGRATION_TESTS
+    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/ceedling/test_*.cmake"
+)
+foreach(test_file ${CEEDLING_INTEGRATION_TESTS})
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    add_test(
+        NAME integration_ceedling_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
+    )
+    set_tests_properties(integration_ceedling_${test_name} PROPERTIES LABELS "integration;ceedling")
+endforeach()
+
 # Consumption Integration Tests
 file(
     GLOB CONSUMPTION_INTEGRATION_TESTS
