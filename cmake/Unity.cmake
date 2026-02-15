@@ -26,6 +26,8 @@
 #   - CMOCK_TREAT_AS        - Type mappings: "TYPE:TREATMENT;..." (default: "")
 #   - CMOCK_WHEN_NO_PROTOTYPES - Action for missing prototypes (default: "warn")
 #   - CMOCK_ENFORCE_STRICT_ORDERING - Strict call ordering (default: OFF)
+#   - CMOCK_MEM_DYNAMIC     - Use dynamic memory allocation (default: OFF)
+#   - CMOCK_MEM_SIZE        - Memory pool size in bytes (static or dynamic increment)
 #
 # USAGE EXAMPLE:
 #   # Configure CMock (optional - sensible defaults provided)
@@ -61,6 +63,14 @@
 
 include_guard(GLOBAL)
 include(CMockSchema)
+
+option(CMOCK_MEM_DYNAMIC "Use dynamic memory allocation in CMock" OFF)
+set(
+    CMOCK_MEM_SIZE
+    ""
+    CACHE STRING
+    "CMock memory pool size in bytes (empty uses CMock default)"
+)
 
 # Default repository and version configuration (can be overridden before calling Unity_Initialize)
 set(_UNITY_DEFAULT_REPO "https://github.com/ThrowTheSwitch/Unity.git")
@@ -137,6 +147,15 @@ function(Unity_Initialize)
     set(CMOCK_GIT_TAG ${ARG_CMOCK_TAG})
 
     find_package(Unity REQUIRED)
+
+    if(TARGET Unity::CMock)
+        if(CMOCK_MEM_DYNAMIC)
+            target_compile_definitions(Unity::CMock PUBLIC CMOCK_MEM_DYNAMIC)
+        endif()
+        if(DEFINED CMOCK_MEM_SIZE AND NOT CMOCK_MEM_SIZE STREQUAL "")
+            target_compile_definitions(Unity::CMock PUBLIC CMOCK_MEM_SIZE=${CMOCK_MEM_SIZE})
+        endif()
+    endif()
 
     # Find Ruby executable for CMock and runner generation
     find_program(Ruby_EXECUTABLE ruby REQUIRED)
