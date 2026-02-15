@@ -19,7 +19,7 @@ integration/
 ├── clangformat/
 │   └── test_configuration.cmake       # Basic config, exclusions, tool missing
 ├── ctest/
-│   └── test_junit_output.cmake         # JUnit output captures full stdout/stderr
+│   └── test_junit_output.cmake         # JUnit output capture with custom size limits
 ├── compilecommands/
 │   └── test_trim.cmake                # jq trim, jq missing scenarios
 ├── findunity/

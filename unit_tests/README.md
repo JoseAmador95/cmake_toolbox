@@ -48,10 +48,12 @@ ctest --test-dir build -L unit
 ctest --test-dir build -LE unit
 ctest --test-dir build -L integration
 ctest --test-dir build --output-junit build/junit.xml
+ctest --test-dir build --output-junit build/junit.xml --test-output-size-passed 200000
+ctest --test-dir build --output-junit build/junit.xml --test-output-size-failed 400000
 ```
 
-JUnit output is captured without truncation by injecting `CTEST_FULL_OUTPUT` into each test's output
-via the `CTestFullOutput.cmake` wrapper, with large size limits as a safety net.
+JUnit output limits are defined by the project (CLI or presets). Defaults are 1024 bytes for passed
+tests and 300 KiB for failed tests when no limits are specified.
 
 ## CI Enforcement
 

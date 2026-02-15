@@ -48,8 +48,6 @@ target_compile_definitions(junit_output_fail PRIVATE TEST_SHOULD_FAIL=1)
 
 add_test(NAME junit_output_pass COMMAND junit_output_pass)
 add_test(NAME junit_output_fail COMMAND junit_output_fail)
-
-configure_file(\"${REPO_ROOT}/cmake/CTestCustom.cmake.in\" \"${BUILD_DIR}/CTestCustom.cmake\" @ONLY)
 "
 )
 
@@ -64,7 +62,6 @@ int main(void) {
 #else
   const char *tag = "PASS";
 #endif
-  printf("CTEST_FULL_OUTPUT\n");
   printf("OUTPUT_START_STDOUT_%s\n", tag);
   for (int i = 0; i < 5000; ++i) {
     putchar('A');
@@ -126,6 +123,8 @@ set(ctest_args --test-dir "${BUILD_DIR}" --output-junit "${junit_file}")
 if(_tb_build_config)
     list(APPEND ctest_args -C "${_tb_build_config}")
 endif()
+list(APPEND ctest_args --test-output-size-passed 200000)
+list(APPEND ctest_args --test-output-size-failed 400000)
 
 execute_process(
     COMMAND ${CMAKE_CTEST_COMMAND} ${ctest_args}
