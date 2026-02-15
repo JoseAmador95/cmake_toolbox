@@ -386,3 +386,21 @@ foreach(test_file ${FINDUNITY_INTEGRATION_TESTS})
             -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
 endforeach()
+
+# Unity Integration Tests
+file(
+    GLOB UNITY_INTEGRATION_TESTS
+    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/unity/test_*.cmake"
+)
+foreach(test_file ${UNITY_INTEGRATION_TESTS})
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    add_test(
+        NAME integration_unity_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
+    )
+endforeach()
