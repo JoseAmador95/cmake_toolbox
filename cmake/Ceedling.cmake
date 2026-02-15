@@ -34,6 +34,10 @@ Cache Variables
   Extract individual test functions as separate CTest tests.
   Default: OFF
 
+``CEEDLING_TEST_LABELS``
+  Default labels applied to Ceedling tests.
+  Default: unit
+
 Functions
 ^^^^^^^^^
 
@@ -47,6 +51,7 @@ Functions
       TARGET <target_under_test>
       [ENABLE_SANITIZER]
       [DISABLE_SANITIZER]
+      [LABELS <label>...]
     )
 
   ``NAME``
@@ -69,6 +74,9 @@ Functions
 
   ``DISABLE_SANITIZER``
     Force disable sanitizer for this test (when CEEDLING_SANITIZER_DEFAULT is ON).
+
+  ``LABELS``
+    Additional CTest labels applied to the test.
 
 Example
 ^^^^^^^
@@ -100,6 +108,7 @@ option(CEEDLING_ENABLE_GCOV "Enable coverage" OFF)
 option(CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
 option(CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
 option(CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
+set(CEEDLING_TEST_LABELS "unit" CACHE STRING "Default labels for Ceedling tests")
 
 # ==============================================================================
 # Include Dependencies
@@ -376,7 +385,7 @@ function(Ceedling_AddUnitTest)
         UNIT_TEST
         TARGET
     )
-    set(multiValueArgs "")
+    set(multiValueArgs LABELS)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     # Validate arguments
@@ -550,6 +559,19 @@ function(Ceedling_AddUnitTest)
         set(_tb_sanitizer_test_environment "${SANITIZER_ENV_VARS}")
     endif()
 
+    set(_tb_test_labels "")
+    if(DEFINED CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
+        list(APPEND _tb_test_labels ${CEEDLING_TEST_LABELS})
+    endif()
+    if(ARG_LABELS)
+        list(APPEND _tb_test_labels ${ARG_LABELS})
+    endif()
+    if(_tb_test_labels)
+        list(REMOVE_DUPLICATES _tb_test_labels)
+        set(_tb_test_labels_string "${_tb_test_labels}")
+        string(REPLACE ";" "\\;" _tb_test_labels_escaped "${_tb_test_labels_string}")
+    endif()
+
     # Disable linting for test targets
     set_target_properties(
         ${ARG_NAME}
@@ -567,6 +589,11 @@ function(Ceedling_AddUnitTest)
         # Discover individual test functions and add as separate CTest tests
         set(TB_UNITY_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}_tests.cmake")
 
+        set(_tb_test_labels_arg "")
+        if(_tb_test_labels_escaped)
+            set(_tb_test_labels_arg -D "TEST_LABELS=${_tb_test_labels_escaped}")
+        endif()
+
         add_custom_command(
             TARGET ${ARG_NAME}
             POST_BUILD
@@ -576,7 +603,7 @@ function(Ceedling_AddUnitTest)
                 "${CMAKE_COMMAND}" -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>" -D
                 "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -D
                 "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${TB_UNITY_TEST_FILE}" -D
-                "TEST_ENVIRONMENT=${_tb_sanitizer_test_environment}" -P
+                "TEST_ENVIRONMENT=${_tb_sanitizer_test_environment}" ${_tb_test_labels_arg} -P
                 "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
         )
@@ -590,10 +617,21 @@ function(Ceedling_AddUnitTest)
         )
     else()
         # Add the whole file as a single test
-        add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
+        set(_tb_ctest_full_output_wrapper
+            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CTestFullOutput.cmake"
+        )
+        add_test(
+            NAME ${ARG_NAME}
+            COMMAND
+                ${CMAKE_COMMAND} -D "TEST_COMMAND=$<TARGET_FILE:${ARG_NAME}>" -D
+                "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -P
+                "${_tb_ctest_full_output_wrapper}"
+        )
+        if(_tb_test_labels_string)
+            set_tests_properties(${ARG_NAME} PROPERTIES LABELS "${_tb_test_labels_string}")
+        endif()
         if(_tb_sanitizer_test_environment)
             Sanitizer_ApplyEnvironmentToTests(TESTS ${ARG_NAME})
         endif()
     endif()
 endfunction()
-

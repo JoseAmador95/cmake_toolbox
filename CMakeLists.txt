@@ -15,6 +15,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 if(CMAKE_TOOLBOX_BUILD_EXAMPLES)
     enable_testing()
+    configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/CTestCustom.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake
+        @ONLY
+    )
     add_subdirectory(examples)
 endif()
 
