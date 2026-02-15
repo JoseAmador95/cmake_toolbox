@@ -3,10 +3,6 @@ find_package(ClangFormat QUIET)
 include(ClangTidy)
 include(Policy)
 
-set(_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER
-    "${CMAKE_CURRENT_LIST_DIR}/../cmake/CTestFullOutput.cmake"
-)
-
 add_library(example STATIC ${CMAKE_CURRENT_SOURCE_DIR}/source/example.c)
 add_library(dependency INTERFACE)
 target_include_directories(dependency INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -31,8 +27,7 @@ foreach(test_file ${POLICY_TEST_FILES})
     add_test(
         NAME policy_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(policy_${test_name} PROPERTIES LABELS "script;policy")
 endforeach()
@@ -48,8 +43,7 @@ foreach(test_file ${CLANGFORMAT_TEST_FILES})
     add_test(
         NAME clangformat_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(clangformat_${test_name} PROPERTIES LABELS "script;clangformat")
 endforeach()
@@ -65,8 +59,7 @@ foreach(test_file ${FINDUNITY_TEST_FILES})
     add_test(
         NAME findunity_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(findunity_${test_name} PROPERTIES LABELS "script;findunity")
 endforeach()
@@ -85,8 +78,7 @@ foreach(test_file ${DISCOVER_TESTS_FILES})
     add_test(
         NAME discover_tests_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(discover_tests_${test_name} PROPERTIES LABELS "script;discover_tests")
 endforeach()
@@ -118,8 +110,7 @@ foreach(test_file ${GCOVRSCHEMA_TEST_FILES})
     add_test(
         NAME gcovrschema_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(gcovrschema_${test_name} PROPERTIES LABELS "script;gcovrschema")
 endforeach()
@@ -135,8 +126,7 @@ foreach(test_file ${CMOCKSCHEMA_TEST_FILES})
     add_test(
         NAME cmockschema_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(cmockschema_${test_name} PROPERTIES LABELS "script;cmockschema")
 endforeach()
@@ -152,8 +142,7 @@ foreach(test_file ${CLANGTIDY_TEST_FILES})
     add_test(
         NAME clangtidy_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(clangtidy_${test_name} PROPERTIES LABELS "script;clangtidy")
 endforeach()
@@ -181,9 +170,7 @@ if(NOT _TOOLBOX_MULTI_CONFIG)
         add_test(
             NAME compilecommands_${test_name}
             COMMAND
-                ${CMAKE_COMMAND} ${_TOOLBOX_TEST_HELPER_ARGS}
-                -D "TEST_FILE=${test_file}" -P
-                ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+                ${CMAKE_COMMAND} ${_TOOLBOX_TEST_HELPER_ARGS} -P ${test_file}
         )
         set_tests_properties(compilecommands_${test_name} PROPERTIES LABELS "script;compilecommands")
     endforeach()
@@ -195,21 +182,12 @@ endif()
 # Sanitizer Module Integration Tests
 # ==============================================================================
 
-# Test that Sanitizer module correctly applies compile and link options
-set(_TOOLBOX_SANITIZER_INTEGRATION_ARGS
-    -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/sanitizer
-    -B ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_test
-    -G "${CMAKE_GENERATOR}"
-    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-)
 add_test(
     NAME sanitizer_integration
     COMMAND
-        ${CMAKE_COMMAND} -D "TEST_COMMAND=${CMAKE_COMMAND}"
-        -D "TEST_ARGS=${_TOOLBOX_SANITIZER_INTEGRATION_ARGS}"
-        -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -P
-        ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+        ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/sanitizer -B
+        ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_test -G "${CMAKE_GENERATOR}"
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 )
 set_tests_properties(sanitizer_integration PROPERTIES LABELS "integration;sanitizer")
 
@@ -221,8 +199,7 @@ foreach(test_file ${SANITIZER_TEST_FILES})
     add_test(
         NAME sanitizer_${test_name}
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -P ${test_file}
     )
     set_tests_properties(sanitizer_${test_name} PROPERTIES LABELS "script;sanitizer")
 endforeach()
@@ -251,20 +228,12 @@ endif()
 
 if(_TOOLBOX_GCOV_SUPPORTED)
     # Test that Gcov module correctly applies compile and link options
-    set(_TOOLBOX_GCOV_INTEGRATION_ARGS
-        -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov
-        -B ${CMAKE_CURRENT_BINARY_DIR}/gcov_test
-        -G "${CMAKE_GENERATOR}"
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-    )
     add_test(
         NAME gcov_integration
         COMMAND
-            ${CMAKE_COMMAND} -D "TEST_COMMAND=${CMAKE_COMMAND}"
-            -D "TEST_ARGS=${_TOOLBOX_GCOV_INTEGRATION_ARGS}"
-            -D "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov -B
+            ${CMAKE_CURRENT_BINARY_DIR}/gcov_test -G "${CMAKE_GENERATOR}"
+            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     )
     set_tests_properties(gcov_integration PROPERTIES LABELS "integration;gcov")
 
@@ -274,8 +243,7 @@ if(_TOOLBOX_GCOV_SUPPORTED)
         COMMAND
             ${CMAKE_COMMAND} ${_TOOLBOX_TEST_HELPER_ARGS}
             -DCMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT=${CMAKE_CURRENT_BINARY_DIR}/test_artifacts
-            -D "TEST_FILE=${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov/test_thresholds.cmake" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -P ${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcov/test_thresholds.cmake
     )
     set_tests_properties(gcov_thresholds PROPERTIES LABELS "script;gcov")
 
@@ -290,8 +258,7 @@ if(_TOOLBOX_GCOV_SUPPORTED)
                 NAME gcov_${test_name}
                 COMMAND
                     ${CMAKE_COMMAND} ${_TOOLBOX_TEST_HELPER_ARGS}
-                    -D "TEST_FILE=${test_file}" -P
-                    ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+                    -P ${test_file}
             )
             set_tests_properties(gcov_${test_name} PROPERTIES LABELS "script;gcov")
         endif()
@@ -320,9 +287,7 @@ if(_TOOLBOX_GCOV_SUPPORTED)
                 ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
                 -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
                 -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -D "TEST_FILE=${test_file}" -P
-                ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+                -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
         )
         set_tests_properties(integration_gcov_${test_name} PROPERTIES LABELS "integration;gcov")
     endforeach()
@@ -342,9 +307,7 @@ foreach(test_file ${SANITIZER_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_sanitizer_${test_name} PROPERTIES LABELS "integration;sanitizer")
 endforeach()
@@ -363,9 +326,7 @@ foreach(test_file ${CLANGTIDY_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_clangtidy_${test_name} PROPERTIES LABELS "integration;clangtidy")
 endforeach()
@@ -384,9 +345,7 @@ foreach(test_file ${CLANGFORMAT_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_clangformat_${test_name} PROPERTIES LABELS "integration;clangformat")
 endforeach()
@@ -405,9 +364,7 @@ foreach(test_file ${COMPILECOMMANDS_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_compilecommands_${test_name} PROPERTIES LABELS "integration;compilecommands")
 endforeach()
@@ -426,9 +383,7 @@ foreach(test_file ${CTEST_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_ctest_${test_name} PROPERTIES LABELS "integration;ctest")
 endforeach()
@@ -447,9 +402,7 @@ foreach(test_file ${CONSUMPTION_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_consumption_${test_name} PROPERTIES LABELS "integration;consumption")
 endforeach()
@@ -468,9 +421,7 @@ foreach(test_file ${FINDUNITY_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_findunity_${test_name} PROPERTIES LABELS "integration;findunity")
 endforeach()
@@ -489,9 +440,7 @@ foreach(test_file ${UNITY_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -D "TEST_FILE=${test_file}" -P
-            ${_TOOLBOX_CTEST_FULL_OUTPUT_WRAPPER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
     )
     set_tests_properties(integration_unity_${test_name} PROPERTIES LABELS "integration;unity")
 endforeach()
