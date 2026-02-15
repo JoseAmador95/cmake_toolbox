@@ -136,6 +136,10 @@ function(detect_msvc build_dir output_var)
         if(compiler_id_line MATCHES "MSVC")
             set(is_msvc ON)
         endif()
+        file(STRINGS "${cache_file}" compiler_id_line_cxx REGEX "^CMAKE_CXX_COMPILER_ID:.*=")
+        if(compiler_id_line_cxx MATCHES "MSVC")
+            set(is_msvc ON)
+        endif()
         file(STRINGS
             "${cache_file}"
             frontend_line
@@ -143,6 +147,45 @@ function(detect_msvc build_dir output_var)
                 "^CMAKE_C_COMPILER_FRONTEND_VARIANT:.*="
         )
         if(frontend_line MATCHES "MSVC")
+            set(is_msvc ON)
+        endif()
+        file(STRINGS
+            "${cache_file}"
+            frontend_line_cxx
+            REGEX
+                "^CMAKE_CXX_COMPILER_FRONTEND_VARIANT:.*="
+        )
+        if(frontend_line_cxx MATCHES "MSVC")
+            set(is_msvc ON)
+        endif()
+        file(STRINGS
+            "${cache_file}"
+            simulate_line
+            REGEX
+                "^CMAKE_C_SIMULATE_ID:.*="
+        )
+        if(simulate_line MATCHES "MSVC")
+            set(is_msvc ON)
+        endif()
+        file(STRINGS
+            "${cache_file}"
+            simulate_line_cxx
+            REGEX
+                "^CMAKE_CXX_SIMULATE_ID:.*="
+        )
+        if(simulate_line_cxx MATCHES "MSVC")
+            set(is_msvc ON)
+        endif()
+        file(STRINGS "${cache_file}" compiler_path_line REGEX "^CMAKE_C_COMPILER:.*=")
+        if(compiler_path_line MATCHES "[cC][lL]\\.exe" OR compiler_path_line MATCHES "[cC][lL][aA][nN][gG]-[cC][lL]")
+            set(is_msvc ON)
+        endif()
+        file(STRINGS "${cache_file}" compiler_path_line_cxx REGEX "^CMAKE_CXX_COMPILER:.*=")
+        if(compiler_path_line_cxx MATCHES "[cC][lL]\\.exe" OR compiler_path_line_cxx MATCHES "[cC][lL][aA][nN][gG]-[cC][lL]")
+            set(is_msvc ON)
+        endif()
+        file(STRINGS "${cache_file}" generator_line REGEX "^CMAKE_GENERATOR:.*=")
+        if(generator_line MATCHES "Visual Studio")
             set(is_msvc ON)
         endif()
     endif()
