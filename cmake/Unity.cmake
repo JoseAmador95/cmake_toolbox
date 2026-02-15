@@ -161,10 +161,10 @@ function(Unity_Initialize)
             set(_tb_cmock_mem_size "${CMOCK_MEM_SIZE}")
             string(STRIP "${_tb_cmock_mem_size}" _tb_cmock_mem_size)
             if(NOT _tb_cmock_mem_size STREQUAL "")
-                if(NOT _tb_cmock_mem_size MATCHES "^[0-9]+$")
+                if(NOT _tb_cmock_mem_size MATCHES "^[1-9][0-9]*$")
                     message(
                         FATAL_ERROR
-                        "${CMAKE_CURRENT_FUNCTION}: CMOCK_MEM_SIZE must be a non-negative integer, "
+                        "${CMAKE_CURRENT_FUNCTION}: CMOCK_MEM_SIZE must be a positive integer, "
                         "but is '${_tb_cmock_mem_size}'"
                     )
                 endif()
