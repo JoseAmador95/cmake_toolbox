@@ -22,6 +22,8 @@ integration/
 │   └── test_trim.cmake                # jq trim, jq missing scenarios
 ├── findunity/
 │   └── test_find_package.cmake        # find_package(Unity) hint/layout coverage
+├── unity/
+│   └── test_cmock_memory.cmake         # Unity_Initialize applies CMock memory defines
 └── consumption/
     ├── test_add_subdirectory.cmake    # Consume toolbox as vendored source
     ├── test_fetchcontent.cmake        # Consume toolbox via FetchContent
@@ -50,6 +52,7 @@ ctest -R "integration_consumption" --output-on-failure
 | ClangFormat | ✓ | ✓ | ✓ | Exclusions |
 | CompileCommands | - | - | ✓ (jq) | Trim |
 | FindUnity | ✓ | ✓ | N/A | Hint resolution / layout validation |
+| Unity | ✓ | ✓ | N/A | CMock memory definitions |
 | Consumption | ✓ | ✓ | N/A | add_subdirectory / FetchContent / find_package |
 
 ## Notes
