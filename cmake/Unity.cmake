@@ -158,7 +158,22 @@ function(Unity_Initialize)
             target_compile_definitions(${_tb_cmock_target} PUBLIC CMOCK_MEM_DYNAMIC)
         endif()
         if(DEFINED CMOCK_MEM_SIZE AND NOT CMOCK_MEM_SIZE STREQUAL "")
-            target_compile_definitions(${_tb_cmock_target} PUBLIC CMOCK_MEM_SIZE=${CMOCK_MEM_SIZE})
+            set(_tb_cmock_mem_size "${CMOCK_MEM_SIZE}")
+            string(STRIP "${_tb_cmock_mem_size}" _tb_cmock_mem_size)
+            if(NOT _tb_cmock_mem_size STREQUAL "")
+                if(NOT _tb_cmock_mem_size MATCHES "^[0-9]+$")
+                    message(
+                        FATAL_ERROR
+                        "${CMAKE_CURRENT_FUNCTION}: CMOCK_MEM_SIZE must be a non-negative integer, "
+                        "but is '${_tb_cmock_mem_size}'"
+                    )
+                endif()
+                target_compile_definitions(
+                    ${_tb_cmock_target}
+                    PUBLIC
+                    "CMOCK_MEM_SIZE=${_tb_cmock_mem_size}"
+                )
+            endif()
         endif()
     endif()
 
