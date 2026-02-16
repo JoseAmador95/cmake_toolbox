@@ -345,7 +345,6 @@ function(Unity_GenerateMock)
         DEPENDS
             ${GENERATED_CONFIG_FILE}
             ${ARG_HEADER}
-            ${Ruby_EXECUTABLE}
         COMMENT "Generating mock for ${ARG_HEADER}"
         VERBATIM
     )
@@ -442,7 +441,6 @@ function(Unity_GenerateRunner)
         DEPENDS
             ${ARG_TEST_SOURCE}
             ${GENERATED_CONFIG_FILE}
-            ${Ruby_EXECUTABLE}
         COMMENT "Generating test runner for ${ARG_TEST_SOURCE}"
         VERBATIM
     )
