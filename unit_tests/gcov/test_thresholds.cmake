@@ -665,6 +665,7 @@ file(REMOVE_RECURSE "${TEST_ROOT}")
 file(MAKE_DIRECTORY "${TEST_ROOT}")
 TestHelpers_CreateMockGcovr(_gcovr_mock OUTPUT_DIR "${TEST_ROOT}/mock_gcovr")
 file(TO_CMAKE_PATH "${_gcovr_mock}" GCOVR_MOCK_PATH)
+list(APPEND _GCOV_CONFIGURE_ARGS "-DGCOVR_EXECUTABLE=${GCOVR_MOCK_PATH}")
 
 message(STATUS "=== Gcovr Threshold Enforcement Tests ===")
 
