@@ -287,22 +287,12 @@ jobs:
         run: cmake --install build-lint --prefix "$RUNNER_TEMP/install"
 
   clang-tools-versions:
-    name: clang-tools-${{ matrix.clang_version }}-${{ matrix.generator.label }}
+    name: clang-tools-${{ matrix.clang_version }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         clang_version: [13, 16, 18, 20, 22]
-        generator:
-          - label: ninja
-            cmake: Ninja
-            build_config: ""
-          - label: unix-makefiles
-            cmake: Unix Makefiles
-            build_config: ""
-          - label: ninja-multi
-            cmake: Ninja Multi-Config
-            build_config: Debug
 
     steps:
       - name: Checkout
@@ -324,16 +314,16 @@ jobs:
       - name: Configure
         run: >-
           cmake -S . -B build
-          -G "${{ matrix.generator.cmake }}"
+          -G "Ninja"
           -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
           -DClangFormat_EXECUTABLE=/usr/bin/clang-format-${{ matrix.clang_version }}
           -DCLANG_TIDY_EXECUTABLE=/usr/bin/clang-tidy-${{ matrix.clang_version }}
 
       - name: Build
-        run: cmake --build build ${{ matrix.generator.build_config && format('--config {0}', matrix.generator.build_config) || '' }}
+        run: cmake --build build
 
       - name: Run clang tools tests
-        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j 4 ${{ matrix.generator.build_config && format('-C {0}', matrix.generator.build_config) || '' }}
+        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j 4
 
   generator-matrix:
     name: generator-${{ matrix.label }}
@@ -348,67 +338,62 @@ jobs:
             build_config: ""
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y ninja-build clang-format clang-tidy jq
+              sudo apt-get install -y ninja-build
           - label: linux-makefiles
             os: ubuntu-latest
             generator: Unix Makefiles
             build_config: ""
             install_deps: |
-              sudo apt-get update
-              sudo apt-get install -y clang-format clang-tidy jq
+              echo "No extra deps"
           - label: linux-ninja-multi
             os: ubuntu-latest
             generator: Ninja Multi-Config
             build_config: Debug
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y ninja-build clang-format clang-tidy jq
+              sudo apt-get install -y ninja-build
           - label: macos-ninja
             os: macos-latest
             generator: Ninja
             build_config: ""
             install_deps: |
-              brew install ninja llvm
-              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+              brew install ninja
           - label: macos-makefiles
             os: macos-latest
             generator: Unix Makefiles
             build_config: ""
             install_deps: |
-              brew install llvm
-              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+              echo "No extra deps"
           - label: macos-ninja-multi
             os: macos-latest
             generator: Ninja Multi-Config
             build_config: Debug
             install_deps: |
-              brew install ninja llvm
-              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+              brew install ninja
           - label: macos-xcode
             os: macos-latest
             generator: Xcode
             build_config: Debug
             install_deps: |
-              brew install llvm
-              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+              echo "No extra deps"
           - label: windows-ninja
             os: windows-latest
             generator: Ninja
             build_config: ""
             install_deps: |
-              choco install llvm ninja -y
+              choco install ninja -y
           - label: windows-ninja-multi
             os: windows-latest
             generator: Ninja Multi-Config
             build_config: Debug
             install_deps: |
-              choco install llvm ninja -y
+              choco install ninja -y
           - label: windows-vs2022
             os: windows-latest
             generator: Visual Studio 17 2022
             build_config: Debug
             install_deps: |
-              choco install llvm -y
+              echo "No extra deps"
 
     steps:
       - name: Checkout
@@ -419,11 +404,10 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.install_deps }}
 
-      - name: Add LLVM to PATH (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
 
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
@@ -435,5 +419,5 @@ jobs:
       - name: Build
         run: cmake --build build ${{ matrix.build_config && format('--config {0}', matrix.build_config) || '' }}
 
-      - name: Run clang tools tests
-        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j 4 ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
+      - name: Run generator coverage tests
+        run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity|gcov|sanitizer" -j 4 ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}

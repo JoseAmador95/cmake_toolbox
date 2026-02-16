@@ -26,6 +26,20 @@ if(WIN32)
     set(_exe_suffix ".exe")
 endif()
 
+set(_tb_build_config "")
+if(DEFINED CMAKE_TOOLBOX_TEST_BUILD_TYPE AND NOT CMAKE_TOOLBOX_TEST_BUILD_TYPE STREQUAL "")
+    set(_tb_build_config "${CMAKE_TOOLBOX_TEST_BUILD_TYPE}")
+elseif(DEFINED CMAKE_TOOLBOX_TEST_GENERATOR
+    AND CMAKE_TOOLBOX_TEST_GENERATOR MATCHES "Visual Studio|Xcode|Multi-Config|Ninja Multi-Config"
+)
+    set(_tb_build_config "Debug")
+endif()
+
+set(_tb_build_args "")
+if(_tb_build_config)
+    list(APPEND _tb_build_args --config "${_tb_build_config}")
+endif()
+
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
@@ -97,7 +111,7 @@ target_link_libraries(mytest PRIVATE mylib)
     # Build
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} --build "${build_dir}"
+            ${CMAKE_COMMAND} --build "${build_dir}" ${_tb_build_args}
         RESULT_VARIABLE build_result
         OUTPUT_VARIABLE build_output
         ERROR_VARIABLE build_error
@@ -121,8 +135,13 @@ target_link_libraries(mytest PRIVATE mylib)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/mytest${_exe_suffix}")
-        message(STATUS "  ✗ Expected test executable not found: ${build_dir}/mytest${_exe_suffix}")
+    set(test_bin_dir "${build_dir}")
+    if(_tb_build_config)
+        set(test_bin_dir "${build_dir}/${_tb_build_config}")
+    endif()
+    set(test_exe "${test_bin_dir}/mytest${_exe_suffix}")
+    if(NOT EXISTS "${test_exe}")
+        message(STATUS "  ✗ Expected test executable not found: ${test_exe}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -193,7 +212,7 @@ target_link_libraries(mytest PRIVATE mylib)
     # Build
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} --build "${build_dir}"
+            ${CMAKE_COMMAND} --build "${build_dir}" ${_tb_build_args}
         RESULT_VARIABLE build_result
         OUTPUT_VARIABLE build_output
         ERROR_VARIABLE build_error
