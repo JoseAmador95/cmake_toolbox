@@ -19,7 +19,8 @@ set(CMAKE_MODULE_PATH
 include(GcovrSchema)
 
 if(NOT DEFINED GCOVR_EXECUTABLE OR GCOVR_EXECUTABLE STREQUAL "")
-    message(FATAL_ERROR "GCOVR_EXECUTABLE is required for this test")
+    message(STATUS "Skipping gcovr real test: GCOVR_EXECUTABLE not set")
+    return()
 endif()
 if(NOT EXISTS "${GCOVR_EXECUTABLE}")
     message(FATAL_ERROR "gcovr executable not found: ${GCOVR_EXECUTABLE}")
