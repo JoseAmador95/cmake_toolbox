@@ -285,3 +285,155 @@ jobs:
 
       - name: Validate install rules
         run: cmake --install build-lint --prefix "$RUNNER_TEMP/install"
+
+  clang-tools-versions:
+    name: clang-tools-${{ matrix.clang_version }}-${{ matrix.generator.label }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        clang_version: [13, 16, 18, 20, 22]
+        generator:
+          - label: ninja
+            cmake: Ninja
+            build_config: ""
+          - label: unix-makefiles
+            cmake: Unix Makefiles
+            build_config: ""
+          - label: ninja-multi
+            cmake: Ninja Multi-Config
+            build_config: Debug
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lsb-release wget gnupg software-properties-common ninja-build
+
+      - name: Install LLVM tools
+        run: |
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh ${{ matrix.clang_version }} all
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build
+          -G "${{ matrix.generator.cmake }}"
+          -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+          -DClangFormat_EXECUTABLE=/usr/bin/clang-format-${{ matrix.clang_version }}
+          -DCLANG_TIDY_EXECUTABLE=/usr/bin/clang-tidy-${{ matrix.clang_version }}
+
+      - name: Build
+        run: cmake --build build ${{ matrix.generator.build_config && format('--config {0}', matrix.generator.build_config) || '' }}
+
+      - name: Run clang tools tests
+        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j 4 ${{ matrix.generator.build_config && format('-C {0}', matrix.generator.build_config) || '' }}
+
+  generator-matrix:
+    name: generator-${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: linux-ninja
+            os: ubuntu-latest
+            generator: Ninja
+            build_config: ""
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y ninja-build clang-format clang-tidy jq
+          - label: linux-makefiles
+            os: ubuntu-latest
+            generator: Unix Makefiles
+            build_config: ""
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang-format clang-tidy jq
+          - label: linux-ninja-multi
+            os: ubuntu-latest
+            generator: Ninja Multi-Config
+            build_config: Debug
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y ninja-build clang-format clang-tidy jq
+          - label: macos-ninja
+            os: macos-latest
+            generator: Ninja
+            build_config: ""
+            install_deps: |
+              brew install ninja llvm
+              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          - label: macos-makefiles
+            os: macos-latest
+            generator: Unix Makefiles
+            build_config: ""
+            install_deps: |
+              brew install llvm
+              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          - label: macos-ninja-multi
+            os: macos-latest
+            generator: Ninja Multi-Config
+            build_config: Debug
+            install_deps: |
+              brew install ninja llvm
+              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          - label: macos-xcode
+            os: macos-latest
+            generator: Xcode
+            build_config: Debug
+            install_deps: |
+              brew install llvm
+              echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          - label: windows-ninja
+            os: windows-latest
+            generator: Ninja
+            build_config: ""
+            install_deps: |
+              choco install llvm ninja -y
+          - label: windows-ninja-multi
+            os: windows-latest
+            generator: Ninja Multi-Config
+            build_config: Debug
+            install_deps: |
+              choco install llvm ninja -y
+          - label: windows-vs2022
+            os: windows-latest
+            generator: Visual Studio 17 2022
+            build_config: Debug
+            install_deps: |
+              choco install llvm -y
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: ${{ matrix.install_deps }}
+
+      - name: Add LLVM to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+
+      - name: Build
+        run: cmake --build build ${{ matrix.build_config && format('--config {0}', matrix.build_config) || '' }}
+
+      - name: Run clang tools tests
+        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j 4 ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
