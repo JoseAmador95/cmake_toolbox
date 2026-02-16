@@ -246,11 +246,13 @@ target_link_libraries(mytest PRIVATE mylib)
         return()
     endif()
 
-    if(NOT EXISTS "${build_dir}/mytest${_exe_suffix}")
-        message(
-            STATUS
-            "  ✗ Expected Clang test executable not found: ${build_dir}/mytest${_exe_suffix}"
-        )
+    set(test_bin_dir "${build_dir}")
+    if(_tb_build_config)
+        set(test_bin_dir "${build_dir}/${_tb_build_config}")
+    endif()
+    set(test_exe "${test_bin_dir}/mytest${_exe_suffix}")
+    if(NOT EXISTS "${test_exe}")
+        message(STATUS "  ✗ Expected Clang test executable not found: ${test_exe}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
