@@ -323,7 +323,7 @@ jobs:
         run: cmake --build build
 
       - name: Run clang tools tests
-        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j 4
+        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j
 
   generator-matrix:
     name: generator-${{ matrix.label }}
@@ -420,7 +420,7 @@ jobs:
         run: cmake --build build ${{ matrix.build_config && format('--config {0}', matrix.build_config) || '' }}
 
       - name: Run generator coverage tests
-        run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity|gcov|sanitizer" -j 4 ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
+        run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity|gcov|sanitizer" -j ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
 
   unity-cmock-versions:
     name: unity-cmock-${{ matrix.label }}
@@ -467,7 +467,7 @@ jobs:
         run: cmake --build build
 
       - name: Run Unity/CMock tests
-        run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity" -j 4
+        run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity" -j
 
   gcovr-versions:
     name: gcovr-${{ matrix.gcovr_version }}
