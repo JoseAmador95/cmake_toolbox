@@ -375,7 +375,7 @@ function(Gcovr_Initialize)
                     GCOVR_GCOV_EXECUTABLE
                     "${_GCOVR_LLVM_COV} gcov"
                     CACHE STRING
-                    "Path or command for gcov executable (empty = auto-detect)"
+                    "Path or command (may include arguments) for gcov executable (empty = auto-detect)"
                 )
                 message(STATUS "Gcovr_Initialize: Using llvm-cov gcov for Clang coverage")
             endif()

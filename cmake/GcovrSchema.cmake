@@ -387,7 +387,7 @@ function(GcovrSchema_SetDefaults)
         GCOVR_GCOV_EXECUTABLE
         ""
         CACHE STRING
-        "Path or command for gcov executable (empty = auto-detect)"
+        "Path or command (may include arguments) for gcov executable (empty = auto-detect)"
     )
 
     set(GCOVR_SEARCH_PATH "" CACHE STRING "Semicolon-separated list of search paths for .gcda files")
@@ -549,7 +549,42 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
 
     if(GCOVR_GCOV_EXECUTABLE)
         if(GCOVR_GCOV_EXECUTABLE MATCHES " ")
-            _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+            if(EXISTS "${GCOVR_GCOV_EXECUTABLE}")
+                _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+            else()
+                string(REGEX MATCH "^[^ ]+" _gcovr_gcov_cmd_first "${GCOVR_GCOV_EXECUTABLE}")
+                if(_gcovr_gcov_cmd_first)
+                    cmake_path(IS_ABSOLUTE _gcovr_gcov_cmd_first _gcovr_is_absolute)
+                    if(_gcovr_is_absolute)
+                        if(EXISTS "${_gcovr_gcov_cmd_first}")
+                            _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+                        else()
+                            message(
+                                WARNING
+                                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                            )
+                        endif()
+                    else()
+                        find_program(_gcovr_gcov_cmd NAMES "${_gcovr_gcov_cmd_first}")
+                        if(_gcovr_gcov_cmd)
+                            _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+                        else()
+                            message(
+                                WARNING
+                                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                            )
+                        endif()
+                        unset(_gcovr_gcov_cmd CACHE)
+                    endif()
+                    unset(_gcovr_gcov_cmd_first)
+                    unset(_gcovr_is_absolute)
+                else()
+                    message(
+                        WARNING
+                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                    )
+                endif()
+            endif()
         else()
             cmake_path(IS_ABSOLUTE GCOVR_GCOV_EXECUTABLE _gcovr_is_absolute)
             if(_gcovr_is_absolute)
