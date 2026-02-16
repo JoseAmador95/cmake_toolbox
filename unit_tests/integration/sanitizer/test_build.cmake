@@ -21,6 +21,25 @@ include(TestHelpers)
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_sanitizer_build")
 
+set(_exe_suffix "")
+if(WIN32)
+    set(_exe_suffix ".exe")
+endif()
+
+set(_tb_build_config "")
+if(DEFINED CMAKE_TOOLBOX_TEST_BUILD_TYPE AND NOT CMAKE_TOOLBOX_TEST_BUILD_TYPE STREQUAL "")
+    set(_tb_build_config "${CMAKE_TOOLBOX_TEST_BUILD_TYPE}")
+elseif(DEFINED CMAKE_TOOLBOX_TEST_GENERATOR
+    AND CMAKE_TOOLBOX_TEST_GENERATOR MATCHES "Visual Studio|Xcode|Multi-Config|Ninja Multi-Config"
+)
+    set(_tb_build_config "Debug")
+endif()
+
+set(_tb_build_args "")
+if(_tb_build_config)
+    list(APPEND _tb_build_args --config "${_tb_build_config}")
+endif()
+
 function(setup_test_environment)
     message(STATUS "Setting up test environment in: ${TEST_ROOT}")
     file(REMOVE_RECURSE "${TEST_ROOT}")
@@ -117,7 +136,7 @@ int main(void) {
     # Build
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} --build "${build_dir}"
+            ${CMAKE_COMMAND} --build "${build_dir}" ${_tb_build_args}
         RESULT_VARIABLE build_result
         OUTPUT_VARIABLE build_output
         ERROR_VARIABLE build_error
@@ -146,9 +165,13 @@ int main(void) {
     endif()
 
     # Run the test (should pass - clean code)
+    set(run_dir "${build_dir}")
+    if(_tb_build_config)
+        set(run_dir "${build_dir}/${_tb_build_config}")
+    endif()
     execute_process(
         COMMAND
-            "${build_dir}/mytest"
+            "${run_dir}/mytest${_exe_suffix}"
         RESULT_VARIABLE run_result
         OUTPUT_VARIABLE run_output
         ERROR_VARIABLE run_error
