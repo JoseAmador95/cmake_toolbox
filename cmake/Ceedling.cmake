@@ -600,10 +600,8 @@ function(Ceedling_AddUnitTest)
         string(REPLACE ";" "\\;" _tb_test_labels_escaped "${_tb_test_labels_string}")
     endif()
 
-    set(_tb_enable_gcovr_post_run OFF)
     set(_tb_gcovr_fixture_required "")
     if(CEEDLING_ENABLE_GCOV AND CEEDLING_GCOVR_POST_RUN AND TARGET gcovr)
-        set(_tb_enable_gcovr_post_run ON)
         set(_tb_gcovr_fixture_required "gcovr_unit")
 
         get_property(
