@@ -421,3 +421,83 @@ jobs:
 
       - name: Run generator coverage tests
         run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity|gcov|sanitizer" -j 4 ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
+
+  unity-cmock-versions:
+    name: unity-cmock-${{ matrix.label }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: unity-2.6.1-cmock-2.6.0
+            unity_tag: v2.6.1
+            cmock_tag: v2.6.0
+          - label: unity-2.5.3-cmock-2.5.3
+            unity_tag: v2.5.3
+            cmock_tag: v2.5.3
+          - label: unity-2.4.3-cmock-2.4.1
+            unity_tag: v2.4.3
+            cmock_tag: v2.4.1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build
+          -G "Ninja"
+          -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+          -DUNITY_GIT_TAG=${{ matrix.unity_tag }}
+          -DCMOCK_GIT_TAG=${{ matrix.cmock_tag }}
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run Unity/CMock tests
+        run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity" -j 4
+
+  gcovr-versions:
+    name: gcovr-${{ matrix.gcovr_version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gcovr_version: ["5.0", "6.0", "7.2", "8.0"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install gcovr
+        run: |
+          python -m pip install --user --upgrade pip
+          python -m pip install --user "gcovr==${{ matrix.gcovr_version }}"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          gcovr --version
+
+      - name: Run gcovr schema test
+        run: >-
+          cmake
+          -DGCOVR_EXECUTABLE="$(command -v gcovr)"
+          -DCMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT="$RUNNER_TEMP/test_artifacts"
+          -P unit_tests/gcovrschema/test_real_gcovr.cmake
