@@ -103,7 +103,7 @@ function(configure_project build_dir)
         COMMAND
             ${CMAKE_COMMAND} -S "${SRC_DIR}" -B "${build_dir}" ${configure_args}
             -DCEEDLING_ENABLE_GCOV=ON
-            -DGCOVR_EXECUTABLE=${ARG_GCOVR_EXECUTABLE}
+            "-DGCOVR_EXECUTABLE=${ARG_GCOVR_EXECUTABLE}"
             ${ARG_EXTRA_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output

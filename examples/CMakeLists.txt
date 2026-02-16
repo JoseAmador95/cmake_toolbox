@@ -402,7 +402,7 @@ foreach(test_file ${CEEDLING_INTEGRATION_TESTS})
             ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
             -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
             -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P "${test_file}"
     )
     set_tests_properties(integration_ceedling_${test_name} PROPERTIES LABELS "integration;ceedling")
 endforeach()
