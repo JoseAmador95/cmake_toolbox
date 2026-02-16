@@ -489,18 +489,7 @@ function(Ceedling_AddUnitTest)
         ${config_file_arg}
         RUNNER_SOURCE_VAR RUNNER_SOURCE
     )
-    cmake_path(GET RUNNER_SOURCE STEM RUNNER_STEM)
-    set(TEST_RUNNER ${TEST_BINARY_DIR}/${RUNNER_STEM}.c)
-    add_custom_command(
-        OUTPUT
-            ${TEST_RUNNER}
-        DEPENDS
-            ${RUNNER_SOURCE}
-        COMMAND
-            ${CMAKE_COMMAND} -E rename ${RUNNER_SOURCE} ${TEST_RUNNER}
-        COMMENT "Move ${RUNNER_STEM} to ${TEST_BINARY_DIR}"
-    )
-    target_sources(${ARG_NAME} PRIVATE ${TEST_RUNNER})
+    target_sources(${ARG_NAME} PRIVATE ${RUNNER_SOURCE})
     target_include_directories(${ARG_NAME} PRIVATE ${TEST_BINARY_DIR}/${CMOCK_MOCK_SUBDIR})
 
     # =========================================================================
