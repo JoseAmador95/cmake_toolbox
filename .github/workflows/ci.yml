@@ -432,12 +432,12 @@ jobs:
           - label: unity-2.6.1-cmock-2.6.0
             unity_tag: v2.6.1
             cmock_tag: v2.6.0
-          - label: unity-2.5.3-cmock-2.5.3
-            unity_tag: v2.5.3
-            cmock_tag: v2.5.3
-          - label: unity-2.4.3-cmock-2.4.1
+          - label: unity-2.5.2-cmock-2.5.2
+            unity_tag: v2.5.2
+            cmock_tag: v2.5.2
+          - label: unity-2.4.3-cmock-2.4.3
             unity_tag: v2.4.3
-            cmock_tag: v2.4.1
+            cmock_tag: v2.4.3
 
     steps:
       - name: Checkout
