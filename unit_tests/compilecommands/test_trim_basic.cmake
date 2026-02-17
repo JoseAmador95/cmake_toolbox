@@ -136,34 +136,23 @@ function(test_trim_preserves_split_flags)
     file(MAKE_DIRECTORY "${src_dir}")
 
     set(test_script
-        [=[
+        "
 cmake_minimum_required(VERSION 3.22)
 project(CompileCommandsSplitFlagsTest LANGUAGES C)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake")
+set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 include(CompileCommands)
 
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/db")
-file(
-    WRITE
-    "${CMAKE_BINARY_DIR}/db/compile_commands.json"
-    [[
-[
-  {
-    "directory": "/tmp/build",
-    "command": "gcc -I include -isystem /sys -DFOO=1 -o lib.o -c src/lib.c",
-    "file": "src/lib.c"
-  }
-]
-]]
-)
+file(MAKE_DIRECTORY \"\${CMAKE_BINARY_DIR}/db\")
+file(WRITE \"\${CMAKE_BINARY_DIR}/db/compile_commands.json\"
+\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"gcc -I include -isystem /sys -DFOO=1 -o lib.o -c src/lib.c\\\",\n    \\\"file\\\": \\\"src/lib.c\\\"\n  }\n]\")
 
 CompileCommands_Trim(
-    INPUT ${CMAKE_BINARY_DIR}/db/compile_commands.json
-    OUTPUT ${CMAKE_BINARY_DIR}/trimmed/compile_commands.json
+    INPUT \${CMAKE_BINARY_DIR}/db/compile_commands.json
+    OUTPUT \${CMAKE_BINARY_DIR}/trimmed/compile_commands.json
 )
 
-add_custom_target(run_trim DEPENDS ${CMAKE_BINARY_DIR}/trimmed/compile_commands.json)
-]=]
+add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands.json)
+"
     )
 
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
