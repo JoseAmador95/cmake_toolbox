@@ -71,6 +71,13 @@ function(_CompileCommands_TrimCommand input_command_var output_var)
             set(keep TRUE)
         endif()
 
+        if(NOT keep)
+            _CompileCommands_TokenHasArgFlag("${tok}" tok_has_arg)
+            if(tok_has_arg)
+                set(keep TRUE)
+            endif()
+        endif()
+
         if(NOT keep AND idx GREATER 0)
             math(EXPR prev_idx "${idx} - 1")
             list(GET tokens ${prev_idx} prev_tok)

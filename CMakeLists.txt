@@ -26,7 +26,6 @@ install(
     DESTINATION ${CMAKE_TOOLBOX_INSTALL_CMAKEDIR}
     FILES_MATCHING
     PATTERN "*.cmake"
-    PATTERN "*.jq"
 )
 
 install(

@@ -128,6 +128,94 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     endif()
 endfunction()
 
+function(test_trim_preserves_split_flags)
+    message(STATUS "Test 2: CompileCommands_Trim preserves split-argument flags")
+
+    set(src_dir "${TEST_ROOT}/split_flags/src")
+    set(build_dir "${TEST_ROOT}/split_flags/build")
+    file(MAKE_DIRECTORY "${src_dir}")
+
+    set(test_script
+        [=[
+cmake_minimum_required(VERSION 3.22)
+project(CompileCommandsSplitFlagsTest LANGUAGES C)
+set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake")
+include(CompileCommands)
+
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/db")
+file(
+    WRITE
+    "${CMAKE_BINARY_DIR}/db/compile_commands.json"
+    [[
+[
+  {
+    "directory": "/tmp/build",
+    "command": "gcc -I include -isystem /sys -DFOO=1 -o lib.o -c src/lib.c",
+    "file": "src/lib.c"
+  }
+]
+]]
+)
+
+CompileCommands_Trim(
+    INPUT ${CMAKE_BINARY_DIR}/db/compile_commands.json
+    OUTPUT ${CMAKE_BINARY_DIR}/trimmed/compile_commands.json
+)
+
+add_custom_target(run_trim DEPENDS ${CMAKE_BINARY_DIR}/trimmed/compile_commands.json)
+]=]
+    )
+
+    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
+
+    configure_project("${src_dir}" "${build_dir}" config_result config_log)
+    if(NOT config_result EQUAL 0)
+        message(STATUS "  - configuration failed: ${config_log}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    build_target("${build_dir}" "run_trim" build_result build_log)
+    if(NOT build_result EQUAL 0)
+        message(STATUS "  - trim target build failed: ${build_log}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    set(trimmed_file "${build_dir}/trimmed/compile_commands.json")
+    if(NOT EXISTS "${trimmed_file}")
+        message(STATUS "  - trimmed output file missing: ${trimmed_file}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+        return()
+    endif()
+
+    file(READ "${trimmed_file}" trimmed_content)
+    if(NOT trimmed_content MATCHES "-DFOO=1")
+        message(STATUS "  - expected define flag is missing in trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+    if(NOT trimmed_content MATCHES "-I include")
+        message(STATUS "  - expected split include flag is missing in trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+    if(NOT trimmed_content MATCHES "-isystem /sys")
+        message(STATUS "  - expected system include flag is missing in trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+    if(NOT trimmed_content MATCHES "-o lib.o")
+        message(STATUS "  - expected output flag is missing in trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+
+    set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    if(ERROR_COUNT EQUAL 0)
+        message(STATUS "  - split-argument flags preserved")
+    endif()
+endfunction()
+
 function(test_trim_creates_output_directory)
     message(STATUS "Test 2: CompileCommands_Trim creates nested output directory at build time")
 
@@ -187,6 +275,7 @@ function(run_all_tests)
     setup_test_environment()
 
     test_trim_executes_and_filters_content()
+    test_trim_preserves_split_flags()
     test_trim_creates_output_directory()
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
