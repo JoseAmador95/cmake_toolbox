@@ -30,8 +30,8 @@ endfunction()
 function(test_trim_executes)
     message(STATUS "Test 1: Build executes trim target and validates transformed output")
 
-    set(src_dir "${TEST_ROOT}/trim_jq/src")
-    set(build_dir "${TEST_ROOT}/trim_jq/build")
+    set(src_dir "${TEST_ROOT}/trim_basic/src")
+    set(build_dir "${TEST_ROOT}/trim_basic/build")
     file(MAKE_DIRECTORY "${src_dir}")
 
     set(test_script

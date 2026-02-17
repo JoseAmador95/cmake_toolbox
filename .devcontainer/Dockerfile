@@ -18,7 +18,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     clang-format \
     clang-tidy \
     ruby-dev \
-    jq \
     gcovr \
     build-essential \
     && apt-get clean -y \
