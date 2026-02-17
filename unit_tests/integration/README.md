@@ -21,7 +21,7 @@ integration/
 ├── ctest/
 │   └── test_junit_output.cmake         # JUnit output capture with custom size limits
 ├── compilecommands/
-│   └── test_trim.cmake                # jq trim, jq missing scenarios
+│   └── test_trim.cmake                # compile_commands trim behavior
 ├── findunity/
 │   └── test_find_package.cmake        # find_package(Unity) hint/layout coverage
 ├── unity/
@@ -53,7 +53,7 @@ ctest -R "integration_consumption" --output-on-failure
 | ClangTidy | ✓ | ✓ | ✓ | Global/Per-target |
 | ClangFormat | ✓ | ✓ | ✓ | Exclusions |
 | CTest | ✓ | ✓ | N/A | JUnit output capture |
-| CompileCommands | - | - | ✓ (jq) | Trim |
+| CompileCommands | - | - | N/A | Trim |
 | FindUnity | ✓ | ✓ | N/A | Hint resolution / layout validation |
 | Unity | ✓ | ✓ | N/A | CMock memory definitions |
 | Consumption | ✓ | ✓ | N/A | add_subdirectory / FetchContent / find_package |
@@ -61,5 +61,5 @@ ctest -R "integration_consumption" --output-on-failure
 ## Notes
 
 - Tests that require specific compilers will skip if the compiler is not found
-- Tests that require optional tools (clang-tidy, clang-format, jq) will verify graceful handling when missing
+- Tests that require optional tools (clang-tidy, clang-format) will verify graceful handling when missing
 - Integration tests create temporary projects in `${CMAKE_BINARY_DIR}/integration_*`

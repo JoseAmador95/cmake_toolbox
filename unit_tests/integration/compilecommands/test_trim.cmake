@@ -27,15 +27,8 @@ function(setup_test_environment)
     file(MAKE_DIRECTORY "${TEST_ROOT}")
 endfunction()
 
-function(test_trim_with_jq)
+function(test_trim_executes)
     message(STATUS "Test 1: Build executes trim target and validates transformed output")
-
-    # Check if jq is available
-    find_program(JQ_EXE jq)
-    if(NOT JQ_EXE)
-        message(STATUS "  ⊘ jq not found, skipping")
-        return()
-    endif()
 
     set(src_dir "${TEST_ROOT}/trim_jq/src")
     set(build_dir "${TEST_ROOT}/trim_jq/build")
@@ -75,7 +68,7 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     )
 
     if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Trim with jq failed: ${error}")
+        message(STATUS "  ✗ Trim failed: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
@@ -118,72 +111,6 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     message(STATUS "  ✓ CompileCommands_Trim executes real trim path and validates output")
 endfunction()
 
-function(test_trim_jq_not_found)
-    message(STATUS "Test 2: CompileCommands_Trim handles missing jq")
-
-    set(src_dir "${TEST_ROOT}/no_jq/src")
-    set(build_dir "${TEST_ROOT}/no_jq/build")
-    file(MAKE_DIRECTORY "${src_dir}")
-    file(MAKE_DIRECTORY "${build_dir}")
-
-    set(test_script
-        "
-cmake_minimum_required(VERSION 3.22)
-project(CompileCommandsNoJqTest LANGUAGES C)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Force jq to not be found
-set(Jq_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
-set(Jq_FOUND FALSE CACHE BOOL \"\" FORCE)
-
-include(CompileCommands)
-
-# This should emit warning but not fail
-CompileCommands_Trim(
-    INPUT \${CMAKE_BINARY_DIR}/compile_commands.json
-    OUTPUT \${CMAKE_BINARY_DIR}/trimmed/compile_commands.json
-)
-
-add_library(mylib STATIC lib.c)
-"
-    )
-
-    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
-    file(WRITE "${src_dir}/lib.c" "int lib_func(void) { return 42; }")
-
-    TestHelpers_GetConfigureArgs(configure_args)
-    execute_process(
-        COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${configure_args}
-        RESULT_VARIABLE result
-        OUTPUT_VARIABLE output
-        ERROR_VARIABLE error
-    )
-
-    if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Should handle missing jq gracefully: ${error}")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    # Check for warning about jq
-    string(
-        FIND "${output}${error}"
-        "jq"
-        has_jq_mention
-    )
-    if(has_jq_mention EQUAL -1)
-        message(STATUS "  ✗ Expected mention of jq in output")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    message(STATUS "  ✓ CompileCommands handles missing jq gracefully")
-endfunction()
-
 function(run_all_tests)
     message(STATUS "=== CompileCommands Integration Tests ===")
 
@@ -202,8 +129,7 @@ function(run_all_tests)
 
     setup_test_environment()
 
-    test_trim_with_jq()
-    test_trim_jq_not_found()
+    test_trim_executes()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)

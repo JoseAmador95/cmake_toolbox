@@ -54,12 +54,6 @@ endfunction()
 function(test_trim_executes_and_filters_content)
     message(STATUS "Test 1: CompileCommands_Trim executes and filters expected flags")
 
-    find_program(JQ_EXE jq)
-    if(NOT JQ_EXE)
-        message(STATUS "  - jq not found, skipping behavior assertions")
-        return()
-    endif()
-
     set(src_dir "${TEST_ROOT}/behavior/src")
     set(build_dir "${TEST_ROOT}/behavior/build")
     file(MAKE_DIRECTORY "${src_dir}")
@@ -137,12 +131,6 @@ endfunction()
 function(test_trim_creates_output_directory)
     message(STATUS "Test 2: CompileCommands_Trim creates nested output directory at build time")
 
-    find_program(JQ_EXE jq)
-    if(NOT JQ_EXE)
-        message(STATUS "  - jq not found, skipping")
-        return()
-    endif()
-
     set(src_dir "${TEST_ROOT}/create_dir/src")
     set(build_dir "${TEST_ROOT}/create_dir/build")
     file(MAKE_DIRECTORY "${src_dir}")
@@ -193,52 +181,6 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/nested/deep/path/trimmed
     message(STATUS "  - nested output path is created and populated")
 endfunction()
 
-function(test_trim_handles_missing_jq)
-    message(STATUS "Test 3: CompileCommands_Trim reports missing jq without failing configure")
-
-    set(src_dir "${TEST_ROOT}/missing_jq/src")
-    set(build_dir "${TEST_ROOT}/missing_jq/build")
-    file(MAKE_DIRECTORY "${src_dir}")
-
-    set(test_script
-        "
-cmake_minimum_required(VERSION 3.22)
-project(CompileCommandsMissingJqTest LANGUAGES C)
-set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-
-set(Jq_FOUND FALSE CACHE BOOL \"\" FORCE)
-set(Jq_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
-
-include(CompileCommands)
-
-file(WRITE \"\${CMAKE_BINARY_DIR}/compile_commands.json\" \"[]\")
-CompileCommands_Trim(
-    INPUT \${CMAKE_BINARY_DIR}/compile_commands.json
-    OUTPUT \${CMAKE_BINARY_DIR}/trimmed.json
-)
-"
-    )
-
-    file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
-
-    configure_project("${src_dir}" "${build_dir}" config_result config_log)
-    if(NOT config_result EQUAL 0)
-        message(STATUS "  - configuration should succeed when jq is missing: ${config_log}")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    if(NOT config_log MATCHES "jq")
-        message(STATUS "  - expected warning mentioning jq was not observed")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
-        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
-        return()
-    endif()
-
-    message(STATUS "  - missing jq warning emitted as expected")
-endfunction()
-
 function(run_all_tests)
     message(STATUS "=== CompileCommands_Trim Basic Behavior Tests ===")
 
@@ -246,8 +188,6 @@ function(run_all_tests)
 
     test_trim_executes_and_filters_content()
     test_trim_creates_output_directory()
-    test_trim_handles_missing_jq()
-
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)
         message(FATAL_ERROR "CompileCommands_Trim basic tests failed with ${ERROR_COUNT} error(s)")
