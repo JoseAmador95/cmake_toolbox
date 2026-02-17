@@ -29,10 +29,10 @@ ctest -R "compilecommands_" --output-on-failure
 
 - **Happy paths**: Valid INPUT/OUTPUT produces expected behavior
 - **Error paths**: Missing parameters trigger FATAL_ERROR
-- **Edge cases**: Missing jq executable emits warning
+- **Edge cases**: Nested output directories are created
 
 ## Notes
 
 - `CompileCommands_Trim` creates a custom command in project mode
 - Tests are run as integration tests (cmake -S -B) to test project-mode behavior
-- If jq is not found, the function emits a WARNING but doesn't fail
+- The trim helper runs as a build-time custom command

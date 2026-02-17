@@ -119,7 +119,7 @@ function(_ClangTidy_GetCommand TRIM RETCMD RETCOMPILECOMMANDS)
         set(use_trim FALSE)
     endif()
 
-    if(use_trim AND JQ_EXECUTABLE)
+    if(use_trim)
         set(output_file ${CMAKE_CURRENT_BINARY_DIR}/compile_commands_trimmed/compile_commands.json)
         CompileCommands_Trim(INPUT ${CLANG_TIDY_COMPILE_COMMANDS} OUTPUT ${output_file})
     endif()
@@ -199,4 +199,3 @@ function(ClangTidy_ConfigureTarget)
         target_sources(${ARG_TARGET} PRIVATE ${compilecommands})
     endif()
 endfunction()
-

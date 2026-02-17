@@ -132,7 +132,7 @@ set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(ClangTidy)
 
-# This should not fail even without jq
+# This should not fail when trim is enabled
 ClangTidy_Configure(STATUS ON TRIM_COMPILE_COMMANDS)
 
 message(STATUS \"ClangTidy_Configure with TRIM_COMPILE_COMMANDS completed\")
