@@ -39,8 +39,6 @@ function(_CompileCommands_JsonEscape input output_var)
     string(REPLACE "\n" "\\n" escaped "${escaped}")
     string(REPLACE "\r" "\\r" escaped "${escaped}")
     string(REPLACE "\t" "\\t" escaped "${escaped}")
-    string(REPLACE "\b" "\\b" escaped "${escaped}")
-    string(REPLACE "\f" "\\f" escaped "${escaped}")
     set(${output_var} "${escaped}" PARENT_SCOPE)
 endfunction()
 
