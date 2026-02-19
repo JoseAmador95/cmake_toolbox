@@ -39,14 +39,14 @@ function(_CompileCommands_JsonEscape input output_var)
     string(REPLACE "\n" "\\n" escaped "${escaped}")
     string(REPLACE "\r" "\\r" escaped "${escaped}")
     string(REPLACE "\t" "\\t" escaped "${escaped}")
-    set(${output_var} "\"${escaped}\"" PARENT_SCOPE)
+    string(REPLACE "\b" "\\b" escaped "${escaped}")
+    string(REPLACE "\f" "\\f" escaped "${escaped}")
+    set(${output_var} "${escaped}" PARENT_SCOPE)
 endfunction()
 
 function(_CompileCommands_TrimCommand input_command_var output_var)
     set(input_command "${${input_command_var}}")
-    set(split_command "${input_command}")
-    string(REPLACE ";" "\\;" split_command "${split_command}")
-    string(REPLACE " " ";" tokens "${split_command}")
+    separate_arguments(tokens UNIX_COMMAND "${input_command}")
 
     list(LENGTH tokens token_count)
     if(token_count EQUAL 0)
@@ -96,7 +96,6 @@ function(_CompileCommands_TrimCommand input_command_var output_var)
     set(${output_var} "${trimmed_command}" PARENT_SCOPE)
 endfunction()
 
-# Validate that all required variables are set
 if(NOT DEFINED INPUT_FILE)
     message(FATAL_ERROR "TrimCompileCommandsHelper: INPUT_FILE is not defined")
 endif()
@@ -105,12 +104,10 @@ if(NOT DEFINED OUTPUT_FILE)
     message(FATAL_ERROR "TrimCompileCommandsHelper: OUTPUT_FILE is not defined")
 endif()
 
-# Validate that input files exist
 if(NOT EXISTS "${INPUT_FILE}")
     message(FATAL_ERROR "TrimCompileCommandsHelper: INPUT_FILE does not exist: ${INPUT_FILE}")
 endif()
 
-# Create output directory if it doesn't exist
 get_filename_component(output_dir "${OUTPUT_FILE}" DIRECTORY)
 if(NOT EXISTS "${output_dir}")
     file(MAKE_DIRECTORY "${output_dir}")
@@ -140,7 +137,7 @@ if(entry_count GREATER 0)
         _CompileCommands_TrimCommand(trim_command_input trimmed_command)
         _CompileCommands_JsonEscape("${trimmed_command}" command_json)
 
-        string(JSON updated_json ERROR_VARIABLE set_error SET "${output_json}" ${index} command "${command_json}")
+        string(JSON updated_json ERROR_VARIABLE set_error SET "${output_json}" ${index} command "\"${command_json}\"")
         if(set_error)
             message(
                 FATAL_ERROR
@@ -153,7 +150,6 @@ endif()
 
 file(WRITE "${OUTPUT_FILE}" "${output_json}")
 
-# Verify output file was created
 if(NOT EXISTS "${OUTPUT_FILE}")
     message(FATAL_ERROR "TrimCompileCommandsHelper: Failed to create output file: ${OUTPUT_FILE}")
 endif()
