@@ -14,6 +14,18 @@ Dependencies
 
 This module uses built-in CMake JSON processing to trim compile commands.
 
+Cache Variables
+^^^^^^^^^^^^^^^
+
+``COMPILE_COMMANDS_TRIM_BLACKLIST``
+  Additional regex patterns for flags to remove during trim.
+  Patterns are matched against each token in the command line.
+  Semicolon-separated list. Default: empty.
+
+  Example::
+
+    set(COMPILE_COMMANDS_TRIM_BLACKLIST "^-Wmy-custom-flag$;^-fmy-custom-opt")
+
 Functions
 ^^^^^^^^^
 
@@ -33,7 +45,20 @@ Functions
     Path where the trimmed output will be written.
 
   This function creates a custom command that filters the compile_commands.json
-  file using a CMake helper script.
+  file using a CMake helper script. The trimming process:
+
+  1. Preserves flags needed for static analysis (includes, defines, standard)
+  2. Removes optimization and debug flags (-O*, -g*)
+  3. Removes flags known to be incompatible with clang-tidy (built-in blacklist)
+  4. Removes user-specified blacklisted flags (COMPILE_COMMANDS_TRIM_BLACKLIST)
+
+  Built-in blacklist removes flags from:
+
+  - GCC Modules: -fmodules-ts, -fmodule-mapper, -fdeps-format
+  - ARM GCC: -mcpu, -march=arm*, -mthumb, -mfloat-abi, -mfpu
+  - GCC warnings: -Wformat-signedness, -Wsuggest-override, etc.
+  - Intel ICC: -w2, -w3, -Wno-maybe-uninitialized
+  - Other embedded: Tricore, RISC-V specific flags
 
 Example
 ^^^^^^^
@@ -41,7 +66,15 @@ Example
 .. code-block:: cmake
 
   include(CompileCommands)
-  
+
+  # Basic usage
+  CompileCommands_Trim(
+    INPUT ${CMAKE_BINARY_DIR}/compile_commands.json
+    OUTPUT ${CMAKE_BINARY_DIR}/trimmed_compile_commands.json
+  )
+
+  # With custom blacklist
+  set(COMPILE_COMMANDS_TRIM_BLACKLIST "^-Wmy-warning$;^-fmy-flag")
   CompileCommands_Trim(
     INPUT ${CMAKE_BINARY_DIR}/compile_commands.json
     OUTPUT ${CMAKE_BINARY_DIR}/trimmed_compile_commands.json
@@ -52,6 +85,10 @@ Example
 include_guard(GLOBAL)
 
 set(COMPILECOMMANDS_AVAILABLE TRUE CACHE INTERNAL "Whether CompileCommands module is available")
+
+set(COMPILE_COMMANDS_TRIM_BLACKLIST ""
+    CACHE STRING "Additional regex patterns for flags to remove during trim (semicolon-separated)"
+)
 
 get_property(_compilecommands_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(_compilecommands_multi_config)
@@ -78,16 +115,6 @@ if(_compilecommands_multi_config)
 endif()
 unset(_compilecommands_multi_config)
 
-# ==============================================================================
-# CompileCommands_Trim
-# ==============================================================================
-#
-# Trim/filter a compile_commands.json file.
-#
-# Parameters:
-#   INPUT  - Path to source compile_commands.json
-#   OUTPUT - Path for output file
-#
 function(CompileCommands_Trim)
     set(options "")
     set(oneValueArgs
@@ -110,12 +137,20 @@ function(CompileCommands_Trim)
     cmake_path(GET ARG_OUTPUT PARENT_PATH output_dir)
     file(MAKE_DIRECTORY "${output_dir}")
 
+    set(_command_args
+        -DINPUT_FILE=${ARG_INPUT}
+        -DOUTPUT_FILE=${ARG_OUTPUT}
+    )
+
+    if(DEFINED COMPILE_COMMANDS_TRIM_BLACKLIST AND NOT COMPILE_COMMANDS_TRIM_BLACKLIST STREQUAL "")
+        list(APPEND _command_args "-DBLACKLIST_PATTERNS=${COMPILE_COMMANDS_TRIM_BLACKLIST}")
+    endif()
+
     add_custom_command(
         OUTPUT
             ${ARG_OUTPUT}
         COMMAND
-            ${CMAKE_COMMAND} -DINPUT_FILE=${ARG_INPUT} -DOUTPUT_FILE=${ARG_OUTPUT} -P
-            ${HELPER_SCRIPT}
+            ${CMAKE_COMMAND} ${_command_args} -P ${HELPER_SCRIPT}
         DEPENDS
             ${ARG_INPUT}
             ${HELPER_SCRIPT}
