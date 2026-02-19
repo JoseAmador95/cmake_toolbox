@@ -65,7 +65,7 @@ function(_CompileCommands_TrimCommand input_command_var output_var)
             set(keep TRUE)
         elseif(tok MATCHES "^-std=")
             set(keep TRUE)
-        elseif(tok MATCHES "^-I[^ ]+")
+        elseif(tok MATCHES "^(-I|-isystem|-iquote|-idirafter|-iframework|-isysroot|-include|-imsvc)[^ ]+")
             set(keep TRUE)
         endif()
 

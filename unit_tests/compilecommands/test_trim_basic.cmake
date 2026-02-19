@@ -65,7 +65,7 @@ include(CompileCommands)
 
 file(MAKE_DIRECTORY \"\${CMAKE_BINARY_DIR}/db\")
 file(WRITE \"\${CMAKE_BINARY_DIR}/db/compile_commands.json\"
-\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"gcc -Iinclude -DFOO=1 -O2 -g -o lib.o -c src/lib.c\\\",\n    \\\"file\\\": \\\"src/lib.c\\\"\n  }\n]\")
+\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"gcc -Iinclude -isystem/sys -iquotequote -DFOO=1 -O2 -g -o lib.o -c src/lib.c\\\",\n    \\\"file\\\": \\\"src/lib.c\\\"\n  }\n]\")
 
 CompileCommands_Trim(
     INPUT \${CMAKE_BINARY_DIR}/db/compile_commands.json
@@ -109,6 +109,14 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     endif()
     if(NOT trimmed_content MATCHES "-Iinclude")
         message(STATUS "  - expected include flag is missing in trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+    if(NOT trimmed_content MATCHES "-isystem/sys")
+        message(STATUS "  - expected concatenated isystem flag is missing in trimmed output")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+    endif()
+    if(NOT trimmed_content MATCHES "-iquotequote")
+        message(STATUS "  - expected concatenated iquote flag is missing in trimmed output")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
     endif()
     if(trimmed_content MATCHES "-O2")
