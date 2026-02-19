@@ -11,6 +11,7 @@ shell redirection or external tools.
 Expected variables (passed via -D flags):
   INPUT_FILE - Path to the source compile_commands.json
   OUTPUT_FILE - Path where the trimmed output will be written
+  BLACKLIST_PATTERNS - (optional) Semicolon-separated list of additional regex patterns
 #]=======================================================================]
 
 function(_CompileCommands_TokenHasArgFlag token result_var)
@@ -42,7 +43,115 @@ function(_CompileCommands_JsonEscape input output_var)
     set(${output_var} "${escaped}" PARENT_SCOPE)
 endfunction()
 
-function(_CompileCommands_TrimCommand input_command_var output_var)
+function(_CompileCommands_InitBlacklist blacklist_var)
+    set(_builtin_blacklist
+        "^-fmodules-ts$"
+        "^-fmodule-mapper=.*"
+        "^-fdeps-format=.*"
+        "^-fstrict-volatile-bitfields$"
+        "^-mcpu=.*"
+        "^-march=arm.*"
+        "^-mthumb$"
+        "^-mno-thumb$"
+        "^-mfloat-abi=.*"
+        "^-mfpu=.*"
+        "^-Wformat-signedness$"
+        "^-Wsuggest-override$"
+        "^-Wduplicated-cond$"
+        "^-Wduplicated-branches$"
+        "^-Wlogical-op$"
+        "^-Wuseless-cast$"
+        "^-w[0-9]$"
+        "^-Wno-maybe-uninitialized$"
+        "^-m(tc|tricore).*"
+        "^-msmall-data-limit=.*"
+        "^-mexplicit-reloc=.*"
+        "^-mno-explicit-reloc$"
+        "^-msram-size=.*"
+        "^-mno-sdata$"
+        "^-msdata=.*"
+        "^-fallow-store-data-races$"
+        "^-fno-allow-store-data-races$"
+    )
+
+    set(_combined_blacklist ${_builtin_blacklist})
+
+    if(DEFINED BLACKLIST_PATTERNS AND NOT BLACKLIST_PATTERNS STREQUAL "")
+        string(REPLACE ";" ";" _user_patterns "${BLACKLIST_PATTERNS}")
+        list(APPEND _combined_blacklist ${_user_patterns})
+    endif()
+
+    set(${blacklist_var} "${_combined_blacklist}" PARENT_SCOPE)
+endfunction()
+
+function(_CompileCommands_IsBlacklisted token blacklist result_var)
+    set(_is_blacklisted FALSE)
+
+    foreach(pattern IN LISTS blacklist)
+        if(token MATCHES "${pattern}")
+            set(_is_blacklisted TRUE)
+            break()
+        endif()
+    endforeach()
+
+    set(${result_var} ${_is_blacklisted} PARENT_SCOPE)
+endfunction()
+
+function(_CompileCommands_IsBlacklistedArgFlag token result_var)
+    set(_is_blacklisted_arg_flag FALSE)
+
+    set(_blacklisted_arg_flags
+        "^-mcpu$"
+        "^-march$"
+        "^-mfpu$"
+        "^-mfloat-abi$"
+        "^-msram-size$"
+        "^-msdata$"
+        "^-mexplicit-reloc$"
+    )
+
+    foreach(pattern IN LISTS _blacklisted_arg_flags)
+        if(token MATCHES "${pattern}")
+            set(_is_blacklisted_arg_flag TRUE)
+            break()
+        endif()
+    endforeach()
+
+    set(${result_var} ${_is_blacklisted_arg_flag} PARENT_SCOPE)
+endfunction()
+
+function(_CompileCommands_ShouldKeepToken tok blacklist result_var)
+    set(_keep FALSE)
+
+    if(tok MATCHES "^-D")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^-std=")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^(-I|-isystem|-iquote|-idirafter|-iframework|-isysroot|-include|-imsvc)[^ ]+")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^-x$")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^-f(no-)?(exceptions|rtti)$")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^-f(PIC|pic|PIE|pie)$")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^-pthread$")
+        set(_keep TRUE)
+    elseif(tok MATCHES "^-m(32|64)$")
+        set(_keep TRUE)
+    endif()
+
+    if(_keep)
+        _CompileCommands_IsBlacklisted("${tok}" "${blacklist}" _is_blacklisted)
+        if(_is_blacklisted)
+            set(_keep FALSE)
+        endif()
+    endif()
+
+    set(${result_var} ${_keep} PARENT_SCOPE)
+endfunction()
+
+function(_CompileCommands_TrimCommand input_command_var output_var blacklist)
     set(input_command "${${input_command_var}}")
     separate_arguments(tokens UNIX_COMMAND "${input_command}")
 
@@ -61,12 +170,8 @@ function(_CompileCommands_TrimCommand input_command_var output_var)
 
         if(idx EQUAL 0 OR idx EQUAL last_idx)
             set(keep TRUE)
-        elseif(tok MATCHES "^-D")
-            set(keep TRUE)
-        elseif(tok MATCHES "^-std=")
-            set(keep TRUE)
-        elseif(tok MATCHES "^(-I|-isystem|-iquote|-idirafter|-iframework|-isysroot|-include|-imsvc)[^ ]+")
-            set(keep TRUE)
+        else()
+            _CompileCommands_ShouldKeepToken("${tok}" "${blacklist}" keep)
         endif()
 
         if(NOT keep)
@@ -80,7 +185,8 @@ function(_CompileCommands_TrimCommand input_command_var output_var)
             math(EXPR prev_idx "${idx} - 1")
             list(GET tokens ${prev_idx} prev_tok)
             _CompileCommands_TokenHasArgFlag("${prev_tok}" prev_has_arg)
-            if(prev_has_arg)
+            _CompileCommands_IsBlacklistedArgFlag("${prev_tok}" prev_is_blacklisted_arg)
+            if(prev_has_arg AND NOT prev_is_blacklisted_arg)
                 set(keep TRUE)
             endif()
         endif()
@@ -124,6 +230,8 @@ if(NOT EXISTS "${output_dir}")
     file(MAKE_DIRECTORY "${output_dir}")
 endif()
 
+_CompileCommands_InitBlacklist(_global_blacklist)
+
 file(READ "${INPUT_FILE}" input_json)
 
 string(JSON entry_count ERROR_VARIABLE json_error LENGTH "${input_json}")
@@ -145,7 +253,7 @@ if(entry_count GREATER 0)
         endif()
 
         set(trim_command_input "${command}")
-        _CompileCommands_TrimCommand(trim_command_input trimmed_command)
+        _CompileCommands_TrimCommand(trim_command_input trimmed_command "${_global_blacklist}")
         _CompileCommands_JsonEscape("${trimmed_command}" command_json)
 
         string(JSON updated_json ERROR_VARIABLE set_error SET "${output_json}" ${index} command "\"${command_json}\"")
