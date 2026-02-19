@@ -21,9 +21,22 @@ Cache Variables
   Path to compile_commands.json file.
   Default: ``${CMAKE_BINARY_DIR}/compile_commands.json``
 
-``CLANG_TIDY_VERIFY_TRIMMED_DB``
-  Whether to verify that the trimmed compile_commands.json is accepted by clang-tidy.
-  Verification runs at build time after trimming. Default: ON.
+Notes
+^^^^^
+
+When clang-tidy encounters unknown compiler flags (e.g., GCC-specific flags
+when using a GCC-generated compile_commands.json), this module's wrapper
+script will detect and report them with suggestions for adding to
+COMPILE_COMMANDS_TRIM_BLACKLIST.
+
+Example output::
+
+  ClangTidy: clang-tidy reported 3 unknown compiler flag(s):
+    - '-fmodules-ts'
+    - '-mcpu=cortex-m7'
+
+  Consider adding to COMPILE_COMMANDS_TRIM_BLACKLIST:
+    set(COMPILE_COMMANDS_TRIM_BLACKLIST "^-fmodules-ts$;^-mcpu=.*")
 
 Functions
 ^^^^^^^^^
@@ -96,49 +109,7 @@ set(CLANG_TIDY_COMPILE_COMMANDS
     "Path to compile_commands.json"
 )
 
-set(CLANG_TIDY_VERIFY_TRIMMED_DB ON
-    CACHE BOOL
-    "Verify trimmed compile_commands.json is accepted by clang-tidy"
-)
-
 include(${CMAKE_CURRENT_LIST_DIR}/CompileCommands.cmake)
-
-function(_ClangTidy_VerifyCompileCommands DB_PATH VERIFY_RESULT_VAR)
-    set(${VERIFY_RESULT_VAR} TRUE PARENT_SCOPE)
-
-    if(NOT ClangTidy_FOUND)
-        return()
-    endif()
-
-    if(NOT EXISTS "${DB_PATH}")
-        message(VERBOSE "ClangTidy: Cannot verify - database does not exist: ${DB_PATH}")
-        return()
-    endif()
-
-    set(_verify_test_file "${CMAKE_BINARY_DIR}/.clang_tidy_verify_test.cpp")
-    file(WRITE "${_verify_test_file}" "int main() { return 0; }\n")
-
-    execute_process(
-        COMMAND ${ClangTidy_EXECUTABLE} -p "${DB_PATH}" -- "${_verify_test_file}"
-        RESULT_VARIABLE _result
-        ERROR_VARIABLE _error
-        OUTPUT_QUIET
-        TIMEOUT 30
-    )
-
-    if(_result EQUAL 0)
-        message(STATUS "ClangTidy: Trimmed compile_commands.json verification passed")
-    else()
-        message(WARNING
-            "ClangTidy: Trimmed compile_commands.json may contain incompatible flags.\n"
-            "Clang-tidy returned: ${_result}\n"
-            "Error output: ${_error}\n"
-            "Consider adding problematic flags to COMPILE_COMMANDS_TRIM_BLACKLIST.\n"
-            "Set CLANG_TIDY_VERIFY_TRIMMED_DB=OFF to skip verification."
-        )
-        set(${VERIFY_RESULT_VAR} FALSE PARENT_SCOPE)
-    endif()
-endfunction()
 
 function(_ClangTidy_GetCommand TRIM RETCMD RETCOMPILECOMMANDS)
     set(output_file ${CLANG_TIDY_COMPILE_COMMANDS})
@@ -154,30 +125,20 @@ function(_ClangTidy_GetCommand TRIM RETCMD RETCOMPILECOMMANDS)
     if(use_trim)
         set(output_file ${CMAKE_CURRENT_BINARY_DIR}/compile_commands_trimmed/compile_commands.json)
         CompileCommands_Trim(INPUT ${CLANG_TIDY_COMPILE_COMMANDS} OUTPUT ${output_file})
-
-        if(CLANG_TIDY_VERIFY_TRIMMED_DB AND ClangTidy_FOUND)
-            get_filename_component(_db_dir "${output_file}" DIRECTORY)
-            set(_verify_stamp "${_db_dir}/.verified")
-
-            add_custom_command(
-                OUTPUT "${_verify_stamp}"
-                COMMAND ${CMAKE_COMMAND}
-                    -DClangTidy_EXECUTABLE=${ClangTidy_EXECUTABLE}
-                    -DDB_PATH=${output_file}
-                    -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
-                    -P ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/internal/VerifyCompileCommandsHelper.cmake
-                COMMAND ${CMAKE_COMMAND} -E touch "${_verify_stamp}"
-                DEPENDS "${output_file}"
-                COMMENT "Verifying trimmed compile_commands.json with clang-tidy"
-                VERBATIM
-            )
-
-            set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES "${_verify_stamp}")
-        endif()
     endif()
 
     message(VERBOSE "ClangTidy using compile commands: ${output_file}")
-    set(${RETCMD} "${ClangTidy_EXECUTABLE};-p;${output_file}" PARENT_SCOPE)
+
+    if(ClangTidy_FOUND)
+        set(wrapper_script "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/internal/ClangTidyWrapper.cmake")
+        set(${RETCMD}
+            "${CMAKE_COMMAND};-DClangTidy_EXECUTABLE=${ClangTidy_EXECUTABLE};-P;${wrapper_script};--;${ClangTidy_EXECUTABLE};-p;${output_file}"
+            PARENT_SCOPE
+        )
+    else()
+        set(${RETCMD} "" PARENT_SCOPE)
+    endif()
+
     if(use_trim)
         set(${RETCOMPILECOMMANDS} "${output_file}" PARENT_SCOPE)
     elseif(EXISTS "${output_file}")
