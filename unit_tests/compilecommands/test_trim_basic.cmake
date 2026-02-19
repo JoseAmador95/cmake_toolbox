@@ -219,7 +219,7 @@ include(CompileCommands)
 
 file(MAKE_DIRECTORY \"\${CMAKE_BINARY_DIR}/db\")
 file(WRITE \"\${CMAKE_BINARY_DIR}/db/compile_commands.json\"
-\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"gcc -I /path/with spaces/include -DFOO=1 -o lib.o -c src/lib.c\\\",\n    \\\"file\\\": \\\"src/lib.c\\\"\n  }\n]\")
+\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"gcc -I \\\\\\\"/path/with spaces/include\\\\\\\" -DFOO=1 -o lib.o -c src/lib.c\\\",\n    \\\"file\\\": \\\"src/lib.c\\\"\n  }\n]\")
 
 CompileCommands_Trim(
     INPUT \${CMAKE_BINARY_DIR}/db/compile_commands.json
@@ -259,9 +259,9 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     file(READ "${trimmed_file}" trimmed_content)
     if(NOT trimmed_content MATCHES "-DFOO=1")
         message(STATUS "  - expected define flag is missing in trimmed output")
-        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1)
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
     endif()
-    if(NOT trimmed_content MATCHES "/path/with spaces/include")
+    if(NOT trimmed_content MATCHES "\\\"/path/with spaces/include\\\\\\\"")
         message(STATUS "  - expected path with spaces is missing in trimmed output")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
     endif()
