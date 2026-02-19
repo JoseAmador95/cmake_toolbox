@@ -26,7 +26,8 @@ function(_CompileCommands_TokenHasArgFlag token result_var)
        OR token STREQUAL "-imacros"
        OR token STREQUAL "-o"
        OR token STREQUAL "-imsvc"
-       OR token STREQUAL "-resource-dir")
+       OR token STREQUAL "-resource-dir"
+       OR token STREQUAL "-x")
         set(${result_var} TRUE PARENT_SCOPE)
     else()
         set(${result_var} FALSE PARENT_SCOPE)
@@ -77,8 +78,7 @@ function(_CompileCommands_InitBlacklist blacklist_var)
     set(_combined_blacklist ${_builtin_blacklist})
 
     if(DEFINED BLACKLIST_PATTERNS AND NOT BLACKLIST_PATTERNS STREQUAL "")
-        string(REPLACE ";" ";" _user_patterns "${BLACKLIST_PATTERNS}")
-        list(APPEND _combined_blacklist ${_user_patterns})
+        list(APPEND _combined_blacklist ${BLACKLIST_PATTERNS})
     endif()
 
     set(${blacklist_var} "${_combined_blacklist}" PARENT_SCOPE)
