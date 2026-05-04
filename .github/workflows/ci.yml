@@ -159,6 +159,36 @@ jobs:
             install_deps: |
               pip install gcovr
 
+          # ── Linux + Cppcheck ─────────────────────────────────────────────
+          - name: linux-cppcheck-enabled
+            os: ubuntu-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang-format gcovr cppcheck
+
+          - name: linux-cppcheck-advisory
+            os: ubuntu-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang-format gcovr
+
+          # ── Linux + IWYU ──────────────────────────────────────────────────
+          - name: linux-iwyu-enabled
+            os: ubuntu-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang-format gcovr iwyu
+
+          - name: linux-iwyu-advisory
+            os: ubuntu-latest
+            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang-format gcovr
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
