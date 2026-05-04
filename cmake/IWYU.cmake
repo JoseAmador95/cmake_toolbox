@@ -435,7 +435,15 @@ function(IWYU_ConfigureTarget)
     endif()
 
     if(NOT TARGET ${ARG_TARGET})
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
+        if(ARG_STRICT)
+            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
+        else()
+            message(
+                VERBOSE
+                "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist (advisory mode, continuing)"
+            )
+            return()
+        endif()
     endif()
 
     if(ARG_STATUS STREQUAL "ON")
