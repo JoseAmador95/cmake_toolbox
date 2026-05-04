@@ -202,7 +202,11 @@ GcovrSchema_GenerateConfigFile(\"${config_file}\")
 
     if(EXISTS "${config_file}")
         file(READ "${config_file}" config_content)
-        string(FIND "${config_content}" "html-high-threshold" has_html)
+        string(
+            FIND "${config_content}"
+            "html-high-threshold"
+            has_html
+        )
 
         if(has_html EQUAL -1)
             message(STATUS "  ✗ Config missing expected HTML threshold key")
@@ -236,9 +240,9 @@ include(GcovrSchema)
 GcovrSchema_SetDefaults()
 GcovrSchema_DetectCapabilities(\"${mock_gcovr_path}\" detected_flags)
 
-set(GCOVR_HTML_TITLE \"Custom Test Title\" CACHE STRING \"\" FORCE)
-set(GCOVR_FAIL_UNDER_LINE \"75\" CACHE STRING \"\" FORCE)
-set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
+set(CMT_GCOVR_HTML_TITLE \"Custom Test Title\" CACHE STRING \"\" FORCE)
+set(CMT_GCOVR_FAIL_UNDER_LINE \"75\" CACHE STRING \"\" FORCE)
+set(CMT_GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
 
 GcovrSchema_GenerateConfigFile(\"${config_file}\")
 "
@@ -265,7 +269,11 @@ GcovrSchema_GenerateConfigFile(\"${config_file}\")
     if(EXISTS "${config_file}")
         file(READ "${config_file}" config_content)
 
-        string(FIND "${config_content}" "Custom Test Title" has_title)
+        string(
+            FIND "${config_content}"
+            "Custom Test Title"
+            has_title
+        )
         if(has_title EQUAL -1)
             message(STATUS "  ✗ Custom title not found in config")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
@@ -303,9 +311,9 @@ include(GcovrSchema)
 GcovrSchema_SetDefaults()
 GcovrSchema_DetectCapabilities(\"${mock_gcovr_path}\" detected_flags)
 
-set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
-set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
-set(GCOVR_FAIL_UNDER_DECISION 60 CACHE STRING \"\" FORCE)
+set(CMT_GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
+set(CMT_GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
+set(CMT_GCOVR_FAIL_UNDER_DECISION 60 CACHE STRING \"\" FORCE)
 
 GcovrSchema_GenerateConfigFile(\"${config_file}\")
 "
@@ -332,8 +340,16 @@ GcovrSchema_GenerateConfigFile(\"${config_file}\")
     if(EXISTS "${config_file}")
         file(READ "${config_file}" config_content)
 
-        string(FIND "${config_content}" "fail-under-line" has_line)
-        string(FIND "${config_content}" "fail-under-decision" has_decision)
+        string(
+            FIND "${config_content}"
+            "fail-under-line"
+            has_line
+        )
+        string(
+            FIND "${config_content}"
+            "fail-under-decision"
+            has_decision
+        )
 
         if(has_line EQUAL -1)
             message(STATUS "  ✗ fail-under-line should be present")

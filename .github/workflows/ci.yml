@@ -26,7 +26,7 @@ jobs:
             os: ubuntu-latest
             cmake_flags: >-
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-              -DCEEDLING_ENABLE_GCOV=ON
+              -DCMT_CEEDLING_ENABLE_GCOV=ON
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr
@@ -35,7 +35,7 @@ jobs:
             os: ubuntu-latest
             cmake_flags: >-
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-              -DCEEDLING_ENABLE_SANITIZER=ON
+              -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr
@@ -44,8 +44,8 @@ jobs:
             os: ubuntu-latest
             cmake_flags: >-
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-              -DCEEDLING_ENABLE_GCOV=ON
-              -DCEEDLING_ENABLE_SANITIZER=ON
+              -DCMT_CEEDLING_ENABLE_GCOV=ON
+              -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr
@@ -67,7 +67,7 @@ jobs:
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
               -DCMAKE_C_COMPILER=clang
               -DCMAKE_CXX_COMPILER=clang++
-              -DCEEDLING_ENABLE_GCOV=ON
+              -DCMT_CEEDLING_ENABLE_GCOV=ON
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang clang-format gcovr llvm
@@ -78,7 +78,7 @@ jobs:
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
               -DCMAKE_C_COMPILER=clang
               -DCMAKE_CXX_COMPILER=clang++
-              -DCEEDLING_ENABLE_SANITIZER=ON
+              -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang clang-format gcovr
@@ -89,8 +89,8 @@ jobs:
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
               -DCMAKE_C_COMPILER=clang
               -DCMAKE_CXX_COMPILER=clang++
-              -DCEEDLING_ENABLE_GCOV=ON
-              -DCEEDLING_ENABLE_SANITIZER=ON
+              -DCMT_CEEDLING_ENABLE_GCOV=ON
+              -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang clang-format gcovr llvm
@@ -112,7 +112,7 @@ jobs:
             os: macos-latest
             cmake_flags: >-
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-              -DCEEDLING_ENABLE_SANITIZER=ON
+              -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               brew install clang-format
               if ! command -v gcovr >/dev/null 2>&1; then
@@ -133,7 +133,7 @@ jobs:
             os: windows-latest
             cmake_flags: >-
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-              -DCEEDLING_ENABLE_SANITIZER=ON
+              -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             build_config: Debug
             install_deps: echo "No extra dependencies"
 
@@ -155,7 +155,7 @@ jobs:
               -G "MinGW Makefiles"
               -DCMAKE_C_COMPILER=gcc
               -DCMAKE_CXX_COMPILER=g++
-              -DCEEDLING_ENABLE_GCOV=ON
+              -DCMT_CEEDLING_ENABLE_GCOV=ON
             install_deps: |
               pip install gcovr
 
@@ -458,8 +458,8 @@ jobs:
           cmake -S . -B build
           -G "Ninja"
           -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-          -DUNITY_GIT_TAG=${{ matrix.unity_tag }}
-          -DCMOCK_GIT_TAG=${{ matrix.cmock_tag }}
+          -DCMT_UNITY_GIT_TAG=${{ matrix.unity_tag }}
+          -DCMT_CMOCK_GIT_TAG=${{ matrix.cmock_tag }}
 
       - name: Build
         run: cmake --build build
@@ -496,6 +496,6 @@ jobs:
       - name: Run gcovr schema test
         run: >-
           cmake
-          -DGCOVR_EXECUTABLE="$(command -v gcovr)"
+          -DCMT_GCOVR_EXECUTABLE="$(command -v gcovr)"
           -DCMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT="$RUNNER_TEMP/test_artifacts"
           -P unit_tests/gcovrschema/test_real_gcovr.cmake

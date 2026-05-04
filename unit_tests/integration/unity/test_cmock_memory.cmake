@@ -11,7 +11,10 @@ endif()
 # Integration Test: Unity module applies CMock memory configuration
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
-set(CMAKE_MODULE_PATH "${REPO_ROOT}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH
+    "${REPO_ROOT}/cmake"
+    ${CMAKE_MODULE_PATH}
+)
 include(TestHelpers)
 
 set(ERROR_COUNT 0)
@@ -39,11 +42,7 @@ function(setup_test_environment)
     file(WRITE "${unity_root}/src/cmock.h" "void cmock_stub(void);\n")
     file(WRITE "${unity_root}/src/cmock.c" "void cmock_stub(void) {}\n")
     file(WRITE "${unity_root}/scripts/cmock.rb" "puts 'cmock stub'\n")
-    file(
-        WRITE
-        "${unity_root}/auto/generate_test_runner.rb"
-        "puts 'runner stub'\n"
-    )
+    file(WRITE "${unity_root}/auto/generate_test_runner.rb" "puts 'runner stub'\n")
 
     if(WIN32)
         set(ruby_stub "${TEST_FIXTURE_ROOT}/ruby.bat")
@@ -108,14 +107,14 @@ if(all_defs)
     list(REMOVE_DUPLICATES all_defs)
 endif()
 
-list(FIND all_defs \"CMOCK_MEM_DYNAMIC\" has_dynamic)
+list(FIND all_defs \"CMT_CMOCK_MEM_DYNAMIC\" has_dynamic)
 if(has_dynamic EQUAL -1)
-    message(FATAL_ERROR \"CMOCK_MEM_DYNAMIC was not applied to Unity::CMock\")
+    message(FATAL_ERROR \"CMT_CMOCK_MEM_DYNAMIC was not applied to Unity::CMock\")
 endif()
 
-list(FIND all_defs \"CMOCK_MEM_SIZE=65536\" has_size)
+list(FIND all_defs \"CMT_CMOCK_MEM_SIZE=65536\" has_size)
 if(has_size EQUAL -1)
-    message(FATAL_ERROR \"CMOCK_MEM_SIZE=65536 was not applied to Unity::CMock\")
+    message(FATAL_ERROR \"CMT_CMOCK_MEM_SIZE=65536 was not applied to Unity::CMock\")
 endif()
 "
     )
@@ -129,10 +128,8 @@ function(run_configure_case name)
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${TEST_PROJECT_SOURCE_DIR}" -B "${build_dir}"
-            ${configure_args}
-            -DCMOCK_MEM_DYNAMIC=ON
-            -DCMOCK_MEM_SIZE=65536
+            ${CMAKE_COMMAND} -S "${TEST_PROJECT_SOURCE_DIR}" -B "${build_dir}" ${configure_args}
+            -DCMT_CMOCK_MEM_DYNAMIC=ON -DCMT_CMOCK_MEM_SIZE=65536
         RESULT_VARIABLE configure_result
         OUTPUT_VARIABLE configure_output
         ERROR_VARIABLE configure_error

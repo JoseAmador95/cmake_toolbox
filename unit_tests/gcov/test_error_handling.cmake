@@ -63,7 +63,7 @@ function(test_nonexistent_target_fails)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 # Target doesn't exist
@@ -88,7 +88,7 @@ function(test_valid_target_succeeds)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 add_library(mylib STATIC dummy.c)
@@ -130,7 +130,7 @@ function(test_multiple_targets)
 cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 include(Gcov)
 
 add_library(lib1 STATIC lib1.c)
@@ -180,7 +180,7 @@ cmake_minimum_required(VERSION 3.22)
 project(GcovTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 # Set custom flags before including module
 set(GCOV_COMPILE_FLAGS \"--coverage\" CACHE STRING \"\" FORCE)

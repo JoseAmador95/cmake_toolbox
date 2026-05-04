@@ -37,21 +37,21 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 include(CMockSchema)
 
-unset(CMOCK_MOCK_PREFIX CACHE)
-unset(CMOCK_PLUGINS CACHE)
+unset(CMT_CMOCK_MOCK_PREFIX CACHE)
+unset(CMT_CMOCK_PLUGINS CACHE)
 
 CMockSchema_SetDefaults()
 
-if(NOT DEFINED CMOCK_MOCK_PREFIX)
-    message(FATAL_ERROR \"CMOCK_MOCK_PREFIX not set\")
+if(NOT DEFINED CMT_CMOCK_MOCK_PREFIX)
+    message(FATAL_ERROR \"CMT_CMOCK_MOCK_PREFIX not set\")
 endif()
 
-if(NOT DEFINED CMOCK_PLUGINS)
-    message(FATAL_ERROR \"CMOCK_PLUGINS not set\")
+if(NOT DEFINED CMT_CMOCK_PLUGINS)
+    message(FATAL_ERROR \"CMT_CMOCK_PLUGINS not set\")
 endif()
 
-message(STATUS \"CMOCK_MOCK_PREFIX = \${CMOCK_MOCK_PREFIX}\")
-message(STATUS \"CMOCK_PLUGINS = \${CMOCK_PLUGINS}\")
+message(STATUS \"CMT_CMOCK_MOCK_PREFIX = \${CMT_CMOCK_MOCK_PREFIX}\")
+message(STATUS \"CMT_CMOCK_PLUGINS = \${CMT_CMOCK_PLUGINS}\")
 "
     )
 
@@ -88,14 +88,14 @@ include(CMockSchema)
 CMockSchema_SetDefaults()
 
 set(expected_vars
-    CMOCK_MOCK_PREFIX
-    CMOCK_MOCK_SUFFIX
-    CMOCK_MOCK_PATH
-    CMOCK_INCLUDES
-    CMOCK_PLUGINS
-    CMOCK_WHEN_NO_PROTOTYPES
-    CMOCK_ENFORCE_STRICT_ORDERING
-    CMOCK_CALLBACK_INCLUDE_COUNT
+    CMT_CMOCK_MOCK_PREFIX
+    CMT_CMOCK_MOCK_SUFFIX
+    CMT_CMOCK_MOCK_PATH
+    CMT_CMOCK_INCLUDES
+    CMT_CMOCK_PLUGINS
+    CMT_CMOCK_WHEN_NO_PROTOTYPES
+    CMT_CMOCK_ENFORCE_STRICT_ORDERING
+    CMT_CMOCK_CALLBACK_INCLUDE_COUNT
 )
 
 foreach(var IN LISTS expected_vars)
@@ -139,8 +139,8 @@ include(CMockSchema)
 
 CMockSchema_SetDefaults()
 
-if(NOT CMOCK_MOCK_PREFIX STREQUAL \"mock_\")
-    message(FATAL_ERROR \"CMOCK_MOCK_PREFIX should be 'mock_', got \${CMOCK_MOCK_PREFIX}\")
+if(NOT CMT_CMOCK_MOCK_PREFIX STREQUAL \"mock_\")
+    message(FATAL_ERROR \"CMT_CMOCK_MOCK_PREFIX should be 'mock_', got \${CMT_CMOCK_MOCK_PREFIX}\")
 endif()
 "
     )
@@ -177,14 +177,14 @@ include(CMockSchema)
 
 CMockSchema_SetDefaults()
 
-list(FIND CMOCK_PLUGINS \"ignore\" ignore_plugin_idx)
+list(FIND CMT_CMOCK_PLUGINS \"ignore\" ignore_plugin_idx)
 if(ignore_plugin_idx EQUAL -1)
-    message(FATAL_ERROR \"CMOCK_PLUGINS should include 'ignore'\")
+    message(FATAL_ERROR \"CMT_CMOCK_PLUGINS should include 'ignore'\")
 endif()
 
-list(FIND CMOCK_PLUGINS \"callback\" callback_plugin_idx)
+list(FIND CMT_CMOCK_PLUGINS \"callback\" callback_plugin_idx)
 if(callback_plugin_idx EQUAL -1)
-    message(FATAL_ERROR \"CMOCK_PLUGINS should include 'callback'\")
+    message(FATAL_ERROR \"CMT_CMOCK_PLUGINS should include 'callback'\")
 endif()
 "
     )

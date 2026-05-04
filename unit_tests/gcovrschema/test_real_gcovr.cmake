@@ -18,12 +18,12 @@ set(CMAKE_MODULE_PATH
 
 include(GcovrSchema)
 
-if(NOT DEFINED GCOVR_EXECUTABLE OR GCOVR_EXECUTABLE STREQUAL "")
-    message(STATUS "Skipping gcovr real test: GCOVR_EXECUTABLE not set")
+if(NOT DEFINED CMT_GCOVR_EXECUTABLE OR CMT_GCOVR_EXECUTABLE STREQUAL "")
+    message(STATUS "Skipping gcovr real test: CMT_GCOVR_EXECUTABLE not set")
     return()
 endif()
-if(NOT EXISTS "${GCOVR_EXECUTABLE}")
-    message(FATAL_ERROR "gcovr executable not found: ${GCOVR_EXECUTABLE}")
+if(NOT EXISTS "${CMT_GCOVR_EXECUTABLE}")
+    message(FATAL_ERROR "gcovr executable not found: ${CMT_GCOVR_EXECUTABLE}")
 endif()
 
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcovrschema_real_gcovr")
@@ -31,32 +31,40 @@ file(REMOVE_RECURSE "${TEST_ROOT}")
 file(MAKE_DIRECTORY "${TEST_ROOT}")
 
 message(STATUS "=== GcovrSchema Real gcovr Test ===")
-message(STATUS "Using gcovr: ${GCOVR_EXECUTABLE}")
+message(STATUS "Using gcovr: ${CMT_GCOVR_EXECUTABLE}")
 
 GcovrSchema_SetDefaults()
-GcovrSchema_DetectVersion("${GCOVR_EXECUTABLE}" detected_version)
+GcovrSchema_DetectVersion("${CMT_GCOVR_EXECUTABLE}" detected_version)
 if(NOT detected_version STREQUAL "")
     message(STATUS "Detected gcovr version: ${detected_version}")
 endif()
 
-GcovrSchema_DetectCapabilities("${GCOVR_EXECUTABLE}" detected_flags)
+GcovrSchema_DetectCapabilities("${CMT_GCOVR_EXECUTABLE}" detected_flags)
 list(LENGTH detected_flags flag_count)
 if(flag_count EQUAL 0)
-    message(FATAL_ERROR "No gcovr capabilities detected from ${GCOVR_EXECUTABLE}")
+    message(FATAL_ERROR "No gcovr capabilities detected from ${CMT_GCOVR_EXECUTABLE}")
 endif()
 
-list(FIND detected_flags "--fail-under-line" has_fail_under_line)
+list(
+    FIND detected_flags
+    "--fail-under-line"
+    has_fail_under_line
+)
 if(has_fail_under_line EQUAL -1)
     message(FATAL_ERROR "Expected --fail-under-line flag not detected")
 endif()
 
-list(FIND detected_flags "--html" has_html)
+list(
+    FIND detected_flags
+    "--html"
+    has_html
+)
 if(has_html EQUAL -1)
     message(FATAL_ERROR "Expected --html flag not detected")
 endif()
 
-set(GCOVR_ENFORCE_THRESHOLDS ON)
-set(GCOVR_FAIL_UNDER_LINE "50")
+set(CMT_GCOVR_ENFORCE_THRESHOLDS ON)
+set(CMT_GCOVR_FAIL_UNDER_LINE "50")
 
 set(config_file "${TEST_ROOT}/gcovr_real.cfg")
 GcovrSchema_GenerateConfigFile("${config_file}")
@@ -66,7 +74,11 @@ if(NOT EXISTS "${config_file}")
 endif()
 
 file(READ "${config_file}" config_content)
-string(FIND "${config_content}" "fail-under-line" has_fail_under_key)
+string(
+    FIND "${config_content}"
+    "fail-under-line"
+    has_fail_under_key
+)
 if(has_fail_under_key EQUAL -1)
     message(FATAL_ERROR "Config file missing fail-under-line entry")
 endif()

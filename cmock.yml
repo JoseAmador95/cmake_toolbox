@@ -3,15 +3,15 @@
 :cmock:
   # Core configuration
   :plugins: # What plugins should be used by CMock?
-@CMOCK_PLUGINS_YAML@
+@CMT_CMOCK_PLUGINS_YAML@
   :verbosity: 2 # the options being 0 errors only, 1 warnings and errors, 2 normal info, 3 verbose
-  :when_no_prototypes: @CMOCK_WHEN_NO_PROTOTYPES_YAML@ # the options being :ignore, :warn, or :error
+  :when_no_prototypes: @CMT_CMOCK_WHEN_NO_PROTOTYPES_YAML@ # the options being :ignore, :warn, or :error
 
   # File configuration
-  :mock_path: "@CMOCK_MOCK_PATH_YAML@" # Path to store mocks when generated
+  :mock_path: "@CMT_CMOCK_MOCK_PATH_YAML@" # Path to store mocks when generated
   :skeleton_path: "" # Subdirectory to store stubs when generated (default: '')
-  :mock_prefix: "@CMOCK_MOCK_PREFIX@" # Prefix to append to filenames for mocks
-  :mock_suffix: "@CMOCK_MOCK_SUFFIX@" # Suffix to append to filenames for mocks
+  :mock_prefix: "@CMT_CMOCK_MOCK_PREFIX@" # Prefix to append to filenames for mocks
+  :mock_suffix: "@CMT_CMOCK_MOCK_SUFFIX@" # Suffix to append to filenames for mocks
 
   # Parser configuration
   :strippables: ['(?:__attribute__\s*\([ (]*.*?[ )]*\)+)']
@@ -30,7 +30,7 @@
 
   # Type handling configuration
   #:unity_helper_path: ''          # specify a string of where to find a unity_helper.h file to discover custom type assertions
-@CMOCK_TREAT_AS_YAML@
+@CMT_CMOCK_TREAT_AS_YAML@
   #:treat_as_array:  {}            # hint to cmock that these types are pointers to something
   #:treat_as_void:  []             # hint to cmock that these types are actually aliases of void
   :memcmp_if_unknown: true # allow cmock to use the memory comparison assertions for unknown types
@@ -38,26 +38,26 @@
 
   # Mock generation configuration
   :weak: "" # Symbol to use to declare weak functions
-  :enforce_strict_ordering: @CMOCK_ENFORCE_STRICT_ORDERING_YAML@ # Do we want cmock to enforce ordering of all function calls?
+  :enforce_strict_ordering: @CMT_CMOCK_ENFORCE_STRICT_ORDERING_YAML@ # Do we want cmock to enforce ordering of all function calls?
   :fail_on_unexpected_calls: true # Do we want cmock to fail when it encounters a function call that wasn't expected?
-  :callback_include_count: @CMOCK_CALLBACK_INCLUDE_COUNT_YAML@ # Do we want cmock to include the number of calls to this callback, when using callbacks?
-  :callback_after_arg_check: @CMOCK_CALLBACK_AFTER_ARG_CHECK_YAML@ # Do we want cmock to enforce an argument check first when using a callback?
+  :callback_include_count: @CMT_CMOCK_CALLBACK_INCLUDE_COUNT_YAML@ # Do we want cmock to include the number of calls to this callback, when using callbacks?
+  :callback_after_arg_check: @CMT_CMOCK_CALLBACK_AFTER_ARG_CHECK_YAML@ # Do we want cmock to enforce an argument check first when using a callback?
   :includes:
-@CMOCK_INCLUDES_YAML@
-@CMOCK_INCLUDES_H_PRE_ORIG_HEADER_YAML@
-@CMOCK_INCLUDES_H_POST_ORIG_HEADER_YAML@
-@CMOCK_INCLUDES_C_PRE_HEADER_YAML@
-@CMOCK_INCLUDES_C_POST_HEADER_YAML@
+@CMT_CMOCK_INCLUDES_YAML@
+@CMT_CMOCK_INCLUDES_H_PRE_ORIG_HEADER_YAML@
+@CMT_CMOCK_INCLUDES_H_POST_ORIG_HEADER_YAML@
+@CMT_CMOCK_INCLUDES_C_PRE_HEADER_YAML@
+@CMT_CMOCK_INCLUDES_C_POST_HEADER_YAML@
   #:array_size_type:  []            # Specify a type or types that should be used for array lengths
   #:array_size_name:  'size|len'    # Specify a name or names that CMock might automatically recognize as the length of an array
   :exclude_setjmp_h: false # Don't use setjmp when running CMock. Note that this might result in late reporting or out-of-order failures.
 
 :unity:
-  :cmdline_args: @TB_EXTRACT_FUNCTIONS_TF@ # Allow extraction of test functions as separate tests
-  :enforce_strict_ordering: @CMOCK_ENFORCE_STRICT_ORDERING_YAML@
+  :cmdline_args: @CMT_CMOCK_EXTRACT_FUNCTIONS_TF@ # Allow extraction of test functions as separate tests
+  :enforce_strict_ordering: @CMT_CMOCK_ENFORCE_STRICT_ORDERING_YAML@
   :plugins:
-@CMOCK_PLUGINS_YAML@
-  :mock_prefix: "@CMOCK_MOCK_PREFIX@"
-  :mock_suffix: "@CMOCK_MOCK_SUFFIX@"
+@CMT_CMOCK_PLUGINS_YAML@
+  :mock_prefix: "@CMT_CMOCK_MOCK_PREFIX@"
+  :mock_suffix: "@CMT_CMOCK_MOCK_SUFFIX@"
   :includes:
-@CMOCK_INCLUDES_YAML@
+@CMT_CMOCK_INCLUDES_YAML@

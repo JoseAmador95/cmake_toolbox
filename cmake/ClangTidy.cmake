@@ -115,7 +115,7 @@ function(_ClangTidy_GetCommand TRIM RETCMD RETCOMPILECOMMANDS)
     set(output_file ${CLANG_TIDY_COMPILE_COMMANDS})
     set(use_trim ${TRIM})
 
-    if(DEFINED COMPILECOMMANDS_AVAILABLE AND NOT COMPILECOMMANDS_AVAILABLE)
+    if(DEFINED CMT_COMPILECOMMANDS_AVAILABLE AND NOT CMT_COMPILECOMMANDS_AVAILABLE)
         if(use_trim)
             message(STATUS "ClangTidy: compile command trimming is unavailable on this generator")
         endif()
@@ -124,7 +124,12 @@ function(_ClangTidy_GetCommand TRIM RETCMD RETCOMPILECOMMANDS)
 
     if(use_trim)
         set(output_file ${CMAKE_CURRENT_BINARY_DIR}/compile_commands_trimmed/compile_commands.json)
-        CompileCommands_Trim(INPUT ${CLANG_TIDY_COMPILE_COMMANDS} OUTPUT ${output_file})
+        CompileCommands_Trim(
+            INPUT
+            ${CLANG_TIDY_COMPILE_COMMANDS}
+            OUTPUT
+            ${output_file}
+        )
     endif()
 
     message(VERBOSE "ClangTidy using compile commands: ${output_file}")

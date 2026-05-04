@@ -41,8 +41,13 @@ Example
 
 include_guard(GLOBAL)
 
-# Look for gcovr executable
-find_program(GCOVR_EXECUTABLE NAMES gcovr DOC "Path to gcovr executable")
+# Check if user already provided CMT_GCOVR_EXECUTABLE
+if(DEFINED CMT_GCOVR_EXECUTABLE AND CMT_GCOVR_EXECUTABLE)
+    set(GCOVR_EXECUTABLE "${CMT_GCOVR_EXECUTABLE}")
+else()
+    # Look for gcovr executable
+    find_program(GCOVR_EXECUTABLE NAMES gcovr DOC "Path to gcovr executable")
+endif()
 
 # Try to get version
 if(GCOVR_EXECUTABLE)
@@ -61,6 +66,7 @@ endif()
 
 # Set result variables
 set(Gcovr_EXECUTABLE "${GCOVR_EXECUTABLE}")
+set(CMT_GCOVR_EXECUTABLE "${GCOVR_EXECUTABLE}")
 
 # Handle standard find_package arguments
 include(FindPackageHandleStandardArgs)

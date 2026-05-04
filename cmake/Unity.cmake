@@ -18,20 +18,20 @@
 #
 # CONFIGURATION VARIABLES:
 #   Set these cached variables to configure CMock behavior:
-#   - CMOCK_MOCK_PREFIX     - Prefix for mock files (default: "mock_")
-#   - CMOCK_MOCK_SUFFIX     - Suffix for mock files (default: "")
-#   - CMOCK_MOCK_PATH       - Mock subdirectory (default: "mocks")
+#   - CMT_CMOCK_MOCK_PREFIX     - Prefix for mock files (default: "mock_")
+#   - CMT_CMOCK_MOCK_SUFFIX     - Suffix for mock files (default: "")
+#   - CMT_CMOCK_MOCK_PATH       - Mock subdirectory (default: "mocks")
 #   - CMOCK_INCLUDES        - Semicolon list of includes (default: "unity.h")
 #   - CMOCK_PLUGINS         - Semicolon list of plugins (default: "ignore;callback")
 #   - CMOCK_TREAT_AS        - Type mappings: "TYPE:TREATMENT;..." (default: "")
 #   - CMOCK_WHEN_NO_PROTOTYPES - Action for missing prototypes (default: "warn")
-#   - CMOCK_ENFORCE_STRICT_ORDERING - Strict call ordering (default: OFF)
-#   - CMOCK_MEM_DYNAMIC     - Use dynamic memory allocation (default: OFF)
-#   - CMOCK_MEM_SIZE        - Memory pool size in bytes (static or dynamic increment)
+#   - CMT_CMOCK_ENFORCE_STRICT_ORDERING - Strict call ordering (default: OFF)
+#   - CMT_CMOCK_MEM_DYNAMIC     - Use dynamic memory allocation (default: OFF)
+#   - CMT_CMOCK_MEM_SIZE        - Memory pool size in bytes (static or dynamic increment)
 #
 # USAGE EXAMPLE:
 #   # Configure CMock (optional - sensible defaults provided)
-#   set(CMOCK_MOCK_PREFIX "Mock")
+#   set(CMT_CMOCK_MOCK_PREFIX "Mock")
 #   set(CMOCK_PLUGINS "ignore;callback;expect_any_args")
 #   set(CMOCK_TREAT_AS "uint8_t:HEX8;uint16_t:HEX16;size_t:HEX32")
 #
@@ -64,22 +64,17 @@
 include_guard(GLOBAL)
 include(CMockSchema)
 
-option(CMOCK_MEM_DYNAMIC "Use dynamic memory allocation in CMock" OFF)
-set(
-    CMOCK_MEM_SIZE
-    ""
-    CACHE STRING
-    "CMock memory pool size in bytes (empty uses CMock default)"
-)
+option(CMT_CMOCK_MEM_DYNAMIC "Use dynamic memory allocation in CMock" OFF)
+set(CMT_CMOCK_MEM_SIZE "" CACHE STRING "CMock memory pool size in bytes (empty uses CMock default)")
 
 # Default repository and version configuration (can be overridden before calling Unity_Initialize)
-set(_UNITY_DEFAULT_REPO "https://github.com/ThrowTheSwitch/Unity.git")
-set(_UNITY_DEFAULT_TAG "v2.6.1")
-set(_CMOCK_DEFAULT_REPO "https://github.com/ThrowTheSwitch/CMock.git")
-set(_CMOCK_DEFAULT_TAG "v2.6.0")
+set(CMT_UNITY_DEFAULT_REPO "https://github.com/ThrowTheSwitch/Unity.git")
+set(CMT_UNITY_DEFAULT_TAG "v2.6.1")
+set(CMT_CMOCK_DEFAULT_REPO "https://github.com/ThrowTheSwitch/CMock.git")
+set(CMT_CMOCK_DEFAULT_TAG "v2.6.0")
 
 # Internal state tracking
-set(_UNITY_INITIALIZED FALSE CACHE INTERNAL "Unity initialization status")
+set(CMT_UNITY_INITIALIZED FALSE CACHE INTERNAL "Unity initialization status")
 
 # ==============================================================================
 # INITIALIZATION FUNCTION
@@ -92,63 +87,63 @@ set(_UNITY_INITIALIZED FALSE CACHE INTERNAL "Unity initialization status")
 # Initialize Unity and CMock dependencies. Must be called once per project.
 #
 # Parameters:
-#   UNITY_REPO        - Unity repository URL (optional, default: ThrowTheSwitch/Unity)
-#   UNITY_TAG         - Unity version tag (optional, default: v2.6.1)
-#   CMOCK_REPO        - CMock repository URL (optional, default: ThrowTheSwitch/CMock)
-#   CMOCK_TAG         - CMock version tag (optional, default: v2.6.0)
+#   CMT_UNITY_REPO        - Unity repository URL (optional, default: ThrowTheSwitch/Unity)
+#   CMT_UNITY_TAG         - Unity version tag (optional, default: v2.6.1)
+#   CMT_CMOCK_REPO        - CMock repository URL (optional, default: ThrowTheSwitch/CMock)
+#   CMT_CMOCK_TAG         - CMock version tag (optional, default: v2.6.0)
 #   ENABLE_CEEDLING   - Enable Ceedling extract functions mode (optional, default: OFF)
 #
 function(Unity_Initialize)
     # Prevent double initialization
-    if(_UNITY_INITIALIZED)
+    if(CMT_UNITY_INITIALIZED)
         return()
     endif()
 
     set(options ENABLE_CEEDLING)
     set(oneValueArgs
-        UNITY_REPO
-        UNITY_TAG
-        CMOCK_REPO
-        CMOCK_TAG
+        CMT_UNITY_REPO
+        CMT_UNITY_TAG
+        CMT_CMOCK_REPO
+        CMT_CMOCK_TAG
     )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     # Set defaults if not provided
     if(NOT ARG_UNITY_REPO)
-        if(DEFINED UNITY_GIT_REPOSITORY AND NOT UNITY_GIT_REPOSITORY STREQUAL "")
-            set(ARG_UNITY_REPO ${UNITY_GIT_REPOSITORY})
+        if(DEFINED CMT_UNITY_GIT_REPOSITORY AND NOT CMT_UNITY_GIT_REPOSITORY STREQUAL "")
+            set(ARG_UNITY_REPO ${CMT_UNITY_GIT_REPOSITORY})
         else()
-            set(ARG_UNITY_REPO ${_UNITY_DEFAULT_REPO})
+            set(ARG_UNITY_REPO ${CMT_UNITY_DEFAULT_REPO})
         endif()
     endif()
     if(NOT ARG_UNITY_TAG)
-        if(DEFINED UNITY_GIT_TAG AND NOT UNITY_GIT_TAG STREQUAL "")
-            set(ARG_UNITY_TAG ${UNITY_GIT_TAG})
+        if(DEFINED CMT_UNITY_GIT_TAG AND NOT CMT_UNITY_GIT_TAG STREQUAL "")
+            set(ARG_UNITY_TAG ${CMT_UNITY_GIT_TAG})
         else()
-            set(ARG_UNITY_TAG ${_UNITY_DEFAULT_TAG})
+            set(ARG_UNITY_TAG ${CMT_UNITY_DEFAULT_TAG})
         endif()
     endif()
     if(NOT ARG_CMOCK_REPO)
-        if(DEFINED CMOCK_GIT_REPOSITORY AND NOT CMOCK_GIT_REPOSITORY STREQUAL "")
-            set(ARG_CMOCK_REPO ${CMOCK_GIT_REPOSITORY})
+        if(DEFINED CMT_CMOCK_GIT_REPOSITORY AND NOT CMT_CMOCK_GIT_REPOSITORY STREQUAL "")
+            set(ARG_CMOCK_REPO ${CMT_CMOCK_GIT_REPOSITORY})
         else()
-            set(ARG_CMOCK_REPO ${_CMOCK_DEFAULT_REPO})
+            set(ARG_CMOCK_REPO ${CMT_CMOCK_DEFAULT_REPO})
         endif()
     endif()
     if(NOT ARG_CMOCK_TAG)
-        if(DEFINED CMOCK_GIT_TAG AND NOT CMOCK_GIT_TAG STREQUAL "")
-            set(ARG_CMOCK_TAG ${CMOCK_GIT_TAG})
+        if(DEFINED CMT_CMOCK_GIT_TAG AND NOT CMT_CMOCK_GIT_TAG STREQUAL "")
+            set(ARG_CMOCK_TAG ${CMT_CMOCK_GIT_TAG})
         else()
-            set(ARG_CMOCK_TAG ${_CMOCK_DEFAULT_TAG})
+            set(ARG_CMOCK_TAG ${CMT_CMOCK_DEFAULT_TAG})
         endif()
     endif()
 
     # Store configuration globally for internal use
-    set(_UNITY_REPO ${ARG_UNITY_REPO} CACHE INTERNAL "Unity repository URL")
-    set(_UNITY_TAG ${ARG_UNITY_TAG} CACHE INTERNAL "Unity version tag")
-    set(_CMOCK_REPO ${ARG_CMOCK_REPO} CACHE INTERNAL "CMock repository URL")
-    set(_CMOCK_TAG ${ARG_CMOCK_TAG} CACHE INTERNAL "CMock version tag")
+    set(CMT_UNITY_REPO ${ARG_UNITY_REPO} CACHE INTERNAL "Unity repository URL")
+    set(CMT_UNITY_TAG ${ARG_UNITY_TAG} CACHE INTERNAL "Unity version tag")
+    set(CMT_CMOCK_REPO ${ARG_CMOCK_REPO} CACHE INTERNAL "CMock repository URL")
+    set(CMT_CMOCK_TAG ${ARG_CMOCK_TAG} CACHE INTERNAL "CMock version tag")
     set(_CEEDLING_EXTRACT_FUNCTIONS
         ${ARG_ENABLE_CEEDLING}
         CACHE INTERNAL
@@ -157,37 +152,37 @@ function(Unity_Initialize)
 
     # Use FindUnity to locate or fetch Unity and CMock
     set(UNITY_FETCH ON)
-    set(UNITY_GIT_REPOSITORY ${ARG_UNITY_REPO})
-    set(UNITY_GIT_TAG ${ARG_UNITY_TAG})
-    set(CMOCK_GIT_REPOSITORY ${ARG_CMOCK_REPO})
-    set(CMOCK_GIT_TAG ${ARG_CMOCK_TAG})
+    set(CMT_UNITY_GIT_REPOSITORY ${ARG_UNITY_REPO})
+    set(CMT_UNITY_GIT_TAG ${ARG_UNITY_TAG})
+    set(CMT_CMOCK_GIT_REPOSITORY ${ARG_CMOCK_REPO})
+    set(CMT_CMOCK_GIT_TAG ${ARG_CMOCK_TAG})
 
     find_package(Unity REQUIRED)
 
     if(TARGET Unity::CMock)
-        get_target_property(_tb_cmock_target Unity::CMock ALIASED_TARGET)
-        if(NOT _tb_cmock_target OR _tb_cmock_target MATCHES "-NOTFOUND$")
-            set(_tb_cmock_target Unity::CMock)
+        get_target_property(_cmt_unity_cmock_target Unity::CMock ALIASED_TARGET)
+        if(NOT _cmt_unity_cmock_target OR _cmt_unity_cmock_target MATCHES "-NOTFOUND$")
+            set(_cmt_unity_cmock_target Unity::CMock)
         endif()
 
-        if(CMOCK_MEM_DYNAMIC)
-            target_compile_definitions(${_tb_cmock_target} PUBLIC CMOCK_MEM_DYNAMIC)
+        if(CMT_CMOCK_MEM_DYNAMIC)
+            target_compile_definitions(${_cmt_unity_cmock_target} PUBLIC CMT_CMOCK_MEM_DYNAMIC)
         endif()
-        if(DEFINED CMOCK_MEM_SIZE AND NOT CMOCK_MEM_SIZE STREQUAL "")
-            set(_tb_cmock_mem_size "${CMOCK_MEM_SIZE}")
-            string(STRIP "${_tb_cmock_mem_size}" _tb_cmock_mem_size)
-            if(NOT _tb_cmock_mem_size STREQUAL "")
-                if(NOT _tb_cmock_mem_size MATCHES "^[1-9][0-9]*$")
+        if(DEFINED CMT_CMOCK_MEM_SIZE AND NOT CMT_CMOCK_MEM_SIZE STREQUAL "")
+            set(_cmt_unity_cmock_mem_size "${CMT_CMOCK_MEM_SIZE}")
+            string(STRIP "${_cmt_unity_cmock_mem_size}" _cmt_unity_cmock_mem_size)
+            if(NOT _cmt_unity_cmock_mem_size STREQUAL "")
+                if(NOT _cmt_unity_cmock_mem_size MATCHES "^[1-9][0-9]*$")
                     message(
                         FATAL_ERROR
-                        "${CMAKE_CURRENT_FUNCTION}: CMOCK_MEM_SIZE must be a positive integer, "
-                        "but is '${_tb_cmock_mem_size}'"
+                        "${CMAKE_CURRENT_FUNCTION}: CMT_CMOCK_MEM_SIZE must be a positive integer, "
+                        "but is '${_cmt_unity_cmock_mem_size}'"
                     )
                 endif()
                 target_compile_definitions(
-                    ${_tb_cmock_target}
+                    ${_cmt_unity_cmock_target}
                     PUBLIC
-                    "CMOCK_MEM_SIZE=${_tb_cmock_mem_size}"
+                        "CMT_CMOCK_MEM_SIZE=${_cmt_unity_cmock_mem_size}"
                 )
             endif()
         endif()
@@ -197,18 +192,22 @@ function(Unity_Initialize)
     find_program(Ruby_EXECUTABLE ruby REQUIRED)
 
     # Set up paths from FindUnity results
-    if(CMock_EXECUTABLE)
-        set(_CMOCK_EXE ${CMock_EXECUTABLE} CACHE INTERNAL "CMock executable path")
+    if(CMT_CMOCK_EXECUTABLE)
+        set(CMT_CMOCK_EXE ${CMT_CMOCK_EXECUTABLE} CACHE INTERNAL "CMock executable path")
     endif()
 
     if(Unity_RUNNER_GENERATOR)
-        set(_RUNNER_EXE ${Unity_RUNNER_GENERATOR} CACHE INTERNAL "Unity runner generator path")
+        set(CMT_UNITY_RUNNER_EXE
+            ${Unity_RUNNER_GENERATOR}
+            CACHE INTERNAL
+            "Unity runner generator path"
+        )
     else()
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Unity runner generator not found")
     endif()
 
     # Set up template-based CMock configuration
-    if(_CMOCK_EXE)
+    if(CMT_CMOCK_EXE)
         CMockSchema_SetDefaults()
         message(
             STATUS
@@ -229,7 +228,7 @@ function(Unity_Initialize)
     endif()
 
     # Mark as initialized globally
-    set(_UNITY_INITIALIZED TRUE CACHE INTERNAL "Unity initialization status")
+    set(CMT_UNITY_INITIALIZED TRUE CACHE INTERNAL "Unity initialization status")
     message(STATUS "${CMAKE_CURRENT_FUNCTION}: Unity testing framework initialized")
 endfunction()
 # ==============================================================================
@@ -248,13 +247,13 @@ endfunction()
 #   MOCK_SOURCE_VAR   - Variable name to store the generated mock source file path (required)
 #   MOCK_HEADER_VAR   - Variable name to store the generated mock header file path (required)
 #   CONFIG_FILE       - Path to the CMock configuration file (optional, overrides template)
-#   MOCK_PREFIX       - Prefix for mock files (optional, overrides CMOCK_MOCK_PREFIX)
-#   MOCK_SUFFIX       - Suffix for mock files (optional, overrides CMOCK_MOCK_SUFFIX)
-#   MOCK_SUBDIR       - Subdirectory name for mocks (optional, overrides CMOCK_MOCK_PATH)
+#   MOCK_PREFIX       - Prefix for mock files (optional, overrides CMT_CMOCK_MOCK_PREFIX)
+#   MOCK_SUFFIX       - Suffix for mock files (optional, overrides CMT_CMOCK_MOCK_SUFFIX)
+#   MOCK_SUBDIR       - Subdirectory name for mocks (optional, overrides CMT_CMOCK_MOCK_PATH)
 #
 function(Unity_GenerateMock)
     # Check if Unity is initialized
-    if(NOT _UNITY_INITIALIZED)
+    if(NOT CMT_UNITY_INITIALIZED)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Unity_Initialize() must be called first")
     endif()
 
@@ -305,8 +304,7 @@ function(Unity_GenerateMock)
         endif()
         CMockSchema_GenerateConfigFile(
             "${GENERATED_CONFIG_FILE}"
-            TEMPLATE_FILE
-            "${ARG_CONFIG_FILE}"
+            TEMPLATE_FILE "${ARG_CONFIG_FILE}"
         )
     else()
         CMockSchema_GenerateConfigFile("${GENERATED_CONFIG_FILE}")
@@ -314,26 +312,26 @@ function(Unity_GenerateMock)
 
     # Set defaults for optional parameters
     if(NOT ARG_MOCK_PREFIX)
-        if(DEFINED CMOCK_MOCK_PREFIX)
-            set(ARG_MOCK_PREFIX "${CMOCK_MOCK_PREFIX}")
+        if(DEFINED CMT_CMOCK_MOCK_PREFIX)
+            set(ARG_MOCK_PREFIX "${CMT_CMOCK_MOCK_PREFIX}")
         else()
             set(ARG_MOCK_PREFIX "mock_")
         endif()
     endif()
 
     if(NOT ARG_MOCK_SUFFIX)
-        if(DEFINED CMOCK_MOCK_SUFFIX)
-            set(ARG_MOCK_SUFFIX "${CMOCK_MOCK_SUFFIX}")
+        if(DEFINED CMT_CMOCK_MOCK_SUFFIX)
+            set(ARG_MOCK_SUFFIX "${CMT_CMOCK_MOCK_SUFFIX}")
         else()
             set(ARG_MOCK_SUFFIX "")
         endif()
     endif()
 
     if(NOT ARG_MOCK_SUBDIR)
-        if(DEFINED CMOCK_MOCK_SUBDIR AND NOT CMOCK_MOCK_SUBDIR STREQUAL "")
-            set(ARG_MOCK_SUBDIR "${CMOCK_MOCK_SUBDIR}")
-        elseif(DEFINED CMOCK_MOCK_PATH AND NOT CMOCK_MOCK_PATH STREQUAL "")
-            set(ARG_MOCK_SUBDIR "${CMOCK_MOCK_PATH}")
+        if(DEFINED CMT_CMOCK_MOCK_SUBDIR AND NOT CMT_CMOCK_MOCK_SUBDIR STREQUAL "")
+            set(ARG_MOCK_SUBDIR "${CMT_CMOCK_MOCK_SUBDIR}")
+        elseif(DEFINED CMT_CMOCK_MOCK_PATH AND NOT CMT_CMOCK_MOCK_PATH STREQUAL "")
+            set(ARG_MOCK_SUBDIR "${CMT_CMOCK_MOCK_PATH}")
         else()
             set(ARG_MOCK_SUBDIR "mocks")
         endif()
@@ -356,7 +354,7 @@ function(Unity_GenerateMock)
             ${MOCK_SOURCE}
             ${MOCK_HEADER}
         COMMAND
-            ${Ruby_EXECUTABLE} ${_CMOCK_EXE} ${ARG_HEADER} -o${GENERATED_CONFIG_FILE}
+            ${Ruby_EXECUTABLE} ${CMT_CMOCK_EXE} ${ARG_HEADER} -o${GENERATED_CONFIG_FILE}
         WORKING_DIRECTORY ${ARG_OUTPUT_DIR}
         DEPENDS
             ${GENERATED_CONFIG_FILE}
@@ -384,7 +382,7 @@ endfunction()
 #
 function(Unity_GenerateRunner)
     # Check if Unity is initialized
-    if(NOT _UNITY_INITIALIZED)
+    if(NOT CMT_UNITY_INITIALIZED)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Unity_Initialize() must be called first")
     endif()
 
@@ -430,8 +428,7 @@ function(Unity_GenerateRunner)
         endif()
         CMockSchema_GenerateConfigFile(
             "${GENERATED_CONFIG_FILE}"
-            TEMPLATE_FILE
-            "${ARG_CONFIG_FILE}"
+            TEMPLATE_FILE "${ARG_CONFIG_FILE}"
         )
     else()
         CMockSchema_GenerateConfigFile("${GENERATED_CONFIG_FILE}")
@@ -452,7 +449,7 @@ function(Unity_GenerateRunner)
         OUTPUT
             ${RUNNER_SOURCE}
         COMMAND
-            ${Ruby_EXECUTABLE} ${_RUNNER_EXE} ${GENERATED_CONFIG_FILE} ${ARG_TEST_SOURCE}
+            ${Ruby_EXECUTABLE} ${CMT_UNITY_RUNNER_EXE} ${GENERATED_CONFIG_FILE} ${ARG_TEST_SOURCE}
             ${RUNNER_SOURCE}
         DEPENDS
             ${ARG_TEST_SOURCE}
@@ -486,7 +483,7 @@ endfunction()
 #
 function(Unity_CreateTestTarget)
     # Check if Unity is initialized
-    if(NOT _UNITY_INITIALIZED)
+    if(NOT CMT_UNITY_INITIALIZED)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Unity_Initialize() must be called first")
     endif()
 
@@ -539,26 +536,26 @@ function(Unity_CreateTestTarget)
     endif()
 
     if(NOT ARG_MOCK_PREFIX)
-        if(DEFINED CMOCK_MOCK_PREFIX)
-            set(ARG_MOCK_PREFIX "${CMOCK_MOCK_PREFIX}")
+        if(DEFINED CMT_CMOCK_MOCK_PREFIX)
+            set(ARG_MOCK_PREFIX "${CMT_CMOCK_MOCK_PREFIX}")
         else()
             set(ARG_MOCK_PREFIX "mock_")
         endif()
     endif()
 
     if(NOT ARG_MOCK_SUFFIX)
-        if(DEFINED CMOCK_MOCK_SUFFIX)
-            set(ARG_MOCK_SUFFIX "${CMOCK_MOCK_SUFFIX}")
+        if(DEFINED CMT_CMOCK_MOCK_SUFFIX)
+            set(ARG_MOCK_SUFFIX "${CMT_CMOCK_MOCK_SUFFIX}")
         else()
             set(ARG_MOCK_SUFFIX "")
         endif()
     endif()
 
     if(NOT ARG_MOCK_SUBDIR)
-        if(DEFINED CMOCK_MOCK_SUBDIR AND NOT CMOCK_MOCK_SUBDIR STREQUAL "")
-            set(ARG_MOCK_SUBDIR "${CMOCK_MOCK_SUBDIR}")
-        elseif(DEFINED CMOCK_MOCK_PATH AND NOT CMOCK_MOCK_PATH STREQUAL "")
-            set(ARG_MOCK_SUBDIR "${CMOCK_MOCK_PATH}")
+        if(DEFINED CMT_CMOCK_MOCK_SUBDIR AND NOT CMT_CMOCK_MOCK_SUBDIR STREQUAL "")
+            set(ARG_MOCK_SUBDIR "${CMT_CMOCK_MOCK_SUBDIR}")
+        elseif(DEFINED CMT_CMOCK_MOCK_PATH AND NOT CMT_CMOCK_MOCK_PATH STREQUAL "")
+            set(ARG_MOCK_SUBDIR "${CMT_CMOCK_MOCK_PATH}")
         else()
             set(ARG_MOCK_SUBDIR "mocks")
         endif()
