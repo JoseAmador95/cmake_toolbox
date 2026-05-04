@@ -47,7 +47,7 @@ Configure cppcheck globally for all C and C++ targets.
 
 ```cmake
 Cppcheck_Configure(
-    STATUS <ON|OFF>
+    STATUS <boolean>
     [STRICT]
     [ENABLE <check1> [<check2> ...]]
     [SUPPRESS <check1> [<check2> ...]]
@@ -57,7 +57,7 @@ Cppcheck_Configure(
 
 Parameters:
 
-- `STATUS` (required): Enable (ON) or disable (OFF) cppcheck globally
+- `STATUS` (required): Enable or disable cppcheck globally. Accepts ON, OFF, TRUE, FALSE, 1, 0
 - `STRICT` (optional): If specified, raises a fatal error if cppcheck is not found. Without this flag, a verbose message is issued
 - `ENABLE` (optional): List of check severities to enable. These are joined with commas into the `--enable` flag
 - `SUPPRESS` (optional): List of individual checks to suppress. These are joined with commas into the `--suppress` flag
@@ -78,7 +78,7 @@ Configure cppcheck for a specific C or C++ target.
 ```cmake
 Cppcheck_ConfigureTarget(
     TARGET <target>
-    STATUS <ON|OFF>
+    STATUS <boolean>
     [STRICT]
     [ENABLE <check1> [<check2> ...]]
     [SUPPRESS <check1> [<check2> ...]]
@@ -89,7 +89,7 @@ Cppcheck_ConfigureTarget(
 Parameters:
 
 - `TARGET` (required): The CMake target to configure cppcheck for (target must exist)
-- `STATUS` (required): Enable (ON) or disable (OFF) cppcheck for this target
+- `STATUS` (required): Enable or disable cppcheck for this target. Accepts ON, OFF, TRUE, FALSE, 1, 0
 - `STRICT` (optional): If specified, raises a fatal error if cppcheck is not found or target does not exist. Without this flag, a verbose message is issued for missing tools
 - `ENABLE` (optional): List of check severities to enable
 - `SUPPRESS` (optional): List of individual checks to suppress
@@ -604,7 +604,6 @@ cmake --build build
 
 ## See Also
 
-- [ClangTidy CMake Module](./clangtidy.md) - C++ AST-based static analysis
 - [ClangFormat CMake Module](./clangformat.md) - Code formatting
 - [Cppcheck Official Documentation](http://cppcheck.sourceforge.net/)
 - [Cppcheck Manual](http://cppcheck.sourceforge.net/manual.pdf)

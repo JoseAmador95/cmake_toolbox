@@ -30,7 +30,7 @@ This module follows the same pattern as ClangTidy.cmake for consistency across t
 
 ## Requirements
 
-- CMake `3.3+`
+- CMake `3.15+`
 - CMake module path includes this repository's `cmake/` directory
 - `find_package(IWYU ...)` called before `include(IWYU)`
 - `include-what-you-use` executable available in system PATH or CMake module path
@@ -48,7 +48,7 @@ Configure IWYU globally for all C++ targets.
 
 ```cmake
 IWYU_Configure(
-    STATUS <ON|OFF>
+    STATUS <boolean>
     [STRICT]
     [MAPPING_FILE <path>]
     [ADDITIONAL_ARGS <arg1> [<arg2> ...]]
@@ -58,7 +58,7 @@ IWYU_Configure(
 
 Parameters:
 
-- `STATUS` (required): Enable (ON) or disable (OFF) IWYU globally
+- `STATUS` (required): Enable or disable IWYU globally. Accepts `ON`, `OFF`, `TRUE`, `FALSE`, `1`, `0`
 - `STRICT` (optional): If specified, raises a fatal error if IWYU is not found. Without this flag, a verbose message is issued
 - `MAPPING_FILE` (optional): Path to an IWYU mapping file (`.imp` format). The file path is passed to IWYU as `-Xiwyu --mapping_file=<path>`. If STRICT mode is enabled and the file does not exist, an error is raised
 - `ADDITIONAL_ARGS` (optional): List of IWYU-specific arguments (e.g., `--no_fwd_decls`, `--keep_going`). Each argument is automatically prefixed with `-Xiwyu`
@@ -79,7 +79,7 @@ Configure IWYU for a specific C++ target.
 ```cmake
 IWYU_ConfigureTarget(
     TARGET <target>
-    STATUS <ON|OFF>
+    STATUS <boolean>
     [STRICT]
     [MAPPING_FILE <path>]
     [ADDITIONAL_ARGS <arg1> [<arg2> ...]]
@@ -90,7 +90,7 @@ IWYU_ConfigureTarget(
 Parameters:
 
 - `TARGET` (required): The CMake target to configure IWYU for (target must exist and be a C++ target)
-- `STATUS` (required): Enable (ON) or disable (OFF) IWYU for this target
+- `STATUS` (required): Enable or disable IWYU for this target. Accepts `ON`, `OFF`, `TRUE`, `FALSE`, `1`, `0`
 - `STRICT` (optional): If specified, raises a fatal error if IWYU is not found or target does not exist. Without this flag, a verbose message is issued for missing tools
 - `MAPPING_FILE` (optional): Path to an IWYU mapping file
 - `ADDITIONAL_ARGS` (optional): List of IWYU-specific arguments
@@ -316,7 +316,7 @@ IWYU_Configure(
 
 If the mapping file doesn't exist:
 
-- **Advisory mode**: warning is issued, analysis continues without mapping
+- **Advisory mode**: omits mapping file flag, analysis continues
 - **Strict mode**: FATAL_ERROR is raised
 
 Verify mapping file path:
@@ -687,9 +687,9 @@ cmake --build build
    )
    ```
 
-2. Use advisory mode to avoid fatal error:
+2. Target existence ALWAYS fails with FATAL_ERROR:
    ```cmake
-   # Without STRICT flag, missing target produces warning only
+   # Target existence is a CMakeLists.txt usage error, always fatal
    IWYU_ConfigureTarget(
        TARGET possibly_missing
        STATUS ON
@@ -733,6 +733,5 @@ cmake --build build
 - [IWYU GitHub Repository](https://github.com/include-what-you-use/include-what-you-use)
 - [IWYU Mapping Files](https://github.com/include-what-you-use/include-what-you-use/tree/master/mappings)
 - [IWYU Design Documentation](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs)
-- [ClangTidy CMake Module](./clangtidy.md) - Broader C++ AST-based analysis
 - [Cppcheck CMake Module](./cppcheck.md) - C/C++ static analysis
 - [CMake CXX_INCLUDE_WHAT_YOU_USE Property](https://cmake.org/cmake/help/latest/prop_tgt/CXX_INCLUDE_WHAT_YOU_USE.html)

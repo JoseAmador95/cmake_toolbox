@@ -15,13 +15,6 @@ Dependencies
 
 This module uses ``find_package(Cppcheck)`` to locate the cppcheck executable.
 
-Cache Variables
-^^^^^^^^^^^^^^^
-
-``CPPCHECK_COMPILE_COMMANDS``
-  Path to compile_commands.json file.
-  Default: ``${CMAKE_BINARY_DIR}/compile_commands.json``
-
 Functions
 ^^^^^^^^^
 
@@ -140,12 +133,6 @@ if(Cppcheck_FOUND)
 else()
     message(VERBOSE "Cppcheck not found")
 endif()
-
-set(CPPCHECK_COMPILE_COMMANDS
-    ${CMAKE_BINARY_DIR}/compile_commands.json
-    CACHE FILEPATH
-    "Path to compile_commands.json"
-)
 
 #[=======================================================================[.rst:
 Internal helper function to build Cppcheck command with all flags.
@@ -282,7 +269,7 @@ function(Cppcheck_Configure)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: STATUS must be specified")
     endif()
 
-    if(NOT ARG_STATUS MATCHES "^(ON|OFF)$")
+    if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
         message(
             FATAL_ERROR
             "${CMAKE_CURRENT_FUNCTION}: STATUS must be ON or OFF, got '${ARG_STATUS}'"
@@ -295,7 +282,7 @@ function(Cppcheck_Configure)
         set(CMAKE_CXX_CPPCHECK "${cmd}" CACHE INTERNAL "" FORCE)
     else()
         if(NOT Cppcheck_FOUND)
-            if(ARG_STRICT)
+            if(ARG_STRICT AND ARG_STATUS STREQUAL "ON")
                 message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
             else()
                 message(VERBOSE "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
@@ -396,7 +383,7 @@ function(Cppcheck_ConfigureTarget)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: STATUS must be specified")
     endif()
 
-    if(NOT ARG_STATUS MATCHES "^(ON|OFF)$")
+    if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
         message(
             FATAL_ERROR
             "${CMAKE_CURRENT_FUNCTION}: STATUS must be ON or OFF, got '${ARG_STATUS}'"
@@ -415,7 +402,7 @@ function(Cppcheck_ConfigureTarget)
         )
     else()
         if(NOT Cppcheck_FOUND)
-            if(ARG_STRICT)
+            if(ARG_STRICT AND ARG_STATUS STREQUAL "ON")
                 message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
             else()
                 message(VERBOSE "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")

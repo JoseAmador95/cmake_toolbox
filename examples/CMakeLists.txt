@@ -218,6 +218,48 @@ else()
     message(STATUS "Skipping CompileCommands unit tests on multi-config generators")
 endif()
 
+# Automatically add all Cppcheck unit tests to CTest
+file(GLOB CPPCHECK_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/cppcheck/test_*.cmake")
+foreach(test_file ${CPPCHECK_TEST_FILES})
+    # Extract the test name from the filename (test_<name>.cmake -> <name>)
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+
+    # Add the test to CTest with name cppcheck_<name>
+    add_test(
+        NAME cppcheck_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -P ${test_file}
+    )
+    set_tests_properties(
+        cppcheck_${test_name}
+        PROPERTIES
+            LABELS
+                "script;cppcheck"
+    )
+endforeach()
+
+# Automatically add all IWYU unit tests to CTest
+file(GLOB IWYU_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/iwyu/test_*.cmake")
+foreach(test_file ${IWYU_TEST_FILES})
+    # Extract the test name from the filename (test_<name>.cmake -> <name>)
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+
+    # Add the test to CTest with name iwyu_<name>
+    add_test(
+        NAME iwyu_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -P ${test_file}
+    )
+    set_tests_properties(
+        iwyu_${test_name}
+        PROPERTIES
+            LABELS
+                "script;iwyu"
+    )
+endforeach()
+
 # ==============================================================================
 # Sanitizer Module Integration Tests
 # ==============================================================================
@@ -551,6 +593,54 @@ foreach(test_file ${FINDUNITY_INTEGRATION_TESTS})
         PROPERTIES
             LABELS
                 "integration;findunity"
+    )
+endforeach()
+
+# Cppcheck Integration Tests
+file(
+    GLOB CPPCHECK_INTEGRATION_TESTS
+    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/cppcheck/test_*.cmake"
+)
+foreach(test_file ${CPPCHECK_INTEGRATION_TESTS})
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    add_test(
+        NAME integration_cppcheck_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
+    )
+    set_tests_properties(
+        integration_cppcheck_${test_name}
+        PROPERTIES
+            LABELS
+                "integration;cppcheck"
+    )
+endforeach()
+
+# IWYU Integration Tests
+file(
+    GLOB IWYU_INTEGRATION_TESTS
+    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/iwyu/test_*.cmake"
+)
+foreach(test_file ${IWYU_INTEGRATION_TESTS})
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    add_test(
+        NAME integration_iwyu_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
+    )
+    set_tests_properties(
+        integration_iwyu_${test_name}
+        PROPERTIES
+            LABELS
+                "integration;iwyu"
     )
 endforeach()
 
