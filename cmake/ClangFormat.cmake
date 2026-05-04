@@ -274,8 +274,6 @@ function(ClangFormat_CreateCommand ARG_OUTPUT_VAR)
         # Add the script to execute
         list(APPEND COMMAND_ARGS "-P")
         list(APPEND COMMAND_ARGS "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ClangFormatCheck.cmake")
-
-        set(COMMAND_ARGS "${COMMAND_ARGS}")
     elseif(ARG_MODE STREQUAL "FORMAT")
         list(APPEND COMMAND_ARGS -i)
         if(ARG_ADDITIONAL_ARGS)
