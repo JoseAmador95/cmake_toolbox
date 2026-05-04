@@ -5,25 +5,29 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-# Create test directory
-set(test_dir "${CMAKE_CURRENT_LIST_DIR}/test_artifacts")
-set(src_dir "${test_dir}/src")
-set(build_dir "${test_dir}/build")
-file(MAKE_DIRECTORY "${src_dir}")
-file(MAKE_DIRECTORY "${build_dir}")
-
 # Get absolute path to cmake modules
 get_filename_component(abs_cmake_module_path "${CMAKE_CURRENT_LIST_DIR}/../../cmake" ABSOLUTE)
 
-# Create minimal CMakeLists.txt for test project
+# Create test directory with unique timestamp to avoid conflicts
+string(TIMESTAMP test_timestamp "%H%M%S%f")
+set(test_dir "${CMAKE_CURRENT_LIST_DIR}/test_artifacts_${test_timestamp}")
+set(build_dir "${test_dir}/build_output")
+file(MAKE_DIRECTORY "${build_dir}")
+
+# Create the CMakeLists.txt content with proper escaping
 file(
-    WRITE "${src_dir}/CMakeLists.txt"
+    WRITE "${build_dir}/CMakeLists.txt"
     "
 cmake_minimum_required(VERSION 3.22)
-project(IWYUTest LANGUAGES CXX)
-list(APPEND CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
+project(IWYUTestWrapper LANGUAGES CXX)
+
+set(CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
 include(IWYU)
-add_library(testlib STATIC \"${src_dir}/lib.cpp\")
+
+# Create a source file inline in the binary directory
+file(WRITE \"\${CMAKE_CURRENT_BINARY_DIR}/lib.cpp\" \"void dummy() {}\")
+
+add_library(testlib STATIC \"\${CMAKE_CURRENT_BINARY_DIR}/lib.cpp\")
 IWYU_ConfigureTarget(TARGET testlib STATUS ON)
 get_target_property(iwyu_prop testlib CXX_INCLUDE_WHAT_YOU_USE)
 if(iwyu_prop)
@@ -34,13 +38,10 @@ endif()
 "
 )
 
-# Create minimal source file
-file(WRITE "${src_dir}/lib.cpp" "void dummy() {}")
-
 # Run cmake on the test project
 execute_process(
     COMMAND
-        ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+        ${CMAKE_COMMAND} -S "${build_dir}" -B "${build_dir}/cmake_build"
     RESULT_VARIABLE result
     OUTPUT_VARIABLE output
     ERROR_VARIABLE error
@@ -53,12 +54,6 @@ file(REMOVE_RECURSE "${test_dir}")
 if(result EQUAL 0)
     if(output MATCHES "PASS" OR error MATCHES "PASS")
         message(STATUS "PASS: IWYU_ConfigureTarget test successful")
-        if(output MATCHES "PASS")
-            message(STATUS "Output: ${output}")
-        endif()
-        if(error MATCHES "PASS")
-            message(STATUS "Error output: ${error}")
-        endif()
     else()
         message(
             FATAL_ERROR
