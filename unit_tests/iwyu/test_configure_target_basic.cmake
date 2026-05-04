@@ -19,11 +19,14 @@ file(MAKE_DIRECTORY "${src_dir}")
 file(MAKE_DIRECTORY "${build_dir}")
 
 # Write a test CMakeLists.txt that uses IWYU_ConfigureTarget
+# Calculate the absolute path to cmake modules
+get_filename_component(cmake_module_dir "${CMAKE_CURRENT_LIST_DIR}/../../cmake" ABSOLUTE)
+
 set(test_cmakelists
     "
 cmake_minimum_required(VERSION 3.22)
 project(IWYUTargetTest LANGUAGES CXX)
-set(CMAKE_MODULE_PATH \"${CMAKE_CURRENT_LIST_DIR}/../../cmake\")
+set(CMAKE_MODULE_PATH \"${cmake_module_dir}\")
 
 include(IWYU)
 
