@@ -350,9 +350,14 @@ message(STATUS \"IWYU STRICT mode test\")
 
     # STRICT mode should fail when tool not found
     if(result EQUAL 0)
-        message(STATUS "  ✓ IWYU STRICT mode correctly enforced (tool not found -> error expected)")
+        message(STATUS "  ✗ IWYU STRICT mode failed - tool missing should have caused error")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
     else()
-        message(STATUS "  ✓ IWYU STRICT mode failed as expected when tool missing")
+        message(
+            STATUS
+            "  ✓ IWYU STRICT mode correctly enforced (tool missing -> error as expected)"
+        )
     endif()
 endfunction()
 

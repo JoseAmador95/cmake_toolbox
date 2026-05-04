@@ -248,9 +248,8 @@ cmake_minimum_required(VERSION 3.22)
 project(CppcheckStrictTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-# Force tool to not be found
-set(Cppcheck_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
-set(Cppcheck_FOUND FALSE CACHE BOOL \"\" FORCE)
+# Force tool to not be found (using CPPCHECK_EXECUTABLE which is what FindCppcheck.cmake uses)
+set(CPPCHECK_EXECUTABLE \"\" CACHE FILEPATH \"\" FORCE)
 
 include(Cppcheck)
 
@@ -277,12 +276,14 @@ message(STATUS \"Cppcheck STRICT mode test\")
 
     # STRICT mode should fail when tool not found
     if(result EQUAL 0)
+        message(STATUS "  ✗ Cppcheck STRICT mode failed - tool missing should have caused error")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    else()
         message(
             STATUS
-            "  ✓ Cppcheck STRICT mode correctly enforced (tool not found -> error expected)"
+            "  ✓ Cppcheck STRICT mode correctly enforced (tool missing -> error as expected)"
         )
-    else()
-        message(STATUS "  ✓ Cppcheck STRICT mode failed as expected when tool missing")
     endif()
 endfunction()
 

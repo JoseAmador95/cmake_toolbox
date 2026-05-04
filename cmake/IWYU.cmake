@@ -295,7 +295,15 @@ function(IWYU_Configure)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: STATUS must be specified")
     endif()
 
-    if(ARG_STATUS)
+    # Validate STATUS parameter
+    if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: STATUS must be one of: ON, OFF, TRUE, FALSE, 1, 0"
+        )
+    endif()
+
+    if(ARG_STATUS STREQUAL "ON")
         if(IWYU_FOUND)
             # Validate mapping file if provided
             if(ARG_MAPPING_FILE)
@@ -310,6 +318,7 @@ function(IWYU_Configure)
                             VERBOSE
                             "${CMAKE_CURRENT_FUNCTION}: MAPPING_FILE '${ARG_MAPPING_FILE}' does not exist"
                         )
+                        unset(ARG_MAPPING_FILE)
                     endif()
                 endif()
             endif()
@@ -352,8 +361,9 @@ Parameters
   Mandatory. ON to enable IWYU for target, OFF to disable it.
 
 ``STRICT``
-  Optional. If specified, fails if IWYU not found, target doesn't exist,
-  or mapping file missing. Without this flag (advisory mode), produces only warnings.
+  Optional. If specified, fails if IWYU not found or mapping file missing.
+  Without this flag (advisory mode), produces only warnings for missing tool/file.
+  Note: Target existence is always checked and fails immediately regardless of STRICT mode.
 
 ``MAPPING_FILE``
   Optional. Path to IWYU mapping file (.imp format) for this target.
@@ -387,7 +397,7 @@ Example
   # Disable IWYU for utils
   IWYU_ConfigureTarget(TARGET utils STATUS OFF)
 
-  # Strict mode: fail if target doesn't exist or mapping missing
+  # Strict mode: fail if IWYU not found or mapping file missing
   IWYU_ConfigureTarget(
     TARGET nonexistent
     STATUS ON
@@ -416,11 +426,19 @@ function(IWYU_ConfigureTarget)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: STATUS must be specified")
     endif()
 
+    # Validate STATUS parameter
+    if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
+        message(
+            FATAL_ERROR
+            "${CMAKE_CURRENT_FUNCTION}: STATUS must be one of: ON, OFF, TRUE, FALSE, 1, 0"
+        )
+    endif()
+
     if(NOT TARGET ${ARG_TARGET})
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
     endif()
 
-    if(ARG_STATUS)
+    if(ARG_STATUS STREQUAL "ON")
         if(IWYU_FOUND)
             # Validate mapping file if provided
             if(ARG_MAPPING_FILE)
@@ -435,6 +453,7 @@ function(IWYU_ConfigureTarget)
                             VERBOSE
                             "${CMAKE_CURRENT_FUNCTION}: MAPPING_FILE '${ARG_MAPPING_FILE}' does not exist"
                         )
+                        unset(ARG_MAPPING_FILE)
                     endif()
                 endif()
             endif()
