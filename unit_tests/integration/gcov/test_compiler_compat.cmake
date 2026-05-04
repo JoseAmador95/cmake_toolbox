@@ -26,18 +26,26 @@ if(WIN32)
     set(_exe_suffix ".exe")
 endif()
 
-set(_tb_build_config "")
+set(_cmt_test_build_config "")
 if(DEFINED CMAKE_TOOLBOX_TEST_BUILD_TYPE AND NOT CMAKE_TOOLBOX_TEST_BUILD_TYPE STREQUAL "")
-    set(_tb_build_config "${CMAKE_TOOLBOX_TEST_BUILD_TYPE}")
-elseif(DEFINED CMAKE_TOOLBOX_TEST_GENERATOR
-    AND CMAKE_TOOLBOX_TEST_GENERATOR MATCHES "Visual Studio|Xcode|Multi-Config|Ninja Multi-Config"
+    set(_cmt_test_build_config "${CMAKE_TOOLBOX_TEST_BUILD_TYPE}")
+elseif(
+    DEFINED
+        CMAKE_TOOLBOX_TEST_GENERATOR
+    AND CMAKE_TOOLBOX_TEST_GENERATOR
+        MATCHES
+        "Visual Studio|Xcode|Multi-Config|Ninja Multi-Config"
 )
-    set(_tb_build_config "Debug")
+    set(_cmt_test_build_config "Debug")
 endif()
 
-set(_tb_build_args "")
-if(_tb_build_config)
-    list(APPEND _tb_build_args --config "${_tb_build_config}")
+set(_cmt_test_build_args "")
+if(_cmt_test_build_config)
+    list(
+        APPEND _cmt_test_build_args
+        --config
+        "${_cmt_test_build_config}"
+    )
 endif()
 
 function(setup_test_environment)
@@ -71,7 +79,7 @@ cmake_minimum_required(VERSION 3.22)
 project(GcovGccTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 
@@ -111,7 +119,7 @@ target_link_libraries(mytest PRIVATE mylib)
     # Build
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} --build "${build_dir}" ${_tb_build_args}
+            ${CMAKE_COMMAND} --build "${build_dir}" ${_cmt_test_build_args}
         RESULT_VARIABLE build_result
         OUTPUT_VARIABLE build_output
         ERROR_VARIABLE build_error
@@ -136,8 +144,8 @@ target_link_libraries(mytest PRIVATE mylib)
     endif()
 
     set(test_bin_dir "${build_dir}")
-    if(_tb_build_config)
-        set(test_bin_dir "${build_dir}/${_tb_build_config}")
+    if(_cmt_test_build_config)
+        set(test_bin_dir "${build_dir}/${_cmt_test_build_config}")
     endif()
     set(test_exe "${test_bin_dir}/mytest${_exe_suffix}")
     if(NOT EXISTS "${test_exe}")
@@ -172,7 +180,7 @@ cmake_minimum_required(VERSION 3.22)
 project(GcovClangTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 
@@ -212,7 +220,7 @@ target_link_libraries(mytest PRIVATE mylib)
     # Build
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} --build "${build_dir}" ${_tb_build_args}
+            ${CMAKE_COMMAND} --build "${build_dir}" ${_cmt_test_build_args}
         RESULT_VARIABLE build_result
         OUTPUT_VARIABLE build_output
         ERROR_VARIABLE build_error
@@ -247,8 +255,8 @@ target_link_libraries(mytest PRIVATE mylib)
     endif()
 
     set(test_bin_dir "${build_dir}")
-    if(_tb_build_config)
-        set(test_bin_dir "${build_dir}/${_tb_build_config}")
+    if(_cmt_test_build_config)
+        set(test_bin_dir "${build_dir}/${_cmt_test_build_config}")
     endif()
     set(test_exe "${test_bin_dir}/mytest${_exe_suffix}")
     if(NOT EXISTS "${test_exe}")

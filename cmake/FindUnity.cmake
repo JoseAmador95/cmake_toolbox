@@ -17,24 +17,24 @@
 #   - ENV{UNITY_ROOT}
 #   - UNITY_FETCH (BOOL, OFF by default)  If ON and Unity not found, the
 #       repositories will be fetched via FetchContent.
-#   - UNITY_GIT_REPOSITORY (override Unity repo URL)
-#   - UNITY_GIT_TAG (override Unity tag)
-#   - CMOCK_GIT_REPOSITORY (override CMock repo URL)
-#   - CMOCK_GIT_TAG (override CMock tag)
+#   - CMT_UNITY_GIT_REPOSITORY (override Unity repo URL)
+#   - CMT_UNITY_GIT_TAG (override Unity tag)
+#   - CMT_CMOCK_GIT_REPOSITORY (override CMock repo URL)
+#   - CMT_CMOCK_GIT_TAG (override CMock tag)
 #
 # Result Variables:
 #   Unity_FOUND            - TRUE if Unity located (or fetched when UNITY_FETCH=ON)
-#   Unity_INCLUDE_DIR      - Directory containing unity.h
-#   Unity_SOURCE           - Path to unity.c (required)
+#   CMT_UNITY_INCLUDE_DIR      - Directory containing unity.h
+#   CMT_UNITY_SOURCE           - Path to unity.c (required)
 #   Unity_RUNNER_GENERATOR - Path to generate_test_runner.rb
 #   Unity_VERSION          - Parsed version (major.minor[.patch]) if detected
 #   Unity_VERSION_MAJOR    - Major version
 #   Unity_VERSION_MINOR    - Minor version
 #   Unity_VERSION_PATCH    - Patch version (if available)
 #   CMock_FOUND            - TRUE if CMock located
-#   CMock_INCLUDE_DIR      - Directory containing cmock.h
-#   CMock_SOURCE           - Path to cmock.c (required if CMock found)
-#   CMock_EXECUTABLE       - Path to cmock.rb
+#   CMT_CMOCK_INCLUDE_DIR      - Directory containing cmock.h
+#   CMT_CMOCK_SOURCE           - Path to cmock.c (required if CMock found)
+#   CMT_CMOCK_EXECUTABLE       - Path to cmock.rb
 #
 # Imported Targets:
 #   Unity::Unity  - Static library target for Unity (requires unity.c)
@@ -78,20 +78,28 @@ set(_Unity_SUBDIRS
 # ----------------------------------------------------------------------------
 # Locate unity.h
 # ----------------------------------------------------------------------------
-unset(Unity_INCLUDE_DIR CACHE)
-find_path(Unity_INCLUDE_DIR NAMES unity.h HINTS ${_Unity_HINT_DIRS} PATH_SUFFIXES ${_Unity_SUBDIRS})
+unset(CMT_UNITY_INCLUDE_DIR CACHE)
+find_path(
+    CMT_UNITY_INCLUDE_DIR
+    NAMES
+        unity.h
+    HINTS
+        ${_Unity_HINT_DIRS}
+    PATH_SUFFIXES
+        ${_Unity_SUBDIRS}
+)
 
 # ----------------------------------------------------------------------------
 # Locate unity.c (required)
 # ----------------------------------------------------------------------------
-unset(Unity_SOURCE CACHE)
+unset(CMT_UNITY_SOURCE CACHE)
 # Prefer same hierarchy as header
 find_file(
-    Unity_SOURCE
+    CMT_UNITY_SOURCE
     NAMES
         unity.c
     HINTS
-        ${Unity_INCLUDE_DIR}
+        ${CMT_UNITY_INCLUDE_DIR}
         ${_Unity_HINT_DIRS}
     PATH_SUFFIXES
         .
@@ -104,18 +112,26 @@ find_file(
 # ----------------------------------------------------------------------------
 # Locate CMock files (optional)
 # ----------------------------------------------------------------------------
-unset(CMock_INCLUDE_DIR CACHE)
-unset(CMock_SOURCE CACHE)
-unset(CMock_EXECUTABLE CACHE)
+unset(CMT_CMOCK_INCLUDE_DIR CACHE)
+unset(CMT_CMOCK_SOURCE CACHE)
+unset(CMT_CMOCK_EXECUTABLE CACHE)
 
-find_path(CMock_INCLUDE_DIR NAMES cmock.h HINTS ${_Unity_HINT_DIRS} PATH_SUFFIXES ${_Unity_SUBDIRS})
+find_path(
+    CMT_CMOCK_INCLUDE_DIR
+    NAMES
+        cmock.h
+    HINTS
+        ${_Unity_HINT_DIRS}
+    PATH_SUFFIXES
+        ${_Unity_SUBDIRS}
+)
 
 find_file(
-    CMock_SOURCE
+    CMT_CMOCK_SOURCE
     NAMES
         cmock.c
     HINTS
-        ${CMock_INCLUDE_DIR}
+        ${CMT_CMOCK_INCLUDE_DIR}
         ${_Unity_HINT_DIRS}
     PATH_SUFFIXES
         .
@@ -126,7 +142,7 @@ find_file(
 )
 
 find_file(
-    CMock_EXECUTABLE
+    CMT_CMOCK_EXECUTABLE
     NAMES
         cmock.rb
     HINTS
@@ -144,7 +160,7 @@ find_file(
     NAMES
         generate_test_runner.rb
     HINTS
-        ${Unity_INCLUDE_DIR}/..
+        ${CMT_UNITY_INCLUDE_DIR}/..
         ${_Unity_HINT_DIRS}
     PATH_SUFFIXES
         .
@@ -156,25 +172,25 @@ find_file(
 # ----------------------------------------------------------------------------
 # Optional: Fetch if not found and user requested UNITY_FETCH
 # ----------------------------------------------------------------------------
-if((NOT Unity_INCLUDE_DIR OR NOT Unity_SOURCE) AND UNITY_FETCH)
+if((NOT CMT_UNITY_INCLUDE_DIR OR NOT CMT_UNITY_SOURCE) AND UNITY_FETCH)
     # Unity defaults
     set(_Unity_repo "https://github.com/ThrowTheSwitch/Unity.git")
-    if(UNITY_GIT_REPOSITORY)
-        set(_Unity_repo "${UNITY_GIT_REPOSITORY}")
+    if(CMT_UNITY_GIT_REPOSITORY)
+        set(_Unity_repo "${CMT_UNITY_GIT_REPOSITORY}")
     endif()
     set(_Unity_tag "v2.6.1")
-    if(UNITY_GIT_TAG)
-        set(_Unity_tag "${UNITY_GIT_TAG}")
+    if(CMT_UNITY_GIT_TAG)
+        set(_Unity_tag "${CMT_UNITY_GIT_TAG}")
     endif()
 
     # CMock defaults
     set(_CMock_repo "https://github.com/ThrowTheSwitch/CMock.git")
-    if(CMOCK_GIT_REPOSITORY)
-        set(_CMock_repo "${CMOCK_GIT_REPOSITORY}")
+    if(CMT_CMOCK_GIT_REPOSITORY)
+        set(_CMock_repo "${CMT_CMOCK_GIT_REPOSITORY}")
     endif()
     set(_CMock_tag "v2.6.0")
-    if(CMOCK_GIT_TAG)
-        set(_CMock_tag "${CMOCK_GIT_TAG}")
+    if(CMT_CMOCK_GIT_TAG)
+        set(_CMock_tag "${CMT_CMOCK_GIT_TAG}")
     endif()
 
     include(FetchContent)
@@ -190,14 +206,14 @@ if((NOT Unity_INCLUDE_DIR OR NOT Unity_SOURCE) AND UNITY_FETCH)
     )
 
     if(unity_repo_SOURCE_DIR AND EXISTS "${unity_repo_SOURCE_DIR}/src/unity.c")
-        set(Unity_INCLUDE_DIR "${unity_repo_SOURCE_DIR}/src")
-        set(Unity_SOURCE "${unity_repo_SOURCE_DIR}/src/unity.c")
+        set(CMT_UNITY_INCLUDE_DIR "${unity_repo_SOURCE_DIR}/src")
+        set(CMT_UNITY_SOURCE "${unity_repo_SOURCE_DIR}/src/unity.c")
     endif()
 
     if(cmock_repo_SOURCE_DIR AND EXISTS "${cmock_repo_SOURCE_DIR}/src/cmock.c")
-        set(CMock_INCLUDE_DIR "${cmock_repo_SOURCE_DIR}/src")
-        set(CMock_SOURCE "${cmock_repo_SOURCE_DIR}/src/cmock.c")
-        set(CMock_EXECUTABLE "${cmock_repo_SOURCE_DIR}/lib/cmock.rb")
+        set(CMT_CMOCK_INCLUDE_DIR "${cmock_repo_SOURCE_DIR}/src")
+        set(CMT_CMOCK_SOURCE "${cmock_repo_SOURCE_DIR}/src/cmock.c")
+        set(CMT_CMOCK_EXECUTABLE "${cmock_repo_SOURCE_DIR}/lib/cmock.rb")
     endif()
 
     if(unity_repo_SOURCE_DIR AND EXISTS "${unity_repo_SOURCE_DIR}/auto/generate_test_runner.rb")
@@ -212,14 +228,12 @@ unset(Unity_VERSION)
 unset(Unity_VERSION_MAJOR)
 unset(Unity_VERSION_MINOR)
 unset(Unity_VERSION_PATCH)
-if(Unity_INCLUDE_DIR AND EXISTS "${Unity_INCLUDE_DIR}/unity.h")
-    set(_unity_header "${Unity_INCLUDE_DIR}/unity.h")
+if(CMT_UNITY_INCLUDE_DIR AND EXISTS "${CMT_UNITY_INCLUDE_DIR}/unity.h")
+    set(_unity_header "${CMT_UNITY_INCLUDE_DIR}/unity.h")
     file(
-        STRINGS
-        "${_unity_header}"
+        STRINGS "${_unity_header}"
         _unity_version_macro_lines
-        REGEX
-            "^#[ \t]*define[ \t]+UNITY_VERSION_(MAJOR|MINOR|BUILD)[ \t]+[0-9]+"
+        REGEX "^#[ \t]*define[ \t]+UNITY_VERSION_(MAJOR|MINOR|BUILD)[ \t]+[0-9]+"
     )
 
     unset(_unity_major)
@@ -245,20 +259,18 @@ if(Unity_INCLUDE_DIR AND EXISTS "${Unity_INCLUDE_DIR}/unity.h")
         endif()
     else()
         file(
-            STRINGS
-            "${_unity_header}"
+            STRINGS "${_unity_header}"
             _unity_version_string_line
-            REGEX
-                "^#[ \t]*define[ \t]+UNITY_VERSION[ \t]+\"[0-9]+\\.[0-9]+(\\.[0-9]+)?\""
+            REGEX "^#[ \t]*define[ \t]+UNITY_VERSION[ \t]+\"[0-9]+\\.[0-9]+(\\.[0-9]+)?\""
         )
         if(_unity_version_string_line)
             list(GET _unity_version_string_line 0 _unity_version_line)
             string(
                 REGEX REPLACE
-                    "^#[ \t]*define[ \t]+UNITY_VERSION[ \t]+\"([0-9]+\\.[0-9]+(\\.[0-9]+)?)\".*$"
-                    "\\1"
-                    Unity_VERSION
-                    "${_unity_version_line}"
+                "^#[ \t]*define[ \t]+UNITY_VERSION[ \t]+\"([0-9]+\\.[0-9]+(\\.[0-9]+)?)\".*$"
+                "\\1"
+                Unity_VERSION
+                "${_unity_version_line}"
             )
             if(Unity_VERSION MATCHES "^([0-9]+)\\.([0-9]+)(\\.([0-9]+))?")
                 set(Unity_VERSION_MAJOR "${CMAKE_MATCH_1}")
@@ -284,10 +296,10 @@ endif()
 # Create imported targets
 # ----------------------------------------------------------------------------
 # Unity requires both header and source
-if(Unity_INCLUDE_DIR AND Unity_SOURCE)
+if(CMT_UNITY_INCLUDE_DIR AND CMT_UNITY_SOURCE)
     if(NOT TARGET Unity::Unity)
-        add_library(unity_unity STATIC "${Unity_SOURCE}")
-        target_include_directories(unity_unity PUBLIC "${Unity_INCLUDE_DIR}")
+        add_library(unity_unity STATIC "${CMT_UNITY_SOURCE}")
+        target_include_directories(unity_unity PUBLIC "${CMT_UNITY_INCLUDE_DIR}")
         # Disable linting for external dependencies
         set_target_properties(
             unity_unity
@@ -304,11 +316,11 @@ endif()
 
 # CMock target if found
 set(CMock_FOUND FALSE)
-if(CMock_INCLUDE_DIR AND CMock_SOURCE)
+if(CMT_CMOCK_INCLUDE_DIR AND CMT_CMOCK_SOURCE)
     set(CMock_FOUND TRUE)
     if(NOT TARGET Unity::CMock)
-        add_library(unity_cmock STATIC "${CMock_SOURCE}")
-        target_include_directories(unity_cmock PUBLIC "${CMock_INCLUDE_DIR}")
+        add_library(unity_cmock STATIC "${CMT_CMOCK_SOURCE}")
+        target_include_directories(unity_cmock PUBLIC "${CMT_CMOCK_INCLUDE_DIR}")
         # CMock depends on Unity
         if(TARGET unity_unity)
             target_link_libraries(unity_cmock PUBLIC unity_unity)
@@ -334,39 +346,39 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
     Unity
     REQUIRED_VARS
-        Unity_INCLUDE_DIR
-        Unity_SOURCE
+        CMT_UNITY_INCLUDE_DIR
+        CMT_UNITY_SOURCE
     VERSION_VAR Unity_VERSION
 )
 
 mark_as_advanced(
-    Unity_INCLUDE_DIR
-    Unity_SOURCE
+    CMT_UNITY_INCLUDE_DIR
+    CMT_UNITY_SOURCE
     Unity_RUNNER_GENERATOR
-    CMock_INCLUDE_DIR
-    CMock_SOURCE
-    CMock_EXECUTABLE
+    CMT_CMOCK_INCLUDE_DIR
+    CMT_CMOCK_SOURCE
+    CMT_CMOCK_EXECUTABLE
 )
 
 # Backward compatibility convenience variables
-set(Unity_INCLUDE_DIRS "${Unity_INCLUDE_DIR}" CACHE INTERNAL "Unity include dirs")
+set(CMT_UNITY_INCLUDE_DIRS "${CMT_UNITY_INCLUDE_DIR}" CACHE INTERNAL "Unity include dirs")
 if(TARGET Unity::Unity)
-    set(Unity_LIBRARIES Unity::Unity CACHE INTERNAL "Unity libraries")
+    set(CMT_UNITY_LIBRARIES Unity::Unity CACHE INTERNAL "Unity libraries")
 endif()
 
 if(Unity_FOUND)
     message(STATUS "${CMAKE_CURRENT_FUNCTION}: Found Unity ${Unity_VERSION}")
-    message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Include: ${Unity_INCLUDE_DIR}")
-    message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Source: ${Unity_SOURCE}")
+    message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Include: ${CMT_UNITY_INCLUDE_DIR}")
+    message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Source: ${CMT_UNITY_SOURCE}")
     if(Unity_RUNNER_GENERATOR)
         message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Runner: ${Unity_RUNNER_GENERATOR}")
     endif()
     if(CMock_FOUND)
         message(STATUS "${CMAKE_CURRENT_FUNCTION}: Found CMock")
-        message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Include: ${CMock_INCLUDE_DIR}")
-        message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Source: ${CMock_SOURCE}")
-        if(CMock_EXECUTABLE)
-            message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Executable: ${CMock_EXECUTABLE}")
+        message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Include: ${CMT_CMOCK_INCLUDE_DIR}")
+        message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Source: ${CMT_CMOCK_SOURCE}")
+        if(CMT_CMOCK_EXECUTABLE)
+            message(STATUS "${CMAKE_CURRENT_FUNCTION}:   Executable: ${CMT_CMOCK_EXECUTABLE}")
         endif()
     endif()
 endif()

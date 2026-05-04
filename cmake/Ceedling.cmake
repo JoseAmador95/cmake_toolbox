@@ -18,28 +18,28 @@ includes coverage (Gcov) and sanitizer (Sanitizer) support.
 Cache Variables
 ^^^^^^^^^^^^^^^
 
-``CEEDLING_ENABLE_GCOV``
+``CMT_CEEDLING_ENABLE_GCOV``
   Enable code coverage instrumentation.
   Default: OFF
 
-``CEEDLING_GCOVR_POST_RUN``
+``CMT_CEEDLING_GCOVR_POST_RUN``
   Run the gcovr target after unit tests via CTest fixtures.
-  Default: ON when ``CEEDLING_ENABLE_GCOV=ON``; otherwise OFF.
+  Default: ON when ``CMT_CEEDLING_ENABLE_GCOV=ON``; otherwise OFF.
   Set OFF to disable.
 
-``CEEDLING_ENABLE_SANITIZER``
+``CMT_CEEDLING_ENABLE_SANITIZER``
   Enable sanitizer instrumentation.
   Default: OFF
 
-``CEEDLING_SANITIZER_DEFAULT``
+``CMT_CEEDLING_SANITIZER_DEFAULT``
   Enable sanitizer by default for all tests.
   Default: ON
 
-``CEEDLING_EXTRACT_FUNCTIONS``
+``CMT_CEEDLING_EXTRACT_FUNCTIONS``
   Extract individual test functions as separate CTest tests.
   Default: OFF
 
-``CEEDLING_TEST_LABELS``
+``CMT_CEEDLING_TEST_LABELS``
   Default labels applied to Ceedling tests.
   Default: unit
 
@@ -66,7 +66,7 @@ Functions
     Path to the test source file.
     Mock dependencies are automatically detected by parsing ``#include``
     directives matching ``#include "mock_*.h"`` (or the configured
-    ``CMOCK_MOCK_PREFIX``). The original header is resolved from the
+    ``CMT_CMOCK_MOCK_PREFIX``). The original header is resolved from the
     include directories of TARGET and its dependencies.
 
   ``TARGET``
@@ -75,10 +75,10 @@ Functions
     to resolve mock headers.
 
   ``ENABLE_SANITIZER``
-    Force enable sanitizer for this test (when CEEDLING_SANITIZER_DEFAULT is OFF).
+    Force enable sanitizer for this test (when CMT_CEEDLING_SANITIZER_DEFAULT is OFF).
 
   ``DISABLE_SANITIZER``
-    Force disable sanitizer for this test (when CEEDLING_SANITIZER_DEFAULT is ON).
+    Force disable sanitizer for this test (when CMT_CEEDLING_SANITIZER_DEFAULT is ON).
 
   ``LABELS``
     Additional CTest labels applied to the test.
@@ -109,21 +109,21 @@ include_guard(GLOBAL)
 # Options
 # ==============================================================================
 
-option(CEEDLING_ENABLE_GCOV "Enable coverage" OFF)
-option(CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
-option(CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
-option(CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
-set(CEEDLING_TEST_LABELS "unit" CACHE STRING "Default labels for Ceedling tests")
+option(CMT_CEEDLING_ENABLE_GCOV "Enable coverage" OFF)
+option(CMT_CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
+option(CMT_CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
+option(CMT_CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
+set(CMT_CEEDLING_TEST_LABELS "unit" CACHE STRING "Default labels for Ceedling tests")
 
 set(_ceedling_gcovr_post_run_default OFF)
-if(CEEDLING_ENABLE_GCOV)
+if(CMT_CEEDLING_ENABLE_GCOV)
     set(_ceedling_gcovr_post_run_default ON)
 endif()
-if(NOT DEFINED CEEDLING_GCOVR_POST_RUN)
-    set(CEEDLING_GCOVR_POST_RUN ${_ceedling_gcovr_post_run_default})
+if(NOT DEFINED CMT_CEEDLING_GCOVR_POST_RUN)
+    set(CMT_CEEDLING_GCOVR_POST_RUN ${_ceedling_gcovr_post_run_default})
 endif()
-set(CEEDLING_GCOVR_POST_RUN
-    "${CEEDLING_GCOVR_POST_RUN}"
+set(CMT_CEEDLING_GCOVR_POST_RUN
+    "${CMT_CEEDLING_GCOVR_POST_RUN}"
     CACHE BOOL
     "Run gcovr after unit tests when coverage is enabled"
 )
@@ -133,11 +133,11 @@ unset(_ceedling_gcovr_post_run_default)
 # Include Dependencies
 # ==============================================================================
 
-if(CEEDLING_ENABLE_GCOV)
+if(CMT_CEEDLING_ENABLE_GCOV)
     include(${CMAKE_CURRENT_LIST_DIR}/Gcov.cmake)
 endif()
 
-if(CEEDLING_ENABLE_SANITIZER)
+if(CMT_CEEDLING_ENABLE_SANITIZER)
     include(${CMAKE_CURRENT_LIST_DIR}/Sanitizer.cmake)
 endif()
 
@@ -146,10 +146,10 @@ include(${CMAKE_CURRENT_LIST_DIR}/Unity.cmake)
 # Initialize Unity once for Ceedling
 Unity_Initialize()
 
-if(CEEDLING_EXTRACT_FUNCTIONS AND TARGET Unity::Unity)
-    get_target_property(_tb_unity_target Unity::Unity ALIASED_TARGET)
-    if(_tb_unity_target AND TARGET ${_tb_unity_target})
-        target_compile_definitions(${_tb_unity_target} PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+if(CMT_CEEDLING_EXTRACT_FUNCTIONS AND TARGET Unity::Unity)
+    get_target_property(_cmt_ceedling_unity_target Unity::Unity ALIASED_TARGET)
+    if(_cmt_ceedling_unity_target AND TARGET ${_cmt_ceedling_unity_target})
+        target_compile_definitions(${_cmt_ceedling_unity_target} PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
     else()
         target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
     endif()
@@ -159,7 +159,7 @@ endif()
 # _Ceedling_ParseMockIncludes (Internal)
 # ==============================================================================
 #
-# Parse a test source file to find mock includes based on CMOCK_MOCK_PREFIX.
+# Parse a test source file to find mock includes based on CMT_CMOCK_MOCK_PREFIX.
 # Returns list of header base names (without prefix and extension).
 #
 # Parameters:
@@ -194,8 +194,8 @@ function(_Ceedling_ParseMockIncludes)
     file(READ "${ARG_TEST_SOURCE}" file_content)
 
     # Get the mock prefix (default: "mock_")
-    if(NOT DEFINED CMOCK_MOCK_PREFIX)
-        set(CMOCK_MOCK_PREFIX "mock_")
+    if(NOT DEFINED CMT_CMOCK_MOCK_PREFIX)
+        set(CMT_CMOCK_MOCK_PREFIX "mock_")
     endif()
 
     # Escape special regex characters in the prefix
@@ -204,7 +204,7 @@ function(_Ceedling_ParseMockIncludes)
         "([.^$*+?()\\[\\]{}|\\\\])"
         "\\\\\\1"
         prefix_escaped
-        "${CMOCK_MOCK_PREFIX}"
+        "${CMT_CMOCK_MOCK_PREFIX}"
     )
 
     # Find all #include directives matching the mock prefix pattern
@@ -392,7 +392,7 @@ function(_Ceedling_ResolveHeader)
         FATAL_ERROR
         "${CMAKE_CURRENT_FUNCTION}: Could not find header '${ARG_HEADER_BASE_NAME}.h' or '${ARG_HEADER_BASE_NAME}.hpp'\n"
         "Searched in directories:\n  ${ARG_INCLUDE_DIRS}\n"
-        "This header was detected from a mock include (${CMOCK_MOCK_PREFIX}${ARG_HEADER_BASE_NAME}.h) in the test file.\n"
+        "This header was detected from a mock include (${CMT_CMOCK_MOCK_PREFIX}${ARG_HEADER_BASE_NAME}.h) in the test file.\n"
         "Make sure the header exists and the target's include directories are set correctly."
     )
 endfunction()
@@ -448,8 +448,8 @@ function(Ceedling_AddUnitTest)
     file(MAKE_DIRECTORY "${TEST_BINARY_DIR}")
 
     # Set default mock subdirectory if not defined
-    if(NOT DEFINED CMOCK_MOCK_SUBDIR)
-        set(CMOCK_MOCK_SUBDIR "mocks")
+    if(NOT DEFINED CMT_CMOCK_MOCK_SUBDIR)
+        set(CMT_CMOCK_MOCK_SUBDIR "mocks")
     endif()
 
     # Look for optional config file
@@ -475,10 +475,7 @@ function(Ceedling_AddUnitTest)
             "${default_config}"
         )
     else()
-        message(
-            STATUS
-            "${CMAKE_CURRENT_FUNCTION}: No cmock.yml found; using generated defaults"
-        )
+        message(STATUS "${CMAKE_CURRENT_FUNCTION}: No cmock.yml found; using generated defaults")
     endif()
 
     # Generate test runner
@@ -490,7 +487,7 @@ function(Ceedling_AddUnitTest)
         RUNNER_SOURCE_VAR RUNNER_SOURCE
     )
     target_sources(${ARG_NAME} PRIVATE ${RUNNER_SOURCE})
-    target_include_directories(${ARG_NAME} PRIVATE ${TEST_BINARY_DIR}/${CMOCK_MOCK_SUBDIR})
+    target_include_directories(${ARG_NAME} PRIVATE ${TEST_BINARY_DIR}/${CMT_CMOCK_MOCK_SUBDIR})
 
     # =========================================================================
     # Auto-detect mocks from test file includes
@@ -543,90 +540,104 @@ function(Ceedling_AddUnitTest)
     endforeach()
 
     # Add coverage instrumentation
-    if(CEEDLING_ENABLE_GCOV)
+    if(CMT_CEEDLING_ENABLE_GCOV)
         Gcov_AddToTarget(${ARG_TARGET} PUBLIC)
         Gcov_AddToTarget(${ARG_NAME} PRIVATE)
     endif()
 
-    set(_tb_enable_sanitizer_for_test OFF)
+    set(_cmt_ceedling_enable_sanitizer_for_test OFF)
     if(
-        CEEDLING_ENABLE_SANITIZER
+        CMT_CEEDLING_ENABLE_SANITIZER
         AND (
             (
-                CEEDLING_SANITIZER_DEFAULT
+                CMT_CEEDLING_SANITIZER_DEFAULT
                 AND NOT ARG_DISABLE_SANITIZER
             )
             OR (
-                NOT CEEDLING_SANITIZER_DEFAULT
+                NOT CMT_CEEDLING_SANITIZER_DEFAULT
                 AND ARG_ENABLE_SANITIZER
             )
         )
     )
-        set(_tb_enable_sanitizer_for_test ON)
+        set(_cmt_ceedling_enable_sanitizer_for_test ON)
     endif()
 
     # Add sanitizer instrumentation
-    if(_tb_enable_sanitizer_for_test)
+    if(_cmt_ceedling_enable_sanitizer_for_test)
         Sanitizer_AddToTarget(TARGET ${ARG_NAME} SCOPE PRIVATE)
         Sanitizer_AddToTarget(TARGET ${ARG_TARGET} SCOPE PUBLIC)
     endif()
 
-    set(_tb_sanitizer_test_environment "")
-    if(_tb_enable_sanitizer_for_test)
-        set(_tb_sanitizer_test_environment "${SANITIZER_ENV_VARS}")
+    set(_cmt_ceedling_sanitizer_test_environment "")
+    if(_cmt_ceedling_enable_sanitizer_for_test)
+        set(_cmt_ceedling_sanitizer_test_environment "${SANITIZER_ENV_VARS}")
     endif()
 
-    set(_tb_test_labels "")
-    if(DEFINED CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
-        list(APPEND _tb_test_labels ${CEEDLING_TEST_LABELS})
+    set(_cmt_ceedling_test_labels "")
+    if(DEFINED CMT_CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
+        list(APPEND _cmt_ceedling_test_labels ${CMT_CEEDLING_TEST_LABELS})
     endif()
     if(ARG_LABELS)
-        list(APPEND _tb_test_labels ${ARG_LABELS})
+        list(APPEND _cmt_ceedling_test_labels ${ARG_LABELS})
     endif()
-    if(_tb_test_labels)
-        list(REMOVE_DUPLICATES _tb_test_labels)
-        set(_tb_test_labels_string "${_tb_test_labels}")
-        string(REPLACE ";" "\\;" _tb_test_labels_escaped "${_tb_test_labels_string}")
+    if(_cmt_ceedling_test_labels)
+        list(REMOVE_DUPLICATES _cmt_ceedling_test_labels)
+        set(_cmt_ceedling_test_labels_string "${_cmt_ceedling_test_labels}")
+        string(REPLACE ";" "\\;" _cmt_ceedling_test_labels_escaped "${_cmt_ceedling_test_labels_string}")
     endif()
 
-    set(_tb_gcovr_fixture_required "")
-    if(CEEDLING_ENABLE_GCOV AND CEEDLING_GCOVR_POST_RUN AND TARGET gcovr)
-        set(_tb_gcovr_fixture_required "gcovr_unit")
+    set(_cmt_ceedling_gcovr_fixture_required "")
+    if(CMT_CEEDLING_ENABLE_GCOV AND CMT_CEEDLING_GCOVR_POST_RUN AND TARGET gcovr)
+        set(_cmt_ceedling_gcovr_fixture_required "gcovr_unit")
 
-        get_property(
-            _tb_gcovr_post_run_added
-            GLOBAL
-            PROPERTY
-                CEEDLING_GCOVR_POST_RUN_ADDED
-        )
-        if(NOT _tb_gcovr_post_run_added)
-            set(
-                _tb_gcovr_build_cmd
+        get_property(_cmt_ceedling_gcovr_post_run_added GLOBAL PROPERTY CMT_CEEDLING_GCOVR_POST_RUN_ADDED)
+        if(NOT _cmt_ceedling_gcovr_post_run_added)
+            set(_cmt_ceedling_gcovr_build_cmd
                 ${CMAKE_COMMAND}
                 --build
                 "${CMAKE_BINARY_DIR}"
                 --target
                 gcovr
             )
-            get_property(_tb_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-            if(_tb_multi_config)
-                list(APPEND _tb_gcovr_build_cmd --config $<CONFIG>)
+            get_property(_cmt_ceedling_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+            if(_cmt_ceedling_multi_config)
+                list(
+                    APPEND _cmt_ceedling_gcovr_build_cmd
+                    --config
+                    $<CONFIG>
+                )
             endif()
 
-            add_test(NAME gcovr_unit COMMAND ${_tb_gcovr_build_cmd})
-            set_property(TEST gcovr_unit PROPERTY FIXTURES_CLEANUP "gcovr_unit")
+            add_test(NAME gcovr_unit COMMAND ${_cmt_ceedling_gcovr_build_cmd})
+            set_property(
+                TEST
+                    gcovr_unit
+                PROPERTY
+                    FIXTURES_CLEANUP
+                        "gcovr_unit"
+            )
 
-            set(_tb_gcovr_labels "")
-            if(DEFINED CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
-                list(APPEND _tb_gcovr_labels ${CEEDLING_TEST_LABELS})
+            set(_cmt_ceedling_gcovr_labels "")
+            if(DEFINED CMT_CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
+                list(APPEND _cmt_ceedling_gcovr_labels ${CMT_CEEDLING_TEST_LABELS})
             endif()
-            list(APPEND _tb_gcovr_labels gcovr)
-            if(_tb_gcovr_labels)
-                list(REMOVE_DUPLICATES _tb_gcovr_labels)
-                set_tests_properties(gcovr_unit PROPERTIES LABELS "${_tb_gcovr_labels}")
+            list(APPEND _cmt_ceedling_gcovr_labels gcovr)
+            if(_cmt_ceedling_gcovr_labels)
+                list(REMOVE_DUPLICATES _cmt_ceedling_gcovr_labels)
+                set_tests_properties(
+                    gcovr_unit
+                    PROPERTIES
+                        LABELS
+                            "${_cmt_ceedling_gcovr_labels}"
+                )
             endif()
 
-            set_property(GLOBAL PROPERTY CEEDLING_GCOVR_POST_RUN_ADDED TRUE)
+            set_property(
+                GLOBAL
+                PROPERTY
+                    CMT_CEEDLING_GCOVR_POST_RUN_ADDED
+                        TRUE
+            )
         endif()
     endif()
 
@@ -643,28 +654,30 @@ function(Ceedling_AddUnitTest)
     )
 
     # Test discovery or single test
-    if(CEEDLING_EXTRACT_FUNCTIONS)
+    if(CMT_CEEDLING_EXTRACT_FUNCTIONS)
         # Discover individual test functions and add as separate CTest tests
-        set(TB_UNITY_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}_tests.cmake")
+        set(CMT_CEEDLING_UNITY_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}_tests.cmake")
 
-        set(_tb_test_labels_arg "")
-        if(_tb_test_labels_escaped)
-            set(_tb_test_labels_arg -D "TEST_LABELS=${_tb_test_labels_escaped}")
+        set(_cmt_ceedling_test_labels_arg "")
+        if(_cmt_ceedling_test_labels_escaped)
+            set(_cmt_ceedling_test_labels_arg
+                -D
+                "TEST_LABELS=${_cmt_ceedling_test_labels_escaped}"
+            )
         endif()
 
-        set(_tb_test_fixtures_arg "")
-        if(_tb_gcovr_fixture_required)
+        set(_cmt_ceedling_test_fixtures_arg "")
+        if(_cmt_ceedling_gcovr_fixture_required)
             string(
                 REPLACE
                 ";"
                 "\\;"
-                _tb_gcovr_fixture_required_escaped
-                "${_tb_gcovr_fixture_required}"
+                _cmt_ceedling_gcovr_fixture_required_escaped
+                "${_cmt_ceedling_gcovr_fixture_required}"
             )
-            set(
-                _tb_test_fixtures_arg
+            set(_cmt_ceedling_test_fixtures_arg
                 -D
-                "TEST_FIXTURES_REQUIRED=${_tb_gcovr_fixture_required_escaped}"
+                "TEST_FIXTURES_REQUIRED=${_cmt_ceedling_gcovr_fixture_required_escaped}"
             )
         endif()
 
@@ -672,14 +685,13 @@ function(Ceedling_AddUnitTest)
             TARGET ${ARG_NAME}
             POST_BUILD
             BYPRODUCTS
-                "${TB_UNITY_TEST_FILE}"
+                "${CMT_CEEDLING_UNITY_TEST_FILE}"
             COMMAND
                 "${CMAKE_COMMAND}" -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>" -D
                 "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -D
-                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${TB_UNITY_TEST_FILE}" -D
-                "TEST_ENVIRONMENT=${_tb_sanitizer_test_environment}" ${_tb_test_labels_arg}
-                ${_tb_test_fixtures_arg} -P
-                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
+                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${CMT_CEEDLING_UNITY_TEST_FILE}" -D
+                "TEST_ENVIRONMENT=${_cmt_ceedling_sanitizer_test_environment}" ${_cmt_ceedling_test_labels_arg}
+                ${_cmt_ceedling_test_fixtures_arg} -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
         )
 
@@ -688,25 +700,30 @@ function(Ceedling_AddUnitTest)
             APPEND
             PROPERTY
                 TEST_INCLUDE_FILES
-                    "${TB_UNITY_TEST_FILE}"
+                    "${CMT_CEEDLING_UNITY_TEST_FILE}"
         )
     else()
         # Add the whole file as a single test
         add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
-        if(_tb_test_labels_string)
-            set_tests_properties(${ARG_NAME} PROPERTIES LABELS "${_tb_test_labels_string}")
+        if(_cmt_ceedling_test_labels_string)
+            set_tests_properties(
+                ${ARG_NAME}
+                PROPERTIES
+                    LABELS
+                        "${_cmt_ceedling_test_labels_string}"
+            )
         endif()
-        if(_tb_gcovr_fixture_required)
+        if(_cmt_ceedling_gcovr_fixture_required)
             set_property(
                 TEST
                     ${ARG_NAME}
                 APPEND
                 PROPERTY
                     FIXTURES_REQUIRED
-                        "${_tb_gcovr_fixture_required}"
+                        "${_cmt_ceedling_gcovr_fixture_required}"
             )
         endif()
-        if(_tb_sanitizer_test_environment)
+        if(_cmt_ceedling_sanitizer_test_environment)
             Sanitizer_ApplyEnvironmentToTests(TESTS ${ARG_NAME})
         endif()
     endif()

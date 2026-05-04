@@ -19,17 +19,17 @@ set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/integration_ctest")
 set(SRC_DIR "${TEST_ROOT}/junit/src")
 set(BUILD_DIR "${TEST_ROOT}/junit/build")
 
-set(_tb_build_config "")
+set(_cmt_test_build_config "")
 if(DEFINED CMAKE_TOOLBOX_TEST_BUILD_TYPE AND NOT CMAKE_TOOLBOX_TEST_BUILD_TYPE STREQUAL "")
-    set(_tb_build_config "${CMAKE_TOOLBOX_TEST_BUILD_TYPE}")
+    set(_cmt_test_build_config "${CMAKE_TOOLBOX_TEST_BUILD_TYPE}")
 elseif(DEFINED CMAKE_TOOLBOX_TEST_GENERATOR
     AND CMAKE_TOOLBOX_TEST_GENERATOR MATCHES "Visual Studio|Xcode|Multi-Config|Ninja Multi-Config"
 )
-    set(_tb_build_config "Debug")
+    set(_cmt_test_build_config "Debug")
 endif()
 
-if(_tb_build_config)
-    set(CMAKE_TOOLBOX_TEST_BUILD_TYPE "${_tb_build_config}")
+if(_cmt_test_build_config)
+    set(CMAKE_TOOLBOX_TEST_BUILD_TYPE "${_cmt_test_build_config}")
 endif()
 
 file(REMOVE_RECURSE "${TEST_ROOT}")
@@ -99,8 +99,8 @@ if(NOT configure_result EQUAL 0)
 endif()
 
 set(build_args "")
-if(_tb_build_config)
-    set(build_args --config "${_tb_build_config}")
+if(_cmt_test_build_config)
+    set(build_args --config "${_cmt_test_build_config}")
 endif()
 
 execute_process(
@@ -120,8 +120,8 @@ endif()
 
 set(junit_file "${BUILD_DIR}/junit-results.xml")
 set(ctest_args --test-dir "${BUILD_DIR}" --output-junit "${junit_file}")
-if(_tb_build_config)
-    list(APPEND ctest_args -C "${_tb_build_config}")
+if(_cmt_test_build_config)
+    list(APPEND ctest_args -C "${_cmt_test_build_config}")
 endif()
 list(APPEND ctest_args --test-output-size-passed 200000)
 list(APPEND ctest_args --test-output-size-failed 400000)
@@ -141,7 +141,7 @@ if(NOT EXISTS "${junit_file}")
     message(FATAL_ERROR "JUnit output not generated: ${junit_file}")
 endif()
 
-set(_tb_markers
+set(_cmt_test_markers
     "OUTPUT_START_STDOUT_PASS"
     "OUTPUT_END_STDOUT_PASS"
     "OUTPUT_START_STDERR_PASS"
@@ -152,7 +152,7 @@ set(_tb_markers
     "OUTPUT_END_STDERR_FAIL"
 )
 
-function(_tb_marker_present_hex marker hex_content result_var)
+function(_cmt_test_marker_present_hex marker hex_content result_var)
     string(HEX "${marker}" marker_hex)
 
     string(FIND "${hex_content}" "${marker_hex}" marker_index_utf8)
@@ -180,32 +180,32 @@ function(_tb_marker_present_hex marker hex_content result_var)
     set(${result_var} FALSE PARENT_SCOPE)
 endfunction()
 
-file(READ "${junit_file}" _tb_junit_hex HEX)
+file(READ "${junit_file}" _cmt_test_junit_hex HEX)
 
-set(_tb_missing_markers "")
-foreach(marker IN LISTS _tb_markers)
-    _tb_marker_present_hex("${marker}" "${_tb_junit_hex}" marker_present)
+set(_cmt_test_missing_markers "")
+foreach(marker IN LISTS _cmt_test_markers)
+    _cmt_test_marker_present_hex("${marker}" "${_cmt_test_junit_hex}" marker_present)
     if(NOT marker_present)
-        list(APPEND _tb_missing_markers "${marker}")
+        list(APPEND _cmt_test_missing_markers "${marker}")
     endif()
 endforeach()
 
-if(_tb_missing_markers)
-    file(SIZE "${junit_file}" _tb_junit_size)
-    set(_tb_hex_head "")
-    string(LENGTH "${_tb_junit_hex}" _tb_hex_length)
-    if(_tb_hex_length GREATER 0)
-        set(_tb_hex_head_length 200)
-        if(_tb_hex_length LESS _tb_hex_head_length)
-            set(_tb_hex_head_length ${_tb_hex_length})
+if(_cmt_test_missing_markers)
+    file(SIZE "${junit_file}" _cmt_test_junit_size)
+    set(_cmt_test_hex_head "")
+    string(LENGTH "${_cmt_test_junit_hex}" _cmt_test_hex_length)
+    if(_cmt_test_hex_length GREATER 0)
+        set(_cmt_test_hex_head_length 200)
+        if(_cmt_test_hex_length LESS _cmt_test_hex_head_length)
+            set(_cmt_test_hex_head_length ${_cmt_test_hex_length})
         endif()
-        string(SUBSTRING "${_tb_junit_hex}" 0 ${_tb_hex_head_length} _tb_hex_head)
+        string(SUBSTRING "${_cmt_test_junit_hex}" 0 ${_cmt_test_hex_head_length} _cmt_test_hex_head)
     endif()
     message(
         FATAL_ERROR
-        "Missing markers in JUnit output: ${_tb_missing_markers}\n"
-        "JUnit size (bytes): ${_tb_junit_size}\n"
-        "JUnit hex head: ${_tb_hex_head}"
+        "Missing markers in JUnit output: ${_cmt_test_missing_markers}\n"
+        "JUnit size (bytes): ${_cmt_test_junit_size}\n"
+        "JUnit hex head: ${_cmt_test_hex_head}"
     )
 endif()
 

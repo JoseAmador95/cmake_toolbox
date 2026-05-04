@@ -7,7 +7,7 @@ include(CMakePackageConfigHelpers)
 
 option(
     CMAKE_TOOLBOX_BUILD_EXAMPLES
-    "Build examples and tests from examples/"
+    "Build examples and tests from examples"
     ${PROJECT_IS_TOP_LEVEL}
 )
 
@@ -28,11 +28,7 @@ install(
     PATTERN "*.cmake"
 )
 
-install(
-    FILES
-        ${CMAKE_CURRENT_LIST_DIR}/cmock.yml
-    DESTINATION ${CMAKE_TOOLBOX_INSTALL_CMAKEDIR}
-)
+install(FILES ${CMAKE_CURRENT_LIST_DIR}/cmock.yml DESTINATION ${CMAKE_TOOLBOX_INSTALL_CMAKEDIR})
 
 configure_package_config_file(
     ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_toolboxConfig.cmake.in

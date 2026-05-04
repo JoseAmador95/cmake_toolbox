@@ -54,10 +54,10 @@ cmake_minimum_required(VERSION 3.22)
 project(GcovConfigFileTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
 # Use external config file
-set(GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/my_gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/my_gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 
@@ -99,7 +99,7 @@ message(STATUS \"CONFIG_FILE mode configured\")
 endfunction()
 
 function(test_config_file_mode_warns_enforce)
-    message(STATUS "Test 2: CONFIG_FILE mode warns when GCOVR_ENFORCE_THRESHOLDS is set")
+    message(STATUS "Test 2: CONFIG_FILE mode warns when CMT_GCOVR_ENFORCE_THRESHOLDS is set")
 
     set(src_dir "${TEST_ROOT}/enforce_warning/src")
     set(build_dir "${TEST_ROOT}/enforce_warning/build")
@@ -113,11 +113,11 @@ cmake_minimum_required(VERSION 3.22)
 project(GcovConfigFileTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
-set(GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
 
-set(GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
-set(GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
-set(GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
+set(CMT_GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
+set(CMT_GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
+set(CMT_GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
 
 include(Gcov)
 
@@ -148,17 +148,17 @@ Gcov_AddToTarget(mylib PUBLIC)
     # Check for warning in output
     string(
         FIND "${output}${error}"
-        "GCOVR_ENFORCE_THRESHOLDS is ignored"
+        "CMT_GCOVR_ENFORCE_THRESHOLDS is ignored"
         has_warning
     )
     if(has_warning EQUAL -1)
-        message(STATUS "  ✗ Expected warning about GCOVR_ENFORCE_THRESHOLDS being ignored")
+        message(STATUS "  ✗ Expected warning about CMT_GCOVR_ENFORCE_THRESHOLDS being ignored")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  ✓ Warning correctly emitted for ignored GCOVR_ENFORCE_THRESHOLDS")
+    message(STATUS "  ✓ Warning correctly emitted for ignored CMT_GCOVR_ENFORCE_THRESHOLDS")
 endfunction()
 
 function(run_all_tests)

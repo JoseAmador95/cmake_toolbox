@@ -302,7 +302,7 @@ include(CMockSchema)
 
 CMockSchema_SetDefaults()
 
-set(CMOCK_MOCK_PREFIX \"custom_mock_\" CACHE STRING \"\" FORCE)
+set(CMT_CMOCK_MOCK_PREFIX \"custom_mock_\" CACHE STRING \"\" FORCE)
 
 CMockSchema_GenerateConfigFile(\"${config_file}\")
 "
@@ -388,10 +388,18 @@ CMockSchema_GenerateConfigFile(\"${config_file}\")
     if(EXISTS "${config_file}")
         file(READ "${config_file}" yaml_content)
 
-        string(FIND "${yaml_content}" "@CMOCK_" has_cmock_placeholder)
-        string(FIND "${yaml_content}" "@TB_EXTRACT_FUNCTIONS_TF@" has_tb_placeholder)
+        string(
+            FIND "${yaml_content}"
+            "@CMOCK_"
+            has_cmock_placeholder
+        )
+        string(
+            FIND "${yaml_content}"
+            "@CMT_CMOCK_EXTRACT_FUNCTIONS_TF@"
+            has_cmt_cmock_extract_functions_placeholder
+        )
 
-        if(NOT has_cmock_placeholder EQUAL -1 OR NOT has_tb_placeholder EQUAL -1)
+        if(NOT has_cmock_placeholder EQUAL -1 OR NOT has_cmt_cmock_extract_functions_placeholder EQUAL -1)
             message(STATUS "  ✗ Placeholder tokens still present in YAML")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
             set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)

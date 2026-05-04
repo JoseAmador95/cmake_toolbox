@@ -84,15 +84,17 @@ Example
 
 include_guard(GLOBAL)
 
-set(COMPILECOMMANDS_AVAILABLE TRUE CACHE INTERNAL "Whether CompileCommands module is available")
+set(CMT_COMPILECOMMANDS_AVAILABLE TRUE CACHE INTERNAL "Whether CompileCommands module is available")
 
-set(COMPILE_COMMANDS_TRIM_BLACKLIST ""
-    CACHE STRING "Additional regex patterns for flags to remove during trim (semicolon-separated)"
+set(COMPILE_COMMANDS_TRIM_BLACKLIST
+    ""
+    CACHE STRING
+    "Additional regex patterns for flags to remove during trim (semicolon-separated)"
 )
 
 get_property(_compilecommands_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(_compilecommands_multi_config)
-    set(COMPILECOMMANDS_AVAILABLE
+    set(CMT_COMPILECOMMANDS_AVAILABLE
         FALSE
         CACHE INTERNAL
         "Whether CompileCommands module is available"

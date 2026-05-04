@@ -16,7 +16,7 @@
 
 include_guard(GLOBAL)
 
-set(_GCOVR_SCHEMA_KNOWN_FLAGS
+set(CMT_GCOVR_SCHEMA_KNOWN_FLAGS
     --search-path
     --filter
     --exclude
@@ -56,16 +56,16 @@ set(_GCOVR_SCHEMA_KNOWN_FLAGS
 # Detect gcovr version from executable (informational only).
 #
 # Parameters:
-#   GCOVR_EXE  - Path to gcovr executable
+#   CMT_GCOVR_EXE  - Path to gcovr executable
 #   OUTPUT_VAR - Variable name to store the detected version (MAJOR.MINOR)
 #
-function(GcovrSchema_DetectVersion GCOVR_EXE OUTPUT_VAR)
+function(GcovrSchema_DetectVersion CMT_GCOVR_EXE OUTPUT_VAR)
     set(DETECTED_VERSION "")
 
-    if(EXISTS "${GCOVR_EXE}")
+    if(EXISTS "${CMT_GCOVR_EXE}")
         execute_process(
             COMMAND
-                "${GCOVR_EXE}" --version
+                "${CMT_GCOVR_EXE}" --version
             OUTPUT_VARIABLE gcovr_version_output
             ERROR_VARIABLE gcovr_version_error
             RESULT_VARIABLE gcovr_version_result
@@ -115,21 +115,21 @@ endfunction()
 # Detect supported gcovr flags from --help output.
 #
 # Parameters:
-#   GCOVR_EXE  - Path to gcovr executable
+#   CMT_GCOVR_EXE  - Path to gcovr executable
 #   OUTPUT_VAR - Variable name to store detected flag list
 #
-function(GcovrSchema_DetectCapabilities GCOVR_EXE OUTPUT_VAR)
+function(GcovrSchema_DetectCapabilities CMT_GCOVR_EXE OUTPUT_VAR)
     set(supported_flags "")
     set(help_output "")
 
-    if(NOT GCOVR_EXE)
+    if(NOT CMT_GCOVR_EXE)
         set(help_output "")
-    elseif(NOT EXISTS "${GCOVR_EXE}")
+    elseif(NOT EXISTS "${CMT_GCOVR_EXE}")
         set(help_output "")
     else()
         execute_process(
             COMMAND
-                "${GCOVR_EXE}" --help
+                "${CMT_GCOVR_EXE}" --help
             OUTPUT_VARIABLE gcovr_help_output
             ERROR_VARIABLE gcovr_help_error
             RESULT_VARIABLE gcovr_help_result
@@ -149,7 +149,7 @@ function(GcovrSchema_DetectCapabilities GCOVR_EXE OUTPUT_VAR)
         if(help_output STREQUAL "")
             execute_process(
                 COMMAND
-                    "${GCOVR_EXE}" -h
+                    "${CMT_GCOVR_EXE}" -h
                 OUTPUT_VARIABLE gcovr_help_output
                 ERROR_VARIABLE gcovr_help_error
                 RESULT_VARIABLE gcovr_help_result
@@ -169,7 +169,7 @@ function(GcovrSchema_DetectCapabilities GCOVR_EXE OUTPUT_VAR)
     endif()
 
     if(help_output)
-        foreach(flag IN LISTS _GCOVR_SCHEMA_KNOWN_FLAGS)
+        foreach(flag IN LISTS CMT_GCOVR_SCHEMA_KNOWN_FLAGS)
             _GcovrSchema_HelpHasFlag("${help_output}" "${flag}" has_flag)
             if(has_flag)
                 list(APPEND supported_flags "${flag}")
@@ -178,26 +178,21 @@ function(GcovrSchema_DetectCapabilities GCOVR_EXE OUTPUT_VAR)
     endif()
 
     if(supported_flags)
-        set(_GCOVR_SUPPORTED_FLAGS
+        set(CMT_GCOVR_SUPPORTED_FLAGS
             "${supported_flags}"
             CACHE INTERNAL
             "Detected gcovr flags"
             FORCE
         )
-        set(_GCOVR_CAPABILITIES_DETECTED
+        set(CMT_GCOVR_CAPABILITIES_DETECTED
             TRUE
             CACHE INTERNAL
             "Whether gcovr capabilities were detected"
             FORCE
         )
     else()
-        set(_GCOVR_SUPPORTED_FLAGS
-            ""
-            CACHE INTERNAL
-            "Detected gcovr flags"
-            FORCE
-        )
-        set(_GCOVR_CAPABILITIES_DETECTED
+        set(CMT_GCOVR_SUPPORTED_FLAGS "" CACHE INTERNAL "Detected gcovr flags" FORCE)
+        set(CMT_GCOVR_CAPABILITIES_DETECTED
             FALSE
             CACHE INTERNAL
             "Whether gcovr capabilities were detected"
@@ -205,8 +200,8 @@ function(GcovrSchema_DetectCapabilities GCOVR_EXE OUTPUT_VAR)
         )
     endif()
 
-    set(_GCOVR_CAPABILITIES_EXE
-        "${GCOVR_EXE}"
+    set(CMT_GCOVR_CAPABILITIES_EXE
+        "${CMT_GCOVR_EXE}"
         CACHE INTERNAL
         "gcovr executable used for capabilities detection"
         FORCE
@@ -219,9 +214,9 @@ endfunction()
 # GcovrSchema_IsFlagSupported
 # ==============================================================================
 function(GcovrSchema_IsFlagSupported FLAG OUTPUT_VAR)
-    if(DEFINED _GCOVR_CAPABILITIES_DETECTED AND _GCOVR_CAPABILITIES_DETECTED)
+    if(DEFINED CMT_GCOVR_CAPABILITIES_DETECTED AND CMT_GCOVR_CAPABILITIES_DETECTED)
         list(
-            FIND _GCOVR_SUPPORTED_FLAGS
+            FIND CMT_GCOVR_SUPPORTED_FLAGS
             "${FLAG}"
             flag_index
         )
@@ -259,7 +254,10 @@ function(GcovrSchema_FilterOutputFormats INPUT_FORMATS OUTPUT_VAR)
             if(has_xml OR has_cobertura)
                 list(APPEND filtered "${format_lower}")
             else()
-                message(WARNING "GcovrSchema: Skipping XML/Cobertura output (gcovr lacks --xml/--cobertura)")
+                message(
+                    WARNING
+                    "GcovrSchema: Skipping XML/Cobertura output (gcovr lacks --xml/--cobertura)"
+                )
             endif()
         elseif(format_lower STREQUAL "json")
             GcovrSchema_IsFlagSupported("--json" has_json)
@@ -315,99 +313,134 @@ function(GcovrSchema_SetDefaults)
         )
     endif()
 
-    set(GCOVR_ENFORCE_THRESHOLDS OFF CACHE BOOL "Enable fail-under thresholds for coverage metrics")
+    set(CMT_GCOVR_ENFORCE_THRESHOLDS
+        OFF
+        CACHE BOOL
+        "Enable fail-under thresholds for coverage metrics"
+    )
 
-    set(GCOVR_FAIL_UNDER_LINE "0" CACHE STRING "Fail if line coverage is below this percentage (0-100)")
+    set(CMT_GCOVR_FAIL_UNDER_LINE
+        "0"
+        CACHE STRING
+        "Fail if line coverage is below this percentage (0-100)"
+    )
 
-    set(GCOVR_FAIL_UNDER_BRANCH
+    set(CMT_GCOVR_FAIL_UNDER_BRANCH
         "0"
         CACHE STRING
         "Fail if branch coverage is below this percentage (0-100)"
     )
 
-    set(GCOVR_FAIL_UNDER_FUNCTION
+    set(CMT_GCOVR_FAIL_UNDER_FUNCTION
         "0"
         CACHE STRING
         "Fail if function coverage is below this percentage (0-100)"
     )
 
-    set(GCOVR_FAIL_UNDER_DECISION
+    set(CMT_GCOVR_FAIL_UNDER_DECISION
         "0"
         CACHE STRING
         "Fail if decision coverage is below this percentage (0-100)"
     )
 
-    set(GCOVR_HTML_HIGH_THRESHOLD "95" CACHE STRING "High coverage threshold for HTML reports (0-100)")
+    set(CMT_GCOVR_HTML_HIGH_THRESHOLD
+        "95"
+        CACHE STRING
+        "High coverage threshold for HTML reports (0-100)"
+    )
 
-    set(GCOVR_HTML_MEDIUM_THRESHOLD
+    set(CMT_GCOVR_HTML_MEDIUM_THRESHOLD
         "85"
         CACHE STRING
         "Medium coverage threshold for HTML reports (0-100)"
     )
 
-    set(GCOVR_FILTER "" CACHE STRING "Semicolon-separated list of regex patterns to include files")
+    set(CMT_GCOVR_FILTER
+        ""
+        CACHE STRING
+        "Semicolon-separated list of regex patterns to include files"
+    )
 
-    set(GCOVR_EXCLUDE "" CACHE STRING "Semicolon-separated list of regex patterns to exclude files")
+    set(CMT_GCOVR_EXCLUDE
+        ""
+        CACHE STRING
+        "Semicolon-separated list of regex patterns to exclude files"
+    )
 
-    set(GCOVR_EXCLUDE_DIRECTORIES
+    set(CMT_GCOVR_EXCLUDE_DIRECTORIES
         ""
         CACHE STRING
         "Semicolon-separated list of regex patterns to exclude directories"
     )
 
-    set(GCOVR_EXCLUDE_UNREACHABLE_BRANCHES ON CACHE BOOL "Exclude unreachable branches from coverage")
+    set(CMT_GCOVR_EXCLUDE_UNREACHABLE_BRANCHES
+        ON
+        CACHE BOOL
+        "Exclude unreachable branches from coverage"
+    )
 
-    set(GCOVR_EXCLUDE_THROW_BRANCHES ON CACHE BOOL "Exclude throw branches from coverage")
+    set(CMT_GCOVR_EXCLUDE_THROW_BRANCHES ON CACHE BOOL "Exclude throw branches from coverage")
 
-    set(GCOVR_EXCLUDE_FUNCTION_LINES OFF CACHE BOOL "Exclude function definition lines from coverage")
+    set(CMT_GCOVR_EXCLUDE_FUNCTION_LINES
+        OFF
+        CACHE BOOL
+        "Exclude function definition lines from coverage"
+    )
 
-    set(GCOVR_OUTPUT_FORMATS
+    set(CMT_GCOVR_OUTPUT_FORMATS
         "html"
         CACHE STRING
         "Semicolon-separated list of output formats (html;xml;json;cobertura;lcov;csv;txt)"
     )
 
-    set(GCOVR_PRINT_SUMMARY ON CACHE BOOL "Print summary to console")
+    set(CMT_GCOVR_PRINT_SUMMARY ON CACHE BOOL "Print summary to console")
 
-    set(GCOVR_SORT
+    set(CMT_GCOVR_SORT
         "uncovered-number"
         CACHE STRING
         "Sort order for HTML report (filename, uncovered-number, uncovered-percent)"
     )
 
-    set(GCOVR_HTML_DETAILS ON CACHE BOOL "Generate detailed HTML with per-file coverage")
+    set(CMT_GCOVR_HTML_DETAILS ON CACHE BOOL "Generate detailed HTML with per-file coverage")
 
-    set(GCOVR_HTML_NESTED OFF CACHE BOOL "Generate nested HTML structure following source layout")
+    set(CMT_GCOVR_HTML_NESTED
+        OFF
+        CACHE BOOL
+        "Generate nested HTML structure following source layout"
+    )
 
-    set(GCOVR_HTML_TITLE "Coverage Report" CACHE STRING "Title for HTML report")
+    set(CMT_GCOVR_HTML_TITLE "Coverage Report" CACHE STRING "Title for HTML report")
 
-    set(GCOVR_HTML_SELF_CONTAINED ON CACHE BOOL "Generate self-contained HTML (inline CSS/JS)")
+    set(CMT_GCOVR_HTML_SELF_CONTAINED ON CACHE BOOL "Generate self-contained HTML (inline CSS/JS)")
 
-    set(
-        GCOVR_GCOV_EXECUTABLE
+    set(CMT_GCOVR_GCOV_EXECUTABLE
         ""
         CACHE STRING
         "Path or command (may include arguments) for gcov executable (empty = auto-detect)"
     )
 
-    set(GCOVR_SEARCH_PATH "" CACHE STRING "Semicolon-separated list of search paths for .gcda files")
+    set(CMT_GCOVR_SEARCH_PATH
+        ""
+        CACHE STRING
+        "Semicolon-separated list of search paths for .gcda files"
+    )
 
-    set(GCOVR_DECISIONS OFF CACHE BOOL "Enable decision coverage (MC/DC)")
+    set(CMT_GCOVR_DECISIONS OFF CACHE BOOL "Enable decision coverage (MC/DC)")
 
-    set(GCOVR_CALLS OFF CACHE BOOL "Enable call coverage")
+    set(CMT_GCOVR_CALLS OFF CACHE BOOL "Enable call coverage")
 endfunction()
 
 # ==============================================================================
 # GcovrSchema_GenerateConfigFile
 # ==============================================================================
 function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
-    if(NOT DEFINED _GCOVR_CAPABILITIES_DETECTED)
+    if(NOT DEFINED CMT_GCOVR_CAPABILITIES_DETECTED)
         if(DEFINED Gcovr_EXECUTABLE AND EXISTS "${Gcovr_EXECUTABLE}")
             GcovrSchema_DetectCapabilities("${Gcovr_EXECUTABLE}" _gcovr_detected_flags)
         endif()
     endif()
 
-    if(DEFINED _GCOVR_CAPABILITIES_DETECTED AND NOT _GCOVR_CAPABILITIES_DETECTED)
+    if(DEFINED CMT_GCOVR_CAPABILITIES_DETECTED AND NOT CMT_GCOVR_CAPABILITIES_DETECTED)
         message(
             WARNING
             "${CMAKE_CURRENT_FUNCTION}: gcovr capabilities not detected; assuming all known flags are supported"
@@ -424,7 +457,10 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
     endmacro()
 
     macro(_gcovr_warn_unsupported key flag)
-        message(WARNING "${CMAKE_CURRENT_FUNCTION}: '${key}' not supported by gcovr (missing ${flag}); skipping")
+        message(
+            WARNING
+            "${CMAKE_CURRENT_FUNCTION}: '${key}' not supported by gcovr (missing ${flag}); skipping"
+        )
     endmacro()
 
     macro(_gcovr_append_if_supported key var flag)
@@ -438,10 +474,10 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endmacro()
 
-    if(GCOVR_SEARCH_PATH)
+    if(CMT_GCOVR_SEARCH_PATH)
         GcovrSchema_IsFlagSupported("--search-path" _gcovr_supported)
         if(_gcovr_supported)
-            foreach(path IN LISTS GCOVR_SEARCH_PATH)
+            foreach(path IN LISTS CMT_GCOVR_SEARCH_PATH)
                 string(APPEND CONFIG_CONTENT "search-path = ${path}\n")
             endforeach()
         else()
@@ -449,10 +485,10 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_FILTER)
+    if(CMT_GCOVR_FILTER)
         GcovrSchema_IsFlagSupported("--filter" _gcovr_supported)
         if(_gcovr_supported)
-            foreach(pattern IN LISTS GCOVR_FILTER)
+            foreach(pattern IN LISTS CMT_GCOVR_FILTER)
                 string(APPEND CONFIG_CONTENT "filter = ${pattern}\n")
             endforeach()
         else()
@@ -460,10 +496,10 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_EXCLUDE)
+    if(CMT_GCOVR_EXCLUDE)
         GcovrSchema_IsFlagSupported("--exclude" _gcovr_supported)
         if(_gcovr_supported)
-            foreach(pattern IN LISTS GCOVR_EXCLUDE)
+            foreach(pattern IN LISTS CMT_GCOVR_EXCLUDE)
                 string(APPEND CONFIG_CONTENT "exclude = ${pattern}\n")
             endforeach()
         else()
@@ -471,10 +507,10 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_EXCLUDE_DIRECTORIES)
+    if(CMT_GCOVR_EXCLUDE_DIRECTORIES)
         GcovrSchema_IsFlagSupported("--exclude-directories" _gcovr_supported)
         if(_gcovr_supported)
-            foreach(pattern IN LISTS GCOVR_EXCLUDE_DIRECTORIES)
+            foreach(pattern IN LISTS CMT_GCOVR_EXCLUDE_DIRECTORIES)
                 string(APPEND CONFIG_CONTENT "exclude-directories = ${pattern}\n")
             endforeach()
         else()
@@ -482,7 +518,7 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_EXCLUDE_UNREACHABLE_BRANCHES)
+    if(CMT_GCOVR_EXCLUDE_UNREACHABLE_BRANCHES)
         GcovrSchema_IsFlagSupported("--exclude-unreachable-branches" _gcovr_supported)
         if(_gcovr_supported)
             _gcovr_append_config("exclude-unreachable-branches" "yes")
@@ -491,7 +527,7 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_EXCLUDE_THROW_BRANCHES)
+    if(CMT_GCOVR_EXCLUDE_THROW_BRANCHES)
         GcovrSchema_IsFlagSupported("--exclude-throw-branches" _gcovr_supported)
         if(_gcovr_supported)
             _gcovr_append_config("exclude-throw-branches" "yes")
@@ -500,7 +536,7 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_EXCLUDE_FUNCTION_LINES)
+    if(CMT_GCOVR_EXCLUDE_FUNCTION_LINES)
         GcovrSchema_IsFlagSupported("--exclude-function-lines" _gcovr_supported)
         if(_gcovr_supported)
             _gcovr_append_config("exclude-function-lines" "yes")
@@ -509,32 +545,56 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_ENFORCE_THRESHOLDS)
-        if(NOT "${GCOVR_FAIL_UNDER_LINE}" STREQUAL "0")
-            _gcovr_append_if_supported("fail-under-line" GCOVR_FAIL_UNDER_LINE "--fail-under-line")
+    if(CMT_GCOVR_ENFORCE_THRESHOLDS)
+        if(NOT "${CMT_GCOVR_FAIL_UNDER_LINE}" STREQUAL "0")
+            _gcovr_append_if_supported(
+                "fail-under-line"
+                CMT_GCOVR_FAIL_UNDER_LINE
+                "--fail-under-line"
+            )
         endif()
 
-        if(NOT "${GCOVR_FAIL_UNDER_BRANCH}" STREQUAL "0")
-            _gcovr_append_if_supported("fail-under-branch" GCOVR_FAIL_UNDER_BRANCH "--fail-under-branch")
+        if(NOT "${CMT_GCOVR_FAIL_UNDER_BRANCH}" STREQUAL "0")
+            _gcovr_append_if_supported(
+                "fail-under-branch"
+                CMT_GCOVR_FAIL_UNDER_BRANCH
+                "--fail-under-branch"
+            )
         endif()
 
-        if(NOT "${GCOVR_FAIL_UNDER_FUNCTION}" STREQUAL "0")
-            _gcovr_append_if_supported("fail-under-function" GCOVR_FAIL_UNDER_FUNCTION "--fail-under-function")
+        if(NOT "${CMT_GCOVR_FAIL_UNDER_FUNCTION}" STREQUAL "0")
+            _gcovr_append_if_supported(
+                "fail-under-function"
+                CMT_GCOVR_FAIL_UNDER_FUNCTION
+                "--fail-under-function"
+            )
         endif()
 
-        if(NOT "${GCOVR_FAIL_UNDER_DECISION}" STREQUAL "0")
-            _gcovr_append_if_supported("fail-under-decision" GCOVR_FAIL_UNDER_DECISION "--fail-under-decision")
+        if(NOT "${CMT_GCOVR_FAIL_UNDER_DECISION}" STREQUAL "0")
+            _gcovr_append_if_supported(
+                "fail-under-decision"
+                CMT_GCOVR_FAIL_UNDER_DECISION
+                "--fail-under-decision"
+            )
         endif()
     endif()
 
-    _gcovr_append_if_supported("html-high-threshold" GCOVR_HTML_HIGH_THRESHOLD "--html-high-threshold")
-    _gcovr_append_if_supported("html-medium-threshold" GCOVR_HTML_MEDIUM_THRESHOLD "--html-medium-threshold")
+    _gcovr_append_if_supported(
+        "html-high-threshold"
+        CMT_GCOVR_HTML_HIGH_THRESHOLD
+        "--html-high-threshold"
+    )
+    _gcovr_append_if_supported(
+        "html-medium-threshold"
+        CMT_GCOVR_HTML_MEDIUM_THRESHOLD
+        "--html-medium-threshold"
+    )
 
-    if(GCOVR_HTML_TITLE AND NOT "${GCOVR_HTML_TITLE}" STREQUAL "Coverage Report")
-        _gcovr_append_if_supported("html-title" GCOVR_HTML_TITLE "--html-title")
+    if(CMT_GCOVR_HTML_TITLE AND NOT "${CMT_GCOVR_HTML_TITLE}" STREQUAL "Coverage Report")
+        _gcovr_append_if_supported("html-title" CMT_GCOVR_HTML_TITLE "--html-title")
     endif()
 
-    if(NOT GCOVR_HTML_SELF_CONTAINED)
+    if(NOT CMT_GCOVR_HTML_SELF_CONTAINED)
         GcovrSchema_IsFlagSupported("--html-self-contained" _gcovr_supported)
         if(_gcovr_supported)
             _gcovr_append_config("html-self-contained" "no")
@@ -543,35 +603,47 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_SORT AND NOT "${GCOVR_SORT}" STREQUAL "uncovered-number")
-        _gcovr_append_if_supported("sort" GCOVR_SORT "--sort")
+    if(CMT_GCOVR_SORT AND NOT "${CMT_GCOVR_SORT}" STREQUAL "uncovered-number")
+        _gcovr_append_if_supported("sort" CMT_GCOVR_SORT "--sort")
     endif()
 
-    if(GCOVR_GCOV_EXECUTABLE)
-        if(GCOVR_GCOV_EXECUTABLE MATCHES " ")
-            if(EXISTS "${GCOVR_GCOV_EXECUTABLE}")
-                _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+    if(CMT_GCOVR_GCOV_EXECUTABLE)
+        if(CMT_GCOVR_GCOV_EXECUTABLE MATCHES " ")
+            if(EXISTS "${CMT_GCOVR_GCOV_EXECUTABLE}")
+                _gcovr_append_if_supported(
+                    "gcov-executable"
+                    CMT_GCOVR_GCOV_EXECUTABLE
+                    "--gcov-executable"
+                )
             else()
-                string(REGEX MATCH "^[^ ]+" _gcovr_gcov_cmd_first "${GCOVR_GCOV_EXECUTABLE}")
+                string(REGEX MATCH "^[^ ]+" _gcovr_gcov_cmd_first "${CMT_GCOVR_GCOV_EXECUTABLE}")
                 if(_gcovr_gcov_cmd_first)
                     cmake_path(IS_ABSOLUTE _gcovr_gcov_cmd_first _gcovr_is_absolute)
                     if(_gcovr_is_absolute)
                         if(EXISTS "${_gcovr_gcov_cmd_first}")
-                            _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+                            _gcovr_append_if_supported(
+                                "gcov-executable"
+                                CMT_GCOVR_GCOV_EXECUTABLE
+                                "--gcov-executable"
+                            )
                         else()
                             message(
                                 WARNING
-                                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${CMT_GCOVR_GCOV_EXECUTABLE}"
                             )
                         endif()
                     else()
                         find_program(_gcovr_gcov_cmd NAMES "${_gcovr_gcov_cmd_first}")
                         if(_gcovr_gcov_cmd)
-                            _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+                            _gcovr_append_if_supported(
+                                "gcov-executable"
+                                CMT_GCOVR_GCOV_EXECUTABLE
+                                "--gcov-executable"
+                            )
                         else()
                             message(
                                 WARNING
-                                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                                "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${CMT_GCOVR_GCOV_EXECUTABLE}"
                             )
                         endif()
                         unset(_gcovr_gcov_cmd CACHE)
@@ -581,29 +653,37 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
                 else()
                     message(
                         WARNING
-                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${CMT_GCOVR_GCOV_EXECUTABLE}"
                     )
                 endif()
             endif()
         else()
-            cmake_path(IS_ABSOLUTE GCOVR_GCOV_EXECUTABLE _gcovr_is_absolute)
+            cmake_path(IS_ABSOLUTE CMT_GCOVR_GCOV_EXECUTABLE _gcovr_is_absolute)
             if(_gcovr_is_absolute)
-                if(EXISTS "${GCOVR_GCOV_EXECUTABLE}")
-                    _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+                if(EXISTS "${CMT_GCOVR_GCOV_EXECUTABLE}")
+                    _gcovr_append_if_supported(
+                        "gcov-executable"
+                        CMT_GCOVR_GCOV_EXECUTABLE
+                        "--gcov-executable"
+                    )
                 else()
                     message(
                         WARNING
-                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${CMT_GCOVR_GCOV_EXECUTABLE}"
                     )
                 endif()
             else()
-                find_program(_gcovr_gcov_cmd NAMES "${GCOVR_GCOV_EXECUTABLE}")
+                find_program(_gcovr_gcov_cmd NAMES "${CMT_GCOVR_GCOV_EXECUTABLE}")
                 if(_gcovr_gcov_cmd)
-                    _gcovr_append_if_supported("gcov-executable" GCOVR_GCOV_EXECUTABLE "--gcov-executable")
+                    _gcovr_append_if_supported(
+                        "gcov-executable"
+                        CMT_GCOVR_GCOV_EXECUTABLE
+                        "--gcov-executable"
+                    )
                 else()
                     message(
                         WARNING
-                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${GCOVR_GCOV_EXECUTABLE}"
+                        "${CMAKE_CURRENT_FUNCTION}: gcov-executable not found: ${CMT_GCOVR_GCOV_EXECUTABLE}"
                     )
                 endif()
                 unset(_gcovr_gcov_cmd CACHE)
@@ -611,7 +691,7 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_DECISIONS)
+    if(CMT_GCOVR_DECISIONS)
         GcovrSchema_IsFlagSupported("--decisions" _gcovr_supported)
         if(_gcovr_supported)
             _gcovr_append_config("decisions" "yes")
@@ -620,7 +700,7 @@ function(GcovrSchema_GenerateConfigFile CONFIG_FILE)
         endif()
     endif()
 
-    if(GCOVR_CALLS)
+    if(CMT_GCOVR_CALLS)
         GcovrSchema_IsFlagSupported("--calls" _gcovr_supported)
         if(_gcovr_supported)
             _gcovr_append_config("calls" "yes")
@@ -641,12 +721,12 @@ function(GcovrSchema_Validate)
 
     foreach(
         var
-        GCOVR_FAIL_UNDER_LINE
-        GCOVR_FAIL_UNDER_BRANCH
-        GCOVR_FAIL_UNDER_FUNCTION
-        GCOVR_FAIL_UNDER_DECISION
-        GCOVR_HTML_HIGH_THRESHOLD
-        GCOVR_HTML_MEDIUM_THRESHOLD
+        CMT_GCOVR_FAIL_UNDER_LINE
+        CMT_GCOVR_FAIL_UNDER_BRANCH
+        CMT_GCOVR_FAIL_UNDER_FUNCTION
+        CMT_GCOVR_FAIL_UNDER_DECISION
+        CMT_GCOVR_HTML_HIGH_THRESHOLD
+        CMT_GCOVR_HTML_MEDIUM_THRESHOLD
     )
         if(DEFINED ${var})
             if(NOT "${${var}}" MATCHES "^[0-9]+$")
@@ -659,7 +739,7 @@ function(GcovrSchema_Validate)
         endif()
     endforeach()
 
-    if(DEFINED GCOVR_OUTPUT_FORMATS)
+    if(DEFINED CMT_GCOVR_OUTPUT_FORMATS)
         set(VALID_FORMATS
             "html"
             "xml"
@@ -670,7 +750,7 @@ function(GcovrSchema_Validate)
             "csv"
             "txt"
         )
-        foreach(format IN LISTS GCOVR_OUTPUT_FORMATS)
+        foreach(format IN LISTS CMT_GCOVR_OUTPUT_FORMATS)
             list(
                 FIND VALID_FORMATS
                 "${format}"
@@ -692,5 +772,5 @@ function(GcovrSchema_Validate)
         endforeach()
     endif()
 
-    set(GCOVR_SCHEMA_VALID ${IS_VALID} PARENT_SCOPE)
+    set(CMT_GCOVR_SCHEMA_VALID ${IS_VALID} PARENT_SCOPE)
 endfunction()
