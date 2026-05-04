@@ -151,18 +151,16 @@ foreach(i RANGE 1 20)
     endif()
 endforeach()
 
-# Based on the logic:
-# policy_version sets a policy to NEW if min_version >= introduced_version
-# For MINIMUM 10.0: policies introduced at 1.0-10.0 should be NEW
-# Then MAXIMUM 15.0: policies introduced > 15.0 should be set back to OLD
-# So policies 1-10 should be NEW, 11-15 should be OLD (10.0 < 11.0), 16-20 should be OLD
-# Plus STRESS_5 and STRESS_15 were explicitly set earlier
-set(expected_new_count 10) # 1,2,3,4,5,6,7,8,9,10 (note: 5 and 15 were set explicitly earlier)
+# Policy_Version logic:
+# - MINIMUM X: policies with introduced_version >= X are set to NEW
+# - MAXIMUM Y: policies with introduced_version > Y are set to OLD
+# For MINIMUM 10.0 MAXIMUM 15.0:
+# - Policies 10-15 have introduced_version in [10.0, 15.0] -> NEW
+# - Plus STRESS_5 and STRESS_15 were explicitly set to NEW earlier
+# Total: STRESS_5, STRESS_10-15 = 7 policies NEW
+set(expected_new_count 7)
 if(NOT actual_new_count EQUAL expected_new_count)
-    message(STATUS "Policy version logic: policies with introduced_version <= 10.0 should be NEW")
-    message(STATUS "Explicitly set: STRESS_5=NEW, STRESS_15=NEW")
-    message(STATUS "Expected ${expected_new_count} policies to be NEW, got ${actual_new_count}")
-    # Don't treat this as an error since we're learning the behavior
+    message(FATAL_ERROR "Expected ${expected_new_count} policies to be NEW, got ${actual_new_count}")
 endif()
 
 # Test 6: Testing policy_info and policy_get_fields consistency
