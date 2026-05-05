@@ -299,11 +299,11 @@ function(IWYU_Configure)
     if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
         message(
             FATAL_ERROR
-            "${CMAKE_CURRENT_FUNCTION}: STATUS must be one of: ON, OFF, TRUE, FALSE, 1, 0"
+            "${CMAKE_CURRENT_FUNCTION}: STATUS must be a valid CMake boolean, got '${ARG_STATUS}'"
         )
     endif()
 
-    if(ARG_STATUS STREQUAL "ON")
+    if(ARG_STATUS)
         if(IWYU_FOUND)
             # Validate mapping file if provided
             if(ARG_MAPPING_FILE)
@@ -446,7 +446,7 @@ function(IWYU_ConfigureTarget)
         endif()
     endif()
 
-    if(ARG_STATUS STREQUAL "ON")
+    if(ARG_STATUS)
         if(IWYU_FOUND)
             # Validate mapping file if provided
             if(ARG_MAPPING_FILE)
