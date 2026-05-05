@@ -19,15 +19,14 @@ file(
     WRITE "${build_dir}/CMakeLists.txt"
     "
 cmake_minimum_required(VERSION 3.22)
-project(IWYUTestWrapper LANGUAGES CXX)
+project(IWYUTestWrapper LANGUAGES NONE)
 
 set(CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
 include(IWYU)
 
-# Create a source file inline in the binary directory
-file(WRITE \"\${CMAKE_CURRENT_BINARY_DIR}/lib.cpp\" \"void dummy() {}\")
-
-add_library(testlib STATIC \"\${CMAKE_CURRENT_BINARY_DIR}/lib.cpp\")
+# Use INTERFACE library to avoid needing a CXX compiler — IWYU
+# configures target properties at CMake configure-time, not build-time
+add_library(testlib INTERFACE)
 IWYU_ConfigureTarget(TARGET testlib STATUS ON)
 get_target_property(iwyu_prop testlib CXX_INCLUDE_WHAT_YOU_USE)
 if(iwyu_prop)
