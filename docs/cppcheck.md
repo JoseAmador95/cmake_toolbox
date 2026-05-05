@@ -30,7 +30,7 @@ This module follows the same pattern as ClangTidy.cmake for consistency across t
 
 ## Requirements
 
-- CMake `3.10+`
+- CMake `3.15+`
 - CMake module path includes this repository's `cmake/` directory
 - `find_package(Cppcheck ...)` called before `include(Cppcheck)`
 - `cppcheck` executable available in system PATH or CMake module path
@@ -108,7 +108,7 @@ When `STATUS` is OFF or cppcheck is not found:
 `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 project(Example LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -140,7 +140,7 @@ Cppcheck will run automatically during the build, reporting any issues to stdout
 `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 project(MyProject LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
