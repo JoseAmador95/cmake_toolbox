@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.22)
 get_filename_component(abs_cmake_module_path "${CMAKE_CURRENT_LIST_DIR}/../../cmake" ABSOLUTE)
 
 # Create test directory with unique timestamp to avoid conflicts
-string(TIMESTAMP test_timestamp "%s")
+string(TIMESTAMP test_timestamp "%Y%m%d%H%M%S")
 set(test_dir "${CMAKE_CURRENT_LIST_DIR}/test_artifacts_${test_timestamp}")
 set(build_dir "${test_dir}/build_output")
 file(MAKE_DIRECTORY "${build_dir}")
