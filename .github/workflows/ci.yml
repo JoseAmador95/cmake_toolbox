@@ -424,9 +424,9 @@ jobs:
             build_config: Debug
             install_deps: |
               choco install ninja -y
-          - label: windows-vs2022
+          - label: windows-vs2025
             os: windows-latest
-            generator: Visual Studio 17 2022
+            generator: Visual Studio 18 2025
             build_config: Debug
             install_deps: |
               echo "No extra deps"
