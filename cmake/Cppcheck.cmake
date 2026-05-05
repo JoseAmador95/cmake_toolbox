@@ -186,10 +186,14 @@ function(_Cppcheck_BuildCommand ENABLE SUPPRESS EXCLUDE_PATTERNS RETCMD)
         endforeach()
     endif()
 
-    # Build --exclude flags if provided
+    # Build -i flags for path exclusion (one -i <path> pair per pattern)
     if(EXCLUDE_PATTERNS)
         foreach(pattern IN LISTS EXCLUDE_PATTERNS)
-            list(APPEND cmd_list "--exclude=${pattern}")
+            list(
+                APPEND cmd_list
+                "-i"
+                "${pattern}"
+            )
         endforeach()
     endif()
 
@@ -216,7 +220,7 @@ Parameters
 
 ``STRICT``
   Optional. If specified, fails with fatal error if cppcheck not found.
-  Without this flag (advisory mode), missing tool only produces a warning.
+  Without this flag (advisory mode), missing tool only produces a verbose message.
 
 ``ENABLE``
   Optional. List of check severities to enable.
@@ -298,7 +302,7 @@ Configure cppcheck for a specific CMake target.
 
 This function sets C_CPPCHECK and CXX_CPPCHECK target properties to enable
 cppcheck analysis for a particular target. The function operates in advisory
-mode by default (missing cppcheck tool produces a warning but continues).
+mode by default (missing cppcheck tool produces a verbose message and continues).
 Use STRICT flag to enforce strict mode.
 
 Parameters
@@ -312,7 +316,7 @@ Parameters
 
 ``STRICT``
   Optional. If specified, fails if cppcheck not found or target doesn't exist.
-  Without this flag (advisory mode), only produces warnings.
+  Without this flag (advisory mode), only produces verbose messages.
 
 ``ENABLE``
   Optional. List of check severities to enable for this target.

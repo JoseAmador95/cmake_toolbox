@@ -286,7 +286,7 @@ jobs:
           }
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure ${{ matrix.ctest_labels && format('-L {0}', matrix.ctest_labels) || '' }} -j ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
+        run: ctest --test-dir build --output-on-failure ${{ matrix.ctest_labels && format('-L {0}', matrix.ctest_labels) || '' }} ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }} -j
 
       - name: Verify tests do not mutate source tree
         shell: pwsh

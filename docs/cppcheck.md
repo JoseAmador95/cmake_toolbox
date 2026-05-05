@@ -9,7 +9,6 @@ Cppcheck is a lightweight static analysis tool that detects various code defects
 Use the current API:
 
 ```cmake
-find_package(Cppcheck QUIET)
 include(Cppcheck)
 
 Cppcheck_Configure(
@@ -59,8 +58,8 @@ Parameters:
 - `STATUS` (required): Enable or disable cppcheck globally. Accepts ON, OFF, TRUE, FALSE, 1, 0
 - `STRICT` (optional): If specified, raises a fatal error if cppcheck is not found. Without this flag, a verbose message is issued
 - `ENABLE` (optional): List of check severities to enable. These are joined with commas into the `--enable` flag
-- `SUPPRESS` (optional): List of individual checks to suppress. These are joined with commas into the `--suppress` flag
-- `EXCLUDE_PATTERNS` (optional): List of path patterns to exclude from analysis. Each is passed as a separate `--exclude` flag
+- `SUPPRESS` (optional): List of individual checks to suppress. Each becomes a separate `--suppress` flag
+- `EXCLUDE_PATTERNS` (optional): List of path patterns to exclude from analysis. Each is passed as a separate `-i` flag
 
 When `STATUS` is ON and cppcheck is found:
 - Sets `CMAKE_C_CPPCHECK` and `CMAKE_CXX_CPPCHECK` to the cppcheck command with configured options
@@ -112,7 +111,6 @@ project(Example LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-find_package(Cppcheck QUIET)
 include(Cppcheck)
 
 # Create a library
@@ -144,7 +142,6 @@ project(MyProject LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-find_package(Cppcheck QUIET)
 include(Cppcheck)
 
 # Configure cppcheck globally with strict checking
@@ -427,7 +424,6 @@ if(DEFINED ENV{CI})
     set(CPPCHECK_STRICT STRICT)
 endif()
 
-find_package(Cppcheck QUIET)
 include(Cppcheck)
 
 Cppcheck_Configure(

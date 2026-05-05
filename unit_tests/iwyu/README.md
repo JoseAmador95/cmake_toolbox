@@ -104,7 +104,7 @@ Tests per-target configuration with missing target validation:
 - Attempts to call `IWYU_ConfigureTarget(TARGET nonexistent STATUS ON)` with non-existent target
 - Verifies configuration FAILS because target must exist (not context-dependent)
 
-**Expected Result:** FAIL (target validation is always enforced)
+**Expected Result:** PASS (test validates that missing target always causes error)
 
 ### test_mapping_file_handling.cmake
 Tests mapping file parameter:

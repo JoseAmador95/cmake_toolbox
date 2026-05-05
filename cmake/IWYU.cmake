@@ -222,7 +222,7 @@ Configure Include-What-You-Use (IWYU) globally for all C++ targets.
 
 This function sets CMAKE_CXX_INCLUDE_WHAT_YOU_USE variable to enable IWYU
 analysis during build. IWYU is C++-only; this function never sets C configuration.
-By default, operates in advisory mode (missing IWYU tool produces only a warning).
+By default, operates in advisory mode (missing IWYU tool produces only a verbose message).
 Use STRICT flag to fail configuration if IWYU is not available.
 
 Parameters
@@ -233,7 +233,7 @@ Parameters
 
 ``STRICT``
   Optional. If specified, fails with fatal error if IWYU not found or mapping
-  file missing. Without this flag (advisory mode), missing tool/file produces warning.
+  file missing. Without this flag (advisory mode), missing tool/file produces a verbose message.
 
 ``MAPPING_FILE``
   Optional. Path to IWYU mapping file (.imp format). Passed to IWYU as
@@ -349,7 +349,7 @@ Configure IWYU for a specific C++ CMake target.
 
 This function sets CXX_INCLUDE_WHAT_YOU_USE target property to enable IWYU
 analysis for a particular C++ target. By default, operates in advisory mode
-(missing IWYU tool produces only a warning). Use STRICT flag to enforce strict mode.
+(missing IWYU tool produces only a verbose message). Use STRICT flag to enforce strict mode.
 
 Parameters
 ^^^^^^^^^^
@@ -362,7 +362,7 @@ Parameters
 
 ``STRICT``
   Optional. If specified, fails if IWYU not found or mapping file missing.
-  Without this flag (advisory mode), produces only warnings for missing tool/file.
+  Without this flag (advisory mode), produces only verbose messages for missing tool/file.
   Note: Target existence is always checked and fails immediately regardless of STRICT mode.
 
 ``MAPPING_FILE``

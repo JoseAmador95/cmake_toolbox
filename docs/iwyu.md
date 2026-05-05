@@ -9,7 +9,6 @@ IWYU is a tool that analyzes C++ code to identify unnecessary `#include` directi
 Use the current API:
 
 ```cmake
-find_package(IWYU QUIET)
 include(IWYU)
 
 IWYU_Configure(
@@ -113,7 +112,6 @@ project(Example LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-find_package(IWYU QUIET)
 include(IWYU)
 
 # Create a library
@@ -145,7 +143,6 @@ project(MyProject LANGUAGES CXX)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(IWYU QUIET)
 include(IWYU)
 
 # Configure IWYU globally with mapping file and custom arguments
@@ -531,7 +528,6 @@ if(DEFINED ENV{CI})
     set(IWYU_STRICT STRICT)
 endif()
 
-find_package(IWYU QUIET)
 include(IWYU)
 
 IWYU_Configure(
