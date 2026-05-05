@@ -43,6 +43,7 @@ cmake -P test_find_iwyu.cmake
 cmake -P test_configure_advisory.cmake
 cmake -P test_configure_strict_fails.cmake
 cmake -P test_configure_target_basic.cmake
+cmake -P test_configure_target_missing_advisory.cmake
 cmake -P test_mapping_file_handling.cmake
 cmake -P test_additional_args.cmake
 cmake -P test_exclude_patterns.cmake
@@ -91,12 +92,19 @@ Tests strict mode enforcement:
 **Expected Result:** FAIL (intentional, when IWYU not available)
 
 ### test_configure_target_basic.cmake
-Tests per-target configuration:
+Tests per-target configuration with real C++ target:
 - Creates a dummy C++ CMake target
 - Calls `IWYU_ConfigureTarget(TARGET mytarget STATUS ON)`
 - Verifies configuration succeeds in advisory mode
 
 **Expected Result:** PASS
+
+### test_configure_target_missing_advisory.cmake
+Tests per-target configuration with missing target validation:
+- Attempts to call `IWYU_ConfigureTarget(TARGET nonexistent STATUS ON)` with non-existent target
+- Verifies configuration FAILS because target must exist (not context-dependent)
+
+**Expected Result:** FAIL (target validation is always enforced)
 
 ### test_mapping_file_handling.cmake
 Tests mapping file parameter:

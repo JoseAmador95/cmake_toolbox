@@ -87,12 +87,12 @@ Tests strict mode enforcement:
 **Expected Result:** FAIL (intentional, when cppcheck not available)
 
 ### test_configure_target_basic.cmake
-Tests per-target configuration:
-- Creates a dummy CMake target
-- Calls `Cppcheck_ConfigureTarget(TARGET mytarget STATUS ON)`
-- Verifies configuration succeeds in advisory mode
+Tests per-target configuration with missing target validation:
+- Attempts to call `Cppcheck_ConfigureTarget(TARGET nonexistent STATUS ON)` with non-existent target
+- Verifies configuration FAILS because target must exist (not context-dependent)
+- Also tests that STRICT flag is properly accepted
 
-**Expected Result:** PASS
+**Expected Result:** FAIL (target validation is always enforced)
 
 ### test_enable_suppress_flags.cmake
 Tests flag processing:
