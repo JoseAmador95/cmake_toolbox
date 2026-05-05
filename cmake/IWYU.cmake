@@ -329,7 +329,7 @@ function(IWYU_Configure)
             message(VERBOSE "IWYU_Configure: ${cmd}")
             set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "${cmd}" CACHE INTERNAL "" FORCE)
         else()
-            if(ARG_STRICT)
+            if(ARG_STRICT AND ARG_STATUS)
                 message(
                     FATAL_ERROR
                     "${CMAKE_CURRENT_FUNCTION}: IWYU not found and STRICT mode enabled"
@@ -477,7 +477,7 @@ function(IWYU_ConfigureTarget)
                         "${cmd}"
             )
         else()
-            if(ARG_STRICT)
+            if(ARG_STRICT AND ARG_STATUS)
                 message(
                     FATAL_ERROR
                     "${CMAKE_CURRENT_FUNCTION}: IWYU not found and STRICT mode enabled"
