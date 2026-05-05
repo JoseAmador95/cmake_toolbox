@@ -179,14 +179,11 @@ function(_Cppcheck_BuildCommand ENABLE SUPPRESS EXCLUDE_PATTERNS RETCMD)
         list(APPEND cmd_list "--enable=${enable_str}")
     endif()
 
-    # Build --suppress flag if provided
+    # Build --suppress flags if provided (one flag per suppression ID)
     if(SUPPRESS)
-        list(
-            JOIN SUPPRESS
-            ","
-            suppress_str
-        )
-        list(APPEND cmd_list "--suppress=${suppress_str}")
+        foreach(id IN LISTS SUPPRESS)
+            list(APPEND cmd_list "--suppress=${id}")
+        endforeach()
     endif()
 
     # Build --exclude flags if provided
@@ -195,6 +192,9 @@ function(_Cppcheck_BuildCommand ENABLE SUPPRESS EXCLUDE_PATTERNS RETCMD)
             list(APPEND cmd_list "--exclude=${pattern}")
         endforeach()
     endif()
+
+    # Make violations fail the build (consistent with IWYU behaviour)
+    list(APPEND cmd_list "--error-exitcode=1")
 
     set(${RETCMD} "${cmd_list}" PARENT_SCOPE)
 endfunction()
