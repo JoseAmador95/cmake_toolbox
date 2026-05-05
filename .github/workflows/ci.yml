@@ -202,6 +202,10 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.install_deps }}
 
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Add MSVC ASan runtime to PATH
         if: matrix.name == 'windows-msvc-sanitizer'
         shell: pwsh
