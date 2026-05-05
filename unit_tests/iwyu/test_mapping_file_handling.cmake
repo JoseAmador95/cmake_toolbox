@@ -42,7 +42,7 @@ else()
     message(STATUS "  CMAKE_CXX_INCLUDE_WHAT_YOU_USE = '${CMAKE_CXX_INCLUDE_WHAT_YOU_USE}'")
 endif()
 
-# Test 2: Create a dummy mapping file and test with strict mode
+# Test 2: Create a dummy mapping file and test advisory mode with mapping file
 file(WRITE "${mapping_file_path}" "# Test IWYU mapping file\n")
 
 IWYU_Configure(STATUS ON MAPPING_FILE "${mapping_file_path}")

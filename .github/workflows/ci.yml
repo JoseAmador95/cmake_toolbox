@@ -163,6 +163,7 @@ jobs:
           - name: linux-cppcheck-enabled
             os: ubuntu-latest
             cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            ctest_labels: cppcheck
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr cppcheck
@@ -170,6 +171,7 @@ jobs:
           - name: linux-cppcheck-advisory
             os: ubuntu-latest
             cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            ctest_labels: cppcheck
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr
@@ -178,6 +180,7 @@ jobs:
           - name: linux-iwyu-enabled
             os: ubuntu-latest
             cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            ctest_labels: iwyu
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr iwyu
@@ -185,6 +188,7 @@ jobs:
           - name: linux-iwyu-advisory
             os: ubuntu-latest
             cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            ctest_labels: iwyu
             install_deps: |
               sudo apt-get update
               sudo apt-get install -y clang-format gcovr
@@ -278,7 +282,7 @@ jobs:
           }
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure -j ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
+        run: ctest --test-dir build --output-on-failure ${{ matrix.ctest_labels && format('-L {0}', matrix.ctest_labels) || '' }} -j ${{ matrix.build_config && format('-C {0}', matrix.build_config) || '' }}
 
       - name: Verify tests do not mutate source tree
         shell: pwsh

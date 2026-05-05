@@ -30,9 +30,8 @@ This module follows the same pattern as ClangTidy.cmake for consistency across t
 
 ## Requirements
 
-- CMake `3.15+`
+- CMake `3.22+`
 - CMake module path includes this repository's `cmake/` directory
-- `find_package(IWYU ...)` called before `include(IWYU)`
 - `include-what-you-use` executable available in system PATH or CMake module path
 - **C++ only**: this module only sets `CMAKE_CXX_INCLUDE_WHAT_YOU_USE` (never `CMAKE_C_INCLUDE_WHAT_YOU_USE`)
 
@@ -109,7 +108,7 @@ When `STATUS` is OFF or IWYU is not found:
 `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 project(Example LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -140,7 +139,7 @@ IWYU will run automatically during compilation, reporting unused and missing inc
 `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 project(MyProject LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
