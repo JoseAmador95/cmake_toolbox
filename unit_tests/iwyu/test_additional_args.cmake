@@ -37,7 +37,13 @@ if(IWYU_FOUND)
     # Count -Xiwyu occurrences (should be 3 for 3 arguments)
     string(REGEX MATCHALL "-Xiwyu" xiwyu_matches "${iwyu_cmd}")
     list(LENGTH xiwyu_matches xiwyu_count)
-    message(STATUS "  - Number of -Xiwyu prefixes: ${xiwyu_count} (expected 3+)")
+    if(xiwyu_count LESS 3)
+        message(
+            FATAL_ERROR
+            "FAIL: Expected 3 -Xiwyu prefixes but got ${xiwyu_count}. Command: ${iwyu_cmd}"
+        )
+    endif()
+    message(STATUS "PASS: ADDITIONAL_ARGS - ${xiwyu_count} -Xiwyu prefixes verified")
 else()
     # Tool not found - advisory mode
     message(STATUS "PASS: ADDITIONAL_ARGS - advisory mode (tool not installed)")

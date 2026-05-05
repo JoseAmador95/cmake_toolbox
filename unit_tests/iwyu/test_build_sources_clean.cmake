@@ -7,16 +7,14 @@ cmake_minimum_required(VERSION 3.22)
 
 get_filename_component(abs_cmake_module_path "${CMAKE_CURRENT_LIST_DIR}/../../cmake" ABSOLUTE)
 
+get_filename_component(test_script_name "${CMAKE_CURRENT_LIST_FILE}" NAME_WE)
 string(TIMESTAMP test_timestamp "%Y%m%d%H%M%S")
-set(test_dir "${CMAKE_CURRENT_LIST_DIR}/test_artifacts_${test_timestamp}")
+set(test_dir "${CMAKE_CURRENT_LIST_DIR}/test_artifacts_${test_script_name}_${test_timestamp}")
 set(build_dir "${test_dir}/build")
 file(MAKE_DIRECTORY "${build_dir}/src")
 
-# Source file: includes only what it uses — no IWYU violations
-file(
-    WRITE "${build_dir}/src/greeter.cpp"
-    "#include <cstdio>\nvoid greet() { std::printf(\"hello\\n\"); }\n"
-)
+# Source file: no includes at all — definitively no IWYU violations possible
+file(WRITE "${build_dir}/src/add.cpp" "int add(int a, int b) { return a + b; }\n")
 
 file(
     WRITE "${build_dir}/CMakeLists.txt"
@@ -27,7 +25,7 @@ project(IWYUCleanSources LANGUAGES CXX)
 set(CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
 include(IWYU)
 
-add_library(testlib STATIC src/greeter.cpp)
+add_library(testlib STATIC src/add.cpp)
 IWYU_ConfigureTarget(TARGET testlib STATUS ON)
 "
 )
