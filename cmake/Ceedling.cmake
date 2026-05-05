@@ -43,6 +43,21 @@ Cache Variables
   Default labels applied to Ceedling tests.
   Default: unit
 
+``CMT_CEEDLING_USE_CEXCEPTION``
+  Enable CException integration. When ON, CException is automatically fetched
+  (via FetchContent) if not found, and linked to every ``Ceedling_AddUnitTest``
+  target. Enables ``Throw()``/``Try``/``Catch`` in both production code and
+  unit tests.
+  Default: OFF
+
+``CMT_CEXCEPTION_GIT_REPOSITORY``
+  CException repository URL used when fetching via FetchContent.
+  Default: ``https://github.com/ThrowTheSwitch/CException.git``
+
+``CMT_CEXCEPTION_GIT_TAG``
+  CException git tag used when fetching via FetchContent.
+  Default: ``v1.3.3``
+
 Functions
 ^^^^^^^^^
 
@@ -114,6 +129,17 @@ option(CMT_CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
 option(CMT_CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
 option(CMT_CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
 set(CMT_CEEDLING_TEST_LABELS "unit" CACHE STRING "Default labels for Ceedling tests")
+option(CMT_CEEDLING_USE_CEXCEPTION "Enable CException integration for unit tests" OFF)
+set(CMT_CEXCEPTION_GIT_REPOSITORY
+    "https://github.com/ThrowTheSwitch/CException.git"
+    CACHE STRING
+    "CException repository URL (used when fetching via FetchContent)"
+)
+set(CMT_CEXCEPTION_GIT_TAG
+    "v1.3.3"
+    CACHE STRING
+    "CException version tag (used when fetching via FetchContent)"
+)
 
 set(_ceedling_gcovr_post_run_default OFF)
 if(CMT_CEEDLING_ENABLE_GCOV)
@@ -153,6 +179,23 @@ if(CMT_CEEDLING_EXTRACT_FUNCTIONS AND TARGET Unity::Unity)
     else()
         target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
     endif()
+endif()
+
+if(CMT_CEEDLING_USE_CEXCEPTION)
+    if(NOT TARGET CException::CException)
+        set(CEXCEPTION_FETCH ON)
+        find_package(CException REQUIRED)
+        if(NOT TARGET CException::CException)
+            message(
+                FATAL_ERROR
+                "Ceedling: CMT_CEEDLING_USE_CEXCEPTION=ON but find_package(CException) did not "
+                "provide the CException::CException imported target. Ensure your CException "
+                "installation exports this target, or unset CException_DIR to let cmake_toolbox "
+                "fetch CException automatically via FetchContent."
+            )
+        endif()
+    endif()
+    message(STATUS "Ceedling: CException integration enabled")
 endif()
 
 # ==============================================================================
@@ -442,6 +485,9 @@ function(Ceedling_AddUnitTest)
             Unity::CMock
             Unity::Unity
     )
+    if(CMT_CEEDLING_USE_CEXCEPTION AND TARGET CException::CException)
+        target_link_libraries(${ARG_NAME} PRIVATE CException::CException)
+    endif()
 
     # Setup build directory
     set(TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}.dir")
@@ -583,14 +629,24 @@ function(Ceedling_AddUnitTest)
     if(_cmt_ceedling_test_labels)
         list(REMOVE_DUPLICATES _cmt_ceedling_test_labels)
         set(_cmt_ceedling_test_labels_string "${_cmt_ceedling_test_labels}")
-        string(REPLACE ";" "\\;" _cmt_ceedling_test_labels_escaped "${_cmt_ceedling_test_labels_string}")
+        string(
+            REPLACE
+            ";"
+            "\\;"
+            _cmt_ceedling_test_labels_escaped
+            "${_cmt_ceedling_test_labels_string}"
+        )
     endif()
 
     set(_cmt_ceedling_gcovr_fixture_required "")
     if(CMT_CEEDLING_ENABLE_GCOV AND CMT_CEEDLING_GCOVR_POST_RUN AND TARGET gcovr)
         set(_cmt_ceedling_gcovr_fixture_required "gcovr_unit")
 
-        get_property(_cmt_ceedling_gcovr_post_run_added GLOBAL PROPERTY CMT_CEEDLING_GCOVR_POST_RUN_ADDED)
+        get_property(
+            _cmt_ceedling_gcovr_post_run_added
+            GLOBAL
+            PROPERTY CMT_CEEDLING_GCOVR_POST_RUN_ADDED
+        )
         if(NOT _cmt_ceedling_gcovr_post_run_added)
             set(_cmt_ceedling_gcovr_build_cmd
                 ${CMAKE_COMMAND}
@@ -689,9 +745,11 @@ function(Ceedling_AddUnitTest)
             COMMAND
                 "${CMAKE_COMMAND}" -D "TEST_EXECUTABLE=$<TARGET_FILE:${ARG_NAME}>" -D
                 "TEST_WORKING_DIR=${CMAKE_CURRENT_BINARY_DIR}" -D
-                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D "TEST_FILE=${CMT_CEEDLING_UNITY_TEST_FILE}" -D
-                "TEST_ENVIRONMENT=${_cmt_ceedling_sanitizer_test_environment}" ${_cmt_ceedling_test_labels_arg}
-                ${_cmt_ceedling_test_fixtures_arg} -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
+                "TEST_SUITE=$<TARGET_FILE_NAME:${ARG_NAME}>" -D
+                "TEST_FILE=${CMT_CEEDLING_UNITY_TEST_FILE}" -D
+                "TEST_ENVIRONMENT=${_cmt_ceedling_sanitizer_test_environment}"
+                ${_cmt_ceedling_test_labels_arg} ${_cmt_ceedling_test_fixtures_arg} -P
+                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/DiscoverTests.cmake"
             VERBATIM
         )
 

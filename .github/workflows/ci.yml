@@ -95,6 +95,27 @@ jobs:
               sudo apt-get update
               sudo apt-get install -y clang clang-format gcovr llvm
 
+          # ── Linux + CException ───────────────────────────────────────────
+          - name: linux-cexception
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMT_CEEDLING_USE_CEXCEPTION=ON
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang-format gcovr
+
+          - name: linux-clang-cexception
+            os: ubuntu-latest
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMT_CEEDLING_USE_CEXCEPTION=ON
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_CXX_COMPILER=clang++
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y clang clang-format gcovr
+
           # ── macOS ────────────────────────────────────────────────────────
           - name: macos-baseline
             os: macos-latest

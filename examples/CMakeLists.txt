@@ -16,6 +16,20 @@ Ceedling_AddUnitTest(
     ENABLE_SANITIZER
 )
 
+if(CMT_CEEDLING_USE_CEXCEPTION)
+    add_library(example_cexception STATIC ${CMAKE_CURRENT_SOURCE_DIR}/source/example_cexception.c)
+    target_include_directories(example_cexception PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(example_cexception PUBLIC CException::CException)
+
+    Ceedling_AddUnitTest(
+        NAME example_cexception_test
+        UNIT_TEST ${CMAKE_CURRENT_SOURCE_DIR}/unit_test/test_example_cexception.c
+        TARGET example_cexception
+        LABELS
+            cexception
+    )
+endif()
+
 # Automatically add all policy unit tests to CTest
 file(GLOB POLICY_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/policy/test_*.cmake")
 foreach(test_file ${POLICY_TEST_FILES})
@@ -76,6 +90,27 @@ foreach(test_file ${FINDUNITY_TEST_FILES})
         PROPERTIES
             LABELS
                 "script;findunity"
+    )
+endforeach()
+
+# Automatically add all FindCException unit tests to CTest
+file(
+    GLOB FINDCEXCEPTION_TEST_FILES
+    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/findcexception/test_*.cmake"
+)
+foreach(test_file ${FINDCEXCEPTION_TEST_FILES})
+    get_filename_component(test_filename ${test_file} NAME_WE)
+    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+    add_test(
+        NAME findcexception_${test_name}
+        COMMAND
+            ${CMAKE_COMMAND} -P ${test_file}
+    )
+    set_tests_properties(
+        findcexception_${test_name}
+        PROPERTIES
+            LABELS
+                "script;findcexception"
     )
 endforeach()
 
@@ -667,3 +702,31 @@ foreach(test_file ${UNITY_INTEGRATION_TESTS})
                 "integration;unity"
     )
 endforeach()
+
+# CException Integration Tests
+if(CMT_CEEDLING_USE_CEXCEPTION)
+    file(
+        GLOB CEXCEPTION_INTEGRATION_TESTS
+        "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/cexception/test_*.cmake"
+    )
+    foreach(test_file ${CEXCEPTION_INTEGRATION_TESTS})
+        get_filename_component(test_filename ${test_file} NAME_WE)
+        string(REGEX REPLACE "^test_" "" test_name ${test_filename})
+        add_test(
+            NAME integration_cexception_${test_name}
+            COMMAND
+                ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
+                -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
+                -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DCMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT=${CMAKE_CURRENT_BINARY_DIR}/test_artifacts -P
+                ${test_file}
+        )
+        set_tests_properties(
+            integration_cexception_${test_name}
+            PROPERTIES
+                LABELS
+                    "integration;cexception"
+        )
+    endforeach()
+endif()
