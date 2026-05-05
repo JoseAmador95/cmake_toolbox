@@ -98,8 +98,8 @@ cmake -S . -B build-ci -DMY_CI_BUILD=ON
 
 ## Requirements
 
-- CMake 3.10+ for Cppcheck support
-- CMake 3.3+ for IWYU support
+- CMake 3.15+ for Cppcheck support
+- CMake 3.15+ for IWYU support
 - cppcheck executable (optional; advisory mode works without it)
 - include-what-you-use executable (optional; advisory mode works without it)
 
