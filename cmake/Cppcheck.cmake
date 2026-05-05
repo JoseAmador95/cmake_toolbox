@@ -272,17 +272,17 @@ function(Cppcheck_Configure)
     if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
         message(
             FATAL_ERROR
-            "${CMAKE_CURRENT_FUNCTION}: STATUS must be ON or OFF, got '${ARG_STATUS}'"
+            "${CMAKE_CURRENT_FUNCTION}: STATUS must be a valid CMake boolean, got '${ARG_STATUS}'"
         )
     endif()
 
-    if(Cppcheck_FOUND AND ARG_STATUS STREQUAL "ON")
+    if(Cppcheck_FOUND AND ARG_STATUS)
         _Cppcheck_BuildCommand("${ARG_ENABLE}" "${ARG_SUPPRESS}" "${ARG_EXCLUDE_PATTERNS}" cmd)
         set(CMAKE_C_CPPCHECK "${cmd}" CACHE INTERNAL "" FORCE)
         set(CMAKE_CXX_CPPCHECK "${cmd}" CACHE INTERNAL "" FORCE)
     else()
         if(NOT Cppcheck_FOUND)
-            if(ARG_STRICT AND ARG_STATUS STREQUAL "ON")
+            if(ARG_STRICT AND ARG_STATUS)
                 message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
             else()
                 message(VERBOSE "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
@@ -386,11 +386,11 @@ function(Cppcheck_ConfigureTarget)
     if(NOT ARG_STATUS MATCHES "^(ON|OFF|TRUE|FALSE|1|0)$")
         message(
             FATAL_ERROR
-            "${CMAKE_CURRENT_FUNCTION}: STATUS must be ON or OFF, got '${ARG_STATUS}'"
+            "${CMAKE_CURRENT_FUNCTION}: STATUS must be a valid CMake boolean, got '${ARG_STATUS}'"
         )
     endif()
 
-    if(Cppcheck_FOUND AND ARG_STATUS STREQUAL "ON")
+    if(Cppcheck_FOUND AND ARG_STATUS)
         _Cppcheck_BuildCommand("${ARG_ENABLE}" "${ARG_SUPPRESS}" "${ARG_EXCLUDE_PATTERNS}" cmd)
         set_target_properties(
             ${ARG_TARGET}
@@ -402,7 +402,7 @@ function(Cppcheck_ConfigureTarget)
         )
     else()
         if(NOT Cppcheck_FOUND)
-            if(ARG_STRICT AND ARG_STATUS STREQUAL "ON")
+            if(ARG_STRICT AND ARG_STATUS)
                 message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
             else()
                 message(VERBOSE "${CMAKE_CURRENT_FUNCTION}: Cppcheck not found")
