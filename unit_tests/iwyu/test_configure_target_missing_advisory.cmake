@@ -19,7 +19,7 @@ file(
     WRITE "${build_dir}/CMakeLists.txt"
     "
 cmake_minimum_required(VERSION 3.22)
-project(IWYUTestMissingTarget LANGUAGES NONE)
+project(IWYUTestMissingTarget LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
 include(IWYU)
