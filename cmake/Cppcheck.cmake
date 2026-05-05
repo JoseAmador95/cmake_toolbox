@@ -371,12 +371,7 @@ function(Cppcheck_ConfigureTarget)
     endif()
 
     if(NOT TARGET ${ARG_TARGET})
-        if(ARG_STRICT)
-            message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
-        else()
-            message(VERBOSE "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
-            return()
-        endif()
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: Target '${ARG_TARGET}' does not exist")
     endif()
 
     if(NOT DEFINED ARG_STATUS)

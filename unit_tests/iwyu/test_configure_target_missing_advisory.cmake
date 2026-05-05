@@ -1,6 +1,6 @@
-# Test: IWYU_ConfigureTarget missing target in advisory mode
-# Purpose: Verify that missing target only warns in advisory mode
-# Expected: PASS (advisory mode should not fail on missing target)
+# Test: IWYU_ConfigureTarget missing target requirement
+# Purpose: Verify that missing target always causes a configuration error
+# Expected: PASS (test correctly validates that missing target fails)
 # Executable: cmake -P test_configure_target_missing_advisory.cmake
 
 cmake_minimum_required(VERSION 3.22)
@@ -19,17 +19,16 @@ file(
     WRITE "${build_dir}/CMakeLists.txt"
     "
 cmake_minimum_required(VERSION 3.22)
-project(IWYUTestAdvisoryMode LANGUAGES CXX)
+project(IWYUTestMissingTarget LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
 include(IWYU)
 
-# Try to configure a non-existent target in advisory mode
-# Should not fail, just issue a verbose message
+# Try to configure a non-existent target
+# Should ALWAYS fail (missing target is a usage error)
 IWYU_ConfigureTarget(TARGET nonexistent_target STATUS ON)
 
-# If we reach here, advisory mode handled missing target correctly
-message(\"PASS: Advisory mode handled missing target\")
+message(\"ERROR: Should not reach here!\")
 "
 )
 
@@ -45,16 +44,13 @@ execute_process(
 # Cleanup
 file(REMOVE_RECURSE "${test_dir}")
 
-# Check result
+# Check result - should FAIL
 if(result EQUAL 0)
-    if(output MATCHES "PASS" OR error MATCHES "PASS")
-        message(STATUS "PASS: IWYU_ConfigureTarget advisory mode test successful")
-    else()
-        message(
-            FATAL_ERROR
-            "FAIL: Test succeeded but did not output PASS. output=${output}, error=${error}"
-        )
-    endif()
+    message(FATAL_ERROR "FAIL: IWYU_ConfigureTarget should fail on missing target")
 else()
-    message(FATAL_ERROR "FAIL: Test failed with result=${result}, output=${output}, error=${error}")
+    if(error MATCHES "does not exist")
+        message(STATUS "PASS: IWYU_ConfigureTarget correctly failed on missing target")
+    else()
+        message(FATAL_ERROR "FAIL: Test failed but with unexpected error: ${error}")
+    endif()
 endif()

@@ -88,9 +88,9 @@ Cppcheck_ConfigureTarget(
 
 Parameters:
 
-- `TARGET` (required): The CMake target to configure cppcheck for (target must exist)
+- `TARGET` (required): The CMake target to configure cppcheck for. Target must exist; missing targets always cause a configuration error
 - `STATUS` (required): Enable or disable cppcheck for this target. Accepts ON, OFF, TRUE, FALSE, 1, 0
-- `STRICT` (optional): If specified, raises a fatal error if cppcheck is not found or target does not exist. Without this flag, a verbose message is issued for missing tools
+- `STRICT` (optional): If specified, raises a fatal error if cppcheck is not found. Without this flag, a verbose message is issued for missing tools
 - `ENABLE` (optional): List of check severities to enable
 - `SUPPRESS` (optional): List of individual checks to suppress
 - `EXCLUDE_PATTERNS` (optional): List of path patterns to exclude
@@ -583,16 +583,7 @@ cmake --build build
    )
    ```
 
-2. Use advisory mode to avoid fatal error:
-   ```cmake
-   # Without STRICT flag, missing target produces warning only
-   Cppcheck_ConfigureTarget(
-       TARGET possibly_missing
-       STATUS ON
-   )
-   ```
-
-3. Check target exists before configuring:
+2. Check target exists before configuring:
    ```cmake
    if(TARGET mylib)
        Cppcheck_ConfigureTarget(
