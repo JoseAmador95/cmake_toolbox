@@ -93,8 +93,14 @@ add_library(mylib STATIC lib.cpp)
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ IWYU_Configure STATUS ON works (advisory mode)")
-    message(STATUS "    Build executed successfully")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ IWYU_Configure STATUS ON works (advisory mode)")
+        message(STATUS "    Build executed successfully")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_global_configuration_off)
@@ -155,7 +161,13 @@ add_library(mylib STATIC lib.cpp)
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ IWYU_Configure STATUS OFF works")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ IWYU_Configure STATUS OFF works")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_per_target_configuration)
@@ -235,7 +247,13 @@ endif()
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ IWYU_ConfigureTarget per-target works")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ IWYU_ConfigureTarget per-target works")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_cxx_only)
@@ -305,7 +323,13 @@ message(STATUS \"IWYU correctly configured only for C++\")
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ IWYU C++-only mode verified")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ IWYU C++-only mode verified")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_strict_mode)
@@ -418,7 +442,13 @@ message(STATUS \"IWYU additional arguments configured\")
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ IWYU additional arguments work")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ IWYU additional arguments work")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(run_all_tests)
