@@ -92,8 +92,14 @@ add_library(mylib STATIC lib.c)
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ Cppcheck_Configure STATUS ON works (advisory mode)")
-    message(STATUS "    Build output: ${build_output}")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ Cppcheck_Configure STATUS ON works (advisory mode)")
+        message(STATUS "    Build output: ${build_output}")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_global_configuration_off)
@@ -157,7 +163,13 @@ add_library(mylib STATIC lib.c)
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ Cppcheck_Configure STATUS OFF works")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ Cppcheck_Configure STATUS OFF works")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_per_target_configuration)
@@ -232,7 +244,13 @@ endif()
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ Cppcheck_ConfigureTarget per-target works")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ Cppcheck_ConfigureTarget per-target works")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(test_strict_mode)
@@ -313,8 +331,7 @@ add_library(utils STATIC utils.cpp)
 Cppcheck_ConfigureTarget(
     TARGET core
     STATUS ON
-    ENABLE warning style performance
-    SUPPRESS missingIncludeSystem unusedVariable
+    ENABLE warning style
 )
 
 Cppcheck_ConfigureTarget(
@@ -356,7 +373,13 @@ message(STATUS \"Cppcheck checks configuration complete\")
         ERROR_VARIABLE build_error
     )
 
-    message(STATUS "  ✓ Cppcheck enable/disable checks works")
+    if(build_result EQUAL 0)
+        message(STATUS "  ✓ Cppcheck enable/disable checks works")
+    else()
+        message(STATUS "  ✗ Build failed unexpectedly: ${build_error}")
+        math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
+        set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(run_all_tests)
