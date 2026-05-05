@@ -92,7 +92,7 @@ Tests per-target configuration with missing target validation:
 - Verifies configuration FAILS because target must exist (not context-dependent)
 - Also tests that STRICT flag is properly accepted
 
-**Expected Result:** FAIL (target validation is always enforced)
+**Expected Result:** PASS (test validates that missing target always causes error)
 
 ### test_enable_suppress_flags.cmake
 Tests flag processing:
@@ -105,7 +105,7 @@ Tests flag processing:
 ### test_exclude_patterns.cmake
 Tests pattern exclusion:
 - Calls with multiple `EXCLUDE_PATTERNS`
-- Verifies patterns are stored as `--exclude=pattern` flags
+- Verifies patterns are stored as `-i <pattern>` flags
 - Prints patterns for verification
 
 **Expected Result:** PASS

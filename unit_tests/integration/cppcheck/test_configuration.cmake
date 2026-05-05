@@ -389,7 +389,7 @@ message(STATUS \"Cppcheck checks configuration complete\")
     )
 
     file(WRITE "${src_dir}/CMakeLists.txt" "${test_script}")
-    file(WRITE "${src_dir}/core.c" "int core_func(void) { int unused; return 42; }")
+    file(WRITE "${src_dir}/core.c" "int core_func(int a, int b) { return a + b; }")
     file(WRITE "${src_dir}/utils.cpp" "void util_func() { }")
 
     TestHelpers_GetConfigureArgs(configure_args)
