@@ -89,9 +89,9 @@ IWYU_ConfigureTarget(
 
 Parameters:
 
-- `TARGET` (required): The CMake target to configure IWYU for (target must exist and be a C++ target)
+- `TARGET` (required): The CMake target to configure IWYU for. Target must exist and be a C++ target; missing targets always cause a configuration error
 - `STATUS` (required): Enable or disable IWYU for this target. Accepts `ON`, `OFF`, `TRUE`, `FALSE`, `1`, `0`
-- `STRICT` (optional): If specified, raises a fatal error if IWYU is not found or target does not exist. Without this flag, a verbose message is issued for missing tools
+- `STRICT` (optional): If specified, raises a fatal error if IWYU is not found. Without this flag, a verbose message is issued for missing tools
 - `MAPPING_FILE` (optional): Path to an IWYU mapping file
 - `ADDITIONAL_ARGS` (optional): List of IWYU-specific arguments
 - `EXCLUDE_PATTERNS` (optional): List of path patterns to exclude
