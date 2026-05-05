@@ -18,34 +18,43 @@ file(MAKE_DIRECTORY "${test_artifacts_dir}")
 set(mapping_file_path "${test_artifacts_dir}/test_iwyu_mapping.imp")
 set(nonexistent_mapping "${test_artifacts_dir}/nonexistent_mapping.imp")
 
-# Test 1: Configure with a non-existent mapping file in advisory mode
-message(STATUS "INFO: Testing MAPPING_FILE in advisory mode (tool may not be installed)")
+# Test 1: Configure with a non-existent mapping file
+# When IWYU is found: module should drop the missing file (advisory) → --mapping_file= absent
+# When IWYU is not found: advisory mode, no-op
+message(STATUS "INFO: Testing MAPPING_FILE with non-existent file")
 
 IWYU_Configure(STATUS ON MAPPING_FILE "${nonexistent_mapping}")
 
 if(IWYU_FOUND)
-    # Tool found - check if mapping file validation occurs
     set(iwyu_cmd "${CMAKE_CXX_INCLUDE_WHAT_YOU_USE}")
-
     if("${iwyu_cmd}" MATCHES "--mapping_file=")
-        message(STATUS "PASS: MAPPING_FILE - parameter is present in command")
-        if("${iwyu_cmd}" MATCHES "mapping_file=${nonexistent_mapping}")
-            message(STATUS "  Correct format detected")
-        endif()
-        message(STATUS "  Command: ${iwyu_cmd}")
-    else()
-        message(STATUS "  INFO: Tool configured but mapping file check may not apply")
+        message(
+            FATAL_ERROR
+            "FAIL: Non-existent mapping file should be silently dropped but is in command: ${iwyu_cmd}"
+        )
     endif()
+    message(STATUS "PASS: MAPPING_FILE (non-existent) correctly dropped in advisory mode")
 else()
-    # Tool not found - advisory mode should still succeed
-    message(STATUS "PASS: MAPPING_FILE - advisory mode completed without tool")
-    message(STATUS "  CMAKE_CXX_INCLUDE_WHAT_YOU_USE = '${CMAKE_CXX_INCLUDE_WHAT_YOU_USE}'")
+    message(STATUS "PASS: MAPPING_FILE (non-existent) - advisory mode completed without tool")
 endif()
 
-# Test 2: Create a dummy mapping file and test advisory mode with mapping file
+# Test 2: Create a real mapping file — when IWYU found, command must include --mapping_file=
 file(WRITE "${mapping_file_path}" "# Test IWYU mapping file\n")
 
 IWYU_Configure(STATUS ON MAPPING_FILE "${mapping_file_path}")
+
+if(IWYU_FOUND)
+    set(iwyu_cmd "${CMAKE_CXX_INCLUDE_WHAT_YOU_USE}")
+    if(NOT ("${iwyu_cmd}" MATCHES "--mapping_file="))
+        message(
+            FATAL_ERROR
+            "FAIL: MAPPING_FILE not found in command after providing existing file. Command: ${iwyu_cmd}"
+        )
+    endif()
+    message(STATUS "PASS: MAPPING_FILE correctly included in command: ${iwyu_cmd}")
+else()
+    message(STATUS "PASS: MAPPING_FILE (existing) - advisory mode completed without tool")
+endif()
 
 message(STATUS "PASS: MAPPING_FILE test completed successfully")
 

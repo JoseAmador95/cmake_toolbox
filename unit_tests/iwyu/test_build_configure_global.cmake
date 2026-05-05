@@ -1,9 +1,10 @@
-# Test: Build with IWYU violations
-# Purpose: Verify that sources with unnecessary includes are caught by IWYU
+# Test: Build with IWYU_Configure global configuration and violations
+# Purpose: Verify that the global IWYU_Configure path (CMAKE_CXX_INCLUDE_WHAT_YOU_USE) is
+#          exercised at build time — distinct from per-target IWYU_ConfigureTarget
 # Expected: PASS in two scenarios:
 #   - IWYU installed: build fails because IWYU detects the violation
-#   - IWYU not installed: build passes (advisory mode skips checks)
-# Executable: cmake -P test_build_sources_violations.cmake
+#   - IWYU not installed: build passes (advisory mode, CMAKE_CXX_INCLUDE_WHAT_YOU_USE empty)
+# Executable: cmake -P test_build_configure_global.cmake
 
 cmake_minimum_required(VERSION 3.22)
 
@@ -25,13 +26,14 @@ file(
     WRITE "${build_dir}/CMakeLists.txt"
     "
 cmake_minimum_required(VERSION 3.22)
-project(IWYUViolations LANGUAGES CXX)
+project(IWYUGlobalViolations LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH \"${abs_cmake_module_path}\")
 include(IWYU)
 
+IWYU_Configure(STATUS ON)
+
 add_library(testlib STATIC src/violations.cpp)
-IWYU_ConfigureTarget(TARGET testlib STATUS ON)
 "
 )
 
@@ -68,5 +70,8 @@ else()
             "FAIL: Build failed but output does not mention IWYU.\noutput=${build_output}\nerror=${build_error}"
         )
     endif()
-    message(STATUS "PASS: Build failed as expected (IWYU detected include violations)")
+    message(
+        STATUS
+        "PASS: Build failed as expected (IWYU detected include violations via global config)"
+    )
 endif()
