@@ -74,3 +74,10 @@ else()
 endif()
 
 message(STATUS "PASS: Cppcheck_ConfigureTarget test completed successfully")
+
+# Cleanup temp files
+file(
+    REMOVE
+    "${CMAKE_CURRENT_BINARY_DIR}/test_missing_target.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/test_missing_target_strict.cmake"
+)

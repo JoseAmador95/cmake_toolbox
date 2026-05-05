@@ -81,10 +81,10 @@ Tests the default advisory mode where cppcheck is optional:
 ### test_configure_strict_fails.cmake
 Tests strict mode enforcement:
 - Calls `Cppcheck_Configure(STATUS ON STRICT)` without cppcheck
-- Expects CMake configuration to FAIL with fatal error
-- This test is expected to fail when cppcheck is not installed
+- If cppcheck is installed: configures successfully
+- If cppcheck is NOT installed: runs a subprocess to verify STRICT causes FATAL_ERROR
 
-**Expected Result:** FAIL (intentional, when cppcheck not available)
+**Expected Result:** PASS (test validates strict mode enforcement correctly)
 
 ### test_configure_target_basic.cmake
 Tests per-target configuration with missing target validation:

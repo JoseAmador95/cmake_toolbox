@@ -86,10 +86,10 @@ Tests the default advisory mode where IWYU is optional:
 ### test_configure_strict_fails.cmake
 Tests strict mode enforcement:
 - Calls `IWYU_Configure(STATUS ON STRICT)` without IWYU
-- Expects CMake configuration to FAIL with fatal error
-- This test is expected to fail when IWYU is not installed
+- If IWYU is installed: configures successfully
+- If IWYU is NOT installed: runs a subprocess to verify STRICT causes FATAL_ERROR
 
-**Expected Result:** FAIL (intentional, when IWYU not available)
+**Expected Result:** PASS (test validates strict mode enforcement correctly)
 
 ### test_configure_target_basic.cmake
 Tests per-target configuration with real C++ target:
