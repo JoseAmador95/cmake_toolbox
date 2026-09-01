@@ -61,4 +61,11 @@ The `test_trim_clangtidy_compat.cmake` verifies that clang-tidy accepts trimmed 
 - `CompileCommands_Trim` creates a custom command in project mode
 - Tests are run as integration tests (cmake -S -B) to test project-mode behavior
 - The trim helper runs as a build-time custom command
-- Clang-Tidy compatibility tests require clang-tidy to be installed
+- Clang-Tidy compatibility tests require clang-tidy to be installed. They skip
+  gracefully when it is missing so developer machines without the tool still pass.
+  Configure with `-DCMAKE_TOOLBOX_REQUIRE_CLANG_TIDY=ON` to turn that skip into a
+  hard failure; CI enables it on the `linux-baseline` leg, which installs
+  clang-tidy and runs the full unfiltered suite.
+- The clang-tidy invocations pass `--checks=clang-analyzer-*` explicitly. With an
+  empty check set clang-tidy aborts with "no checks enabled" before parsing the
+  compile command, which would make the tests pass without validating anything.

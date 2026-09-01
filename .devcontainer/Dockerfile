@@ -15,7 +15,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     cmake \
     git \
     clang \
-    clang-format \
     clang-tidy \
     ruby-dev \
     gcovr \

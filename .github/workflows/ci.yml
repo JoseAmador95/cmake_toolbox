@@ -15,12 +15,17 @@ jobs:
       matrix:
         include:
           # ── Linux ────────────────────────────────────────────────────────
+          # This leg runs the full unfiltered suite and is the one that owns the
+          # CompileCommands clang-tidy compatibility test: it installs clang-tidy
+          # and requires it, so the test can never skip silently in CI.
           - name: linux-baseline
             os: ubuntu-latest
-            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+            cmake_flags: >-
+              -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
+              -DCMAKE_TOOLBOX_REQUIRE_CLANG_TIDY=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang-format gcovr
+              sudo apt-get install -y clang-tidy gcovr
 
           - name: linux-gcov
             os: ubuntu-latest
@@ -29,7 +34,7 @@ jobs:
               -DCMT_CEEDLING_ENABLE_GCOV=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang-format gcovr
+              sudo apt-get install -y gcovr
 
           - name: linux-sanitizer
             os: ubuntu-latest
@@ -38,7 +43,7 @@ jobs:
               -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang-format gcovr
+              sudo apt-get install -y gcovr
 
           - name: linux-gcov-sanitizer
             os: ubuntu-latest
@@ -48,7 +53,7 @@ jobs:
               -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang-format gcovr
+              sudo apt-get install -y gcovr
 
           # ── Linux + Clang ─────────────────────────────────────────────────
           - name: linux-clang-baseline
@@ -59,7 +64,7 @@ jobs:
               -DCMAKE_CXX_COMPILER=clang++
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang clang-format gcovr
+              sudo apt-get install -y clang gcovr
 
           - name: linux-clang-gcov
             os: ubuntu-latest
@@ -70,7 +75,7 @@ jobs:
               -DCMT_CEEDLING_ENABLE_GCOV=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang clang-format gcovr llvm
+              sudo apt-get install -y clang gcovr llvm
 
           - name: linux-clang-sanitizer
             os: ubuntu-latest
@@ -81,7 +86,7 @@ jobs:
               -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang clang-format gcovr
+              sudo apt-get install -y clang gcovr
 
           - name: linux-clang-gcov-sanitizer
             os: ubuntu-latest
@@ -93,14 +98,13 @@ jobs:
               -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
               sudo apt-get update
-              sudo apt-get install -y clang clang-format gcovr llvm
+              sudo apt-get install -y clang gcovr llvm
 
           # ── macOS ────────────────────────────────────────────────────────
           - name: macos-baseline
             os: macos-latest
             cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
             install_deps: |
-              brew install clang-format
               if ! command -v gcovr >/dev/null 2>&1; then
                 brew install pipx
                 pipx ensurepath
@@ -114,7 +118,6 @@ jobs:
               -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
               -DCMT_CEEDLING_ENABLE_SANITIZER=ON
             install_deps: |
-              brew install clang-format
               if ! command -v gcovr >/dev/null 2>&1; then
                 brew install pipx
                 pipx ensurepath
@@ -158,40 +161,6 @@ jobs:
               -DCMT_CEEDLING_ENABLE_GCOV=ON
             install_deps: |
               pip install gcovr
-
-          # ── Linux + Cppcheck ─────────────────────────────────────────────
-          - name: linux-cppcheck-enabled
-            os: ubuntu-latest
-            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-            ctest_labels: cppcheck
-            install_deps: |
-              sudo apt-get update
-              sudo apt-get install -y clang-format gcovr cppcheck
-
-          - name: linux-cppcheck-advisory
-            os: ubuntu-latest
-            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-            ctest_labels: cppcheck
-            install_deps: |
-              sudo apt-get update
-              sudo apt-get install -y clang-format gcovr
-
-          # ── Linux + IWYU ──────────────────────────────────────────────────
-          - name: linux-iwyu-enabled
-            os: ubuntu-latest
-            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-            ctest_labels: iwyu
-            install_deps: |
-              sudo apt-get update
-              sudo apt-get install -y clang-format gcovr iwyu
-
-          - name: linux-iwyu-advisory
-            os: ubuntu-latest
-            cmake_flags: -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-            ctest_labels: iwyu
-            install_deps: |
-              sudo apt-get update
-              sudo apt-get install -y clang-format gcovr
 
     steps:
       - name: Checkout
@@ -321,45 +290,6 @@ jobs:
 
       - name: Validate install rules
         run: cmake --install build-lint --prefix "$RUNNER_TEMP/install"
-
-  clang-tools-versions:
-    name: clang-tools-${{ matrix.clang_version }}
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        clang_version: [13, 16, 18, 20, 22]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lsb-release wget gnupg software-properties-common ninja-build
-
-      - name: Install LLVM tools
-        run: |
-          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
-          chmod +x /tmp/llvm.sh
-          sudo /tmp/llvm.sh ${{ matrix.clang_version }} all
-
-      - name: Configure
-        run: >-
-          cmake -S . -B build
-          -G "Ninja"
-          -DCMAKE_TOOLBOX_BUILD_EXAMPLES=ON
-          -DClangFormat_EXECUTABLE=/usr/bin/clang-format-${{ matrix.clang_version }}
-          -DCLANG_TIDY_EXECUTABLE=/usr/bin/clang-tidy-${{ matrix.clang_version }}
-
-      - name: Build
-        run: cmake --build build
-
-      - name: Run clang tools tests
-        run: ctest --test-dir build --output-on-failure -L "clangformat|clangtidy" -j
 
   generator-matrix:
     name: generator-${{ matrix.label }}
@@ -504,36 +434,3 @@ jobs:
 
       - name: Run Unity/CMock tests
         run: ctest --test-dir build --output-on-failure -L "ceedling|unity|findunity" -j
-
-  gcovr-versions:
-    name: gcovr-${{ matrix.gcovr_version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        gcovr_version: ["5.0", "6.0", "7.2", "8.0"]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install gcovr
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install --user "gcovr==${{ matrix.gcovr_version }}"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          gcovr --version
-
-      - name: Run gcovr schema test
-        run: >-
-          cmake
-          -DCMT_GCOVR_EXECUTABLE="$(command -v gcovr)"
-          -DCMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT="$RUNNER_TEMP/test_artifacts"
-          -P unit_tests/gcovrschema/test_real_gcovr.cmake

@@ -47,7 +47,7 @@ project(ConsumerFindPackage LANGUAGES C)
 find_package(cmake_toolbox CONFIG REQUIRED)
 
 include(Policy)
-include(ClangFormat)
+include(CompileCommands)
 
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)

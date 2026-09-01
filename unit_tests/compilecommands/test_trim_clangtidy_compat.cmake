@@ -52,12 +52,86 @@ endfunction()
 function(find_clang_tidy CLANG_TIDY_VAR)
     set(${CLANG_TIDY_VAR} "" PARENT_SCOPE)
 
-    find_program(_clang_tidy NAMES clang-tidy clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15)
+    find_program(
+        _clang_tidy
+        NAMES
+            clang-tidy
+            clang-tidy-18
+            clang-tidy-17
+            clang-tidy-16
+            clang-tidy-15
+    )
     if(_clang_tidy)
         set(${CLANG_TIDY_VAR} "${_clang_tidy}" PARENT_SCOPE)
         message(STATUS "Found clang-tidy: ${_clang_tidy}")
+    elseif(CMAKE_TOOLBOX_REQUIRE_CLANG_TIDY)
+        # Opt-in strict mode (used by CI): a missing clang-tidy would make every
+        # case below skip, and the whole suite would pass without exercising
+        # anything. Fail loudly instead.
+        message(
+            FATAL_ERROR
+            "clang-tidy not found but CMAKE_TOOLBOX_REQUIRE_CLANG_TIDY is ON. "
+            "Install clang-tidy or turn the option off to allow skipping."
+        )
     else()
         message(STATUS "clang-tidy not found, skipping compatibility tests")
+    endif()
+endfunction()
+
+# Runs clang-tidy against a trimmed compilation database.
+#
+# The source file is passed as a positional argument (before any ``--``) so that
+# clang-tidy picks the trimmed compile command up from the database given by
+# ``-p``. Passing it after ``--`` turns it into a compiler flag and clang-tidy
+# bails out with "no input files specified" without ever reading the trimmed
+# flags.
+#
+# ``--checks`` is passed explicitly so the run never depends on an ambient
+# ``.clang-tidy`` file: with an empty check set clang-tidy aborts with
+# "no checks enabled" before it parses the compile command. ``clang-analyzer-*``
+# is a non-empty check set that is silent on the trivial sources used here while
+# still forcing a real compilation of the trimmed flags.
+function(run_clang_tidy CLANG_TIDY BUILD_DIR SOURCE_FILE LOG_VAR)
+    execute_process(
+        COMMAND
+            ${CLANG_TIDY} --checks=clang-analyzer-* -p "${BUILD_DIR}" "${SOURCE_FILE}"
+        RESULT_VARIABLE tidy_result
+        ERROR_VARIABLE tidy_error
+        OUTPUT_VARIABLE tidy_output
+        TIMEOUT 30
+    )
+    set(${LOG_VAR} "${tidy_error}${tidy_output}" PARENT_SCOPE)
+endfunction()
+
+# Detects the degenerate runs where clang-tidy exited before it ever validated
+# the trimmed compile command, which would otherwise look like a clean pass.
+function(assert_clang_tidy_ran LOG ERROR_COUNT_VAR)
+    set(inert FALSE)
+    string(
+        FIND "${LOG}"
+        "Error: no checks enabled"
+        no_checks_pos
+    )
+    if(no_checks_pos GREATER -1)
+        message(STATUS "  - clang-tidy enabled no checks, the trimmed database was never validated")
+        set(inert TRUE)
+    endif()
+    string(
+        FIND "${LOG}"
+        "no input files specified"
+        no_input_pos
+    )
+    if(no_input_pos GREATER -1)
+        message(
+            STATUS
+            "  - clang-tidy received no input file, the trimmed database was never validated"
+        )
+        set(inert TRUE)
+    endif()
+    if(inert)
+        message(STATUS "    Output: ${LOG}")
+        math(EXPR _count "${${ERROR_COUNT_VAR}} + 1")
+        set(${ERROR_COUNT_VAR} "${_count}" PARENT_SCOPE)
     endif()
 endfunction()
 
@@ -83,7 +157,7 @@ include(CompileCommands)
 
 file(MAKE_DIRECTORY \"\${CMAKE_BINARY_DIR}/db\")
 file(WRITE \"\${CMAKE_BINARY_DIR}/db/compile_commands.json\"
-\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 -fstrict-volatile-bitfields -DFOO=1 -Iinclude -o lib.o -c src/lib.c\\\",\n    \\\"file\\\": \\\"src/lib.c\\\"\n  }\n]\")
+\"[\n  {\n    \\\"directory\\\": \\\"${src_dir}\\\",\n    \\\"command\\\": \\\"arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 -fstrict-volatile-bitfields -DFOO=1 -Iinclude -o lib.o -c ${src_dir}/lib.c\\\",\n    \\\"file\\\": \\\"${src_dir}/lib.c\\\"\n  }\n]\")
 
 CompileCommands_Trim(
     INPUT \${CMAKE_BINARY_DIR}/db/compile_commands.json
@@ -122,16 +196,19 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     endif()
 
     set(test_file "${src_dir}/lib.c")
-    execute_process(
-        COMMAND ${clang_tidy} -p "${build_dir}/trimmed" -- "${test_file}"
-        RESULT_VARIABLE tidy_result
-        ERROR_VARIABLE tidy_error
-        OUTPUT_VARIABLE tidy_output
-        TIMEOUT 30
-    )
+    run_clang_tidy("${clang_tidy}" "${build_dir}/trimmed" "${test_file}" tidy_error)
+    assert_clang_tidy_ran("${tidy_error}" ERROR_COUNT)
 
-    string(FIND "${tidy_error}" "unknown argument" unknown_arg_pos)
-    string(FIND "${tidy_error}" "error:" error_pos)
+    string(
+        FIND "${tidy_error}"
+        "unknown argument"
+        unknown_arg_pos
+    )
+    string(
+        FIND "${tidy_error}"
+        "error:"
+        error_pos
+    )
 
     if(unknown_arg_pos GREATER -1)
         message(STATUS "  - clang-tidy reported 'unknown argument' in trimmed output")
@@ -170,7 +247,7 @@ include(CompileCommands)
 
 file(MAKE_DIRECTORY \"\${CMAKE_BINARY_DIR}/db\")
 file(WRITE \"\${CMAKE_BINARY_DIR}/db/compile_commands.json\"
-\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"g++ -fmodules-ts -fmodule-mapper=module.map -fdeps-format=p1689r5 -std=c++20 -Iinclude -o lib.o -c src/lib.cpp\\\",\n    \\\"file\\\": \\\"src/lib.cpp\\\"\n  }\n]\")
+\"[\n  {\n    \\\"directory\\\": \\\"${src_dir}\\\",\n    \\\"command\\\": \\\"g++ -fmodules-ts -fmodule-mapper=module.map -fdeps-format=p1689r5 -std=c++20 -Iinclude -o lib.o -c ${src_dir}/lib.cpp\\\",\n    \\\"file\\\": \\\"${src_dir}/lib.cpp\\\"\n  }\n]\")
 
 CompileCommands_Trim(
     INPUT \${CMAKE_BINARY_DIR}/db/compile_commands.json
@@ -209,30 +286,44 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     endif()
 
     set(test_file "${src_dir}/lib.cpp")
-    execute_process(
-        COMMAND ${clang_tidy} -p "${build_dir}/trimmed" -- "${test_file}"
-        RESULT_VARIABLE tidy_result
-        ERROR_VARIABLE tidy_error
-        OUTPUT_VARIABLE tidy_output
-        TIMEOUT 30
-    )
+    run_clang_tidy("${clang_tidy}" "${build_dir}/trimmed" "${test_file}" tidy_error)
+    assert_clang_tidy_ran("${tidy_error}" ERROR_COUNT)
 
-    string(FIND "${tidy_error}" "unknown argument" unknown_arg_pos)
-    string(FIND "${tidy_error}" "error:" error_pos)
+    string(
+        FIND "${tidy_error}"
+        "unknown argument"
+        unknown_arg_pos
+    )
+    string(
+        FIND "${tidy_error}"
+        "error:"
+        error_pos
+    )
 
     if(unknown_arg_pos GREATER -1)
         message(STATUS "  - clang-tidy reported 'unknown argument' in trimmed output")
         message(STATUS "    Error: ${tidy_error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
     elseif(error_pos GREATER -1)
-        string(FIND "${tidy_error}" "file not found" file_not_found)
-        string(FIND "${tidy_error}" "fatal error" fatal_error)
+        string(
+            FIND "${tidy_error}"
+            "file not found"
+            file_not_found
+        )
+        string(
+            FIND "${tidy_error}"
+            "fatal error"
+            fatal_error
+        )
         if(file_not_found EQUAL -1 AND fatal_error EQUAL -1)
             message(STATUS "  - clang-tidy reported errors in trimmed output")
             message(STATUS "    Error: ${tidy_error}")
             math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         else()
-            message(STATUS "  - clang-tidy accepted trimmed compile_commands.json (file not found is expected)")
+            message(
+                STATUS
+                "  - clang-tidy accepted trimmed compile_commands.json (file not found is expected)"
+            )
         endif()
     else()
         message(STATUS "  - clang-tidy accepted trimmed compile_commands.json")
@@ -263,7 +354,7 @@ include(CompileCommands)
 
 file(MAKE_DIRECTORY \"\${CMAKE_BINARY_DIR}/db\")
 file(WRITE \"\${CMAKE_BINARY_DIR}/db/compile_commands.json\"
-\"[\n  {\n    \\\"directory\\\": \\\"/tmp/build\\\",\n    \\\"command\\\": \\\"g++ -std=c++17 -fno-exceptions -fno-rtti -fPIC -pthread -DDEBUG=1 -Iinclude -o lib.o -c src/lib.cpp\\\",\n    \\\"file\\\": \\\"src/lib.cpp\\\"\n  }\n]\")
+\"[\n  {\n    \\\"directory\\\": \\\"${src_dir}\\\",\n    \\\"command\\\": \\\"g++ -std=c++17 -fno-exceptions -fno-rtti -fPIC -pthread -DDEBUG=1 -Iinclude -o lib.o -c ${src_dir}/lib.cpp\\\",\n    \\\"file\\\": \\\"${src_dir}/lib.cpp\\\"\n  }\n]\")
 
 CompileCommands_Trim(
     INPUT \${CMAKE_BINARY_DIR}/db/compile_commands.json
@@ -308,16 +399,19 @@ add_custom_target(run_trim DEPENDS \${CMAKE_BINARY_DIR}/trimmed/compile_commands
     endif()
 
     set(test_file "${src_dir}/lib.cpp")
-    execute_process(
-        COMMAND ${clang_tidy} -p "${build_dir}/trimmed" -- "${test_file}"
-        RESULT_VARIABLE tidy_result
-        ERROR_VARIABLE tidy_error
-        OUTPUT_VARIABLE tidy_output
-        TIMEOUT 30
-    )
+    run_clang_tidy("${clang_tidy}" "${build_dir}/trimmed" "${test_file}" tidy_error)
+    assert_clang_tidy_ran("${tidy_error}" ERROR_COUNT)
 
-    string(FIND "${tidy_error}" "unknown argument" unknown_arg_pos)
-    string(FIND "${tidy_error}" "error:" error_pos)
+    string(
+        FIND "${tidy_error}"
+        "unknown argument"
+        unknown_arg_pos
+    )
+    string(
+        FIND "${tidy_error}"
+        "error:"
+        error_pos
+    )
 
     if(unknown_arg_pos GREATER -1)
         message(STATUS "  - clang-tidy reported 'unknown argument'")

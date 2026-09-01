@@ -52,7 +52,7 @@ FetchContent_MakeAvailable(cmake_toolbox)
 list(PREPEND CMAKE_MODULE_PATH \"\${cmake_toolbox_SOURCE_DIR}/cmake\")
 
 include(Policy)
-include(ClangFormat)
+include(CompileCommands)
 
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)
