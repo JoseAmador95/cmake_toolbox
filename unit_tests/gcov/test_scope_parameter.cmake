@@ -33,6 +33,18 @@ endfunction()
 function(test_scope_variation SCOPE_VALUE)
     message(STATUS "  Testing SCOPE=${SCOPE_VALUE}")
 
+    # Which target properties must (and must not) carry the coverage flags.
+    if(SCOPE_VALUE STREQUAL "PUBLIC")
+        set(OWN_PROPS "compile_opts iface_compile_opts link_opts iface_link_opts")
+        set(EMPTY_PROPS "")
+    elseif(SCOPE_VALUE STREQUAL "PRIVATE")
+        set(OWN_PROPS "compile_opts link_opts")
+        set(EMPTY_PROPS "iface_compile_opts iface_link_opts")
+    else()
+        set(OWN_PROPS "iface_compile_opts iface_link_opts")
+        set(EMPTY_PROPS "compile_opts link_opts")
+    endif()
+
     set(test_script
         "
 cmake_minimum_required(VERSION 3.22)
@@ -44,10 +56,24 @@ include(Gcov)
 add_library(mylib STATIC dummy.c)
 Gcov_AddToTarget(mylib ${SCOPE_VALUE})
 
-# Force property evaluation to verify flags were set
 get_target_property(compile_opts mylib COMPILE_OPTIONS)
-get_target_property(link_libs mylib LINK_LIBRARIES)
-message(STATUS \"SCOPE ${SCOPE_VALUE}: compile_opts=\${compile_opts}, link_libs=\${link_libs}\")
+get_target_property(iface_compile_opts mylib INTERFACE_COMPILE_OPTIONS)
+get_target_property(link_opts mylib LINK_OPTIONS)
+get_target_property(iface_link_opts mylib INTERFACE_LINK_OPTIONS)
+message(STATUS \"SCOPE ${SCOPE_VALUE}: compile_opts=\${compile_opts} iface=\${iface_compile_opts}\")
+
+# PUBLIC/PRIVATE instrument the target itself; PUBLIC/INTERFACE also export the
+# flags to consumers. Assert --coverage lands exactly where the scope says.
+foreach(prop ${OWN_PROPS})
+    if(NOT \"\${\${prop}}\" MATCHES \"--coverage\")
+        message(FATAL_ERROR \"SCOPE ${SCOPE_VALUE}: \${prop} must contain --coverage (got \${\${prop}})\")
+    endif()
+endforeach()
+foreach(prop ${EMPTY_PROPS})
+    if(\"\${\${prop}}\" MATCHES \"--coverage\")
+        message(FATAL_ERROR \"SCOPE ${SCOPE_VALUE}: \${prop} must not contain --coverage\")
+    endif()
+endforeach()
 "
     )
 
@@ -102,9 +128,12 @@ Gcov_AddToTarget(base_lib PUBLIC)
 add_library(consumer_lib STATIC consumer.c)
 target_link_libraries(consumer_lib PUBLIC base_lib)
 
-# Check that flags are available to consumer through PUBLIC scope
-get_target_property(compile_opts consumer_lib COMPILE_OPTIONS)
-message(STATUS \"Consumer compile options (through propagation): \${compile_opts}\")
+# Check that flags are exported to consumers through PUBLIC scope
+get_target_property(exported base_lib INTERFACE_COMPILE_OPTIONS)
+if(NOT \"\${exported}\" MATCHES \"--coverage\")
+    message(FATAL_ERROR \"PUBLIC scope must export --coverage to consumers (got \${exported})\")
+endif()
+message(STATUS \"Exported compile options: \${exported}\")
 "
     )
 

@@ -33,7 +33,11 @@ Example
 function(TestHelpers_GetConfigureArgs OUT_VAR)
     set(args "")
     if(DEFINED CMAKE_TOOLBOX_TEST_GENERATOR AND NOT CMAKE_TOOLBOX_TEST_GENERATOR STREQUAL "")
-        list(APPEND args -G "${CMAKE_TOOLBOX_TEST_GENERATOR}")
+        list(
+            APPEND args
+            -G
+            "${CMAKE_TOOLBOX_TEST_GENERATOR}"
+        )
     endif()
     if(DEFINED CMAKE_TOOLBOX_TEST_C_COMPILER AND NOT CMAKE_TOOLBOX_TEST_C_COMPILER STREQUAL "")
         list(APPEND args "-DCMAKE_C_COMPILER=${CMAKE_TOOLBOX_TEST_C_COMPILER}")
@@ -52,41 +56,15 @@ set(_TOOLBOX_GCOVR_HELP_TEXT
     "  --help\n"
     "  --version\n"
     "  --config\n"
-    "  --search-path\n"
-    "  --filter\n"
-    "  --exclude\n"
-    "  --exclude-directories\n"
-    "  --exclude-unreachable-branches\n"
-    "  --exclude-throw-branches\n"
-    "  --exclude-function-lines\n"
-    "  --fail-under-line\n"
-    "  --fail-under-branch\n"
-    "  --fail-under-function\n"
-    "  --fail-under-decision\n"
-    "  --html\n"
-    "  --html-details\n"
-    "  --html-nested\n"
-    "  --html-title\n"
-    "  --html-self-contained\n"
-    "  --html-high-threshold\n"
-    "  --html-medium-threshold\n"
-    "  --xml\n"
-    "  --cobertura\n"
-    "  --json\n"
-    "  --lcov\n"
-    "  --csv\n"
-    "  --coveralls\n"
-    "  --txt\n"
-    "  --sort\n"
-    "  --gcov-executable\n"
-    "  --decisions\n"
-    "  --calls\n"
-    "  --print-summary\n"
 )
 
 function(TestHelpers_CreateMockGcovr OUT_VAR)
     set(options "")
-    set(oneValueArgs OUTPUT_DIR HELP_TEXT VERSION_TEXT)
+    set(oneValueArgs
+        OUTPUT_DIR
+        HELP_TEXT
+        VERSION_TEXT
+    )
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -112,8 +90,7 @@ function(TestHelpers_CreateMockGcovr OUT_VAR)
         file(TO_NATIVE_PATH "${help_file}" help_file_native)
         set(script_path "${script_path}.bat")
         file(
-            WRITE
-            "${script_path}"
+            WRITE "${script_path}"
             "@echo off\r\n"
             "if \"%1\"==\"--help\" (\r\n"
             "  type \"${help_file_native}\"\r\n"
@@ -131,8 +108,7 @@ function(TestHelpers_CreateMockGcovr OUT_VAR)
         )
     else()
         file(
-            WRITE
-            "${script_path}"
+            WRITE "${script_path}"
             "#!/bin/sh\n"
             "if [ \"$1\" = \"--help\" ] || [ \"$1\" = \"-h\" ]; then\n"
             "  cat \"${help_file}\"\n"
