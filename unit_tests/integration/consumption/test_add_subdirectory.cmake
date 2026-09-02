@@ -45,7 +45,7 @@ add_subdirectory(\"${REPO_ROOT}\" \"\${CMAKE_BINARY_DIR}/cmake_toolbox\")
 list(PREPEND CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
 include(Policy)
-include(ClangFormat)
+include(CompileCommands)
 
  add_library(consumer_lib STATIC consumer_lib.c)
  add_executable(consumer_app consumer_app.c)

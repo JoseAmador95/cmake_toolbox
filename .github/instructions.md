@@ -2,10 +2,7 @@
 
 This document outlines the coding standards, patterns, and best practices to follow when working on the CMake Toolbox project.
 
-## Code StyFunctions:
-  ModuleName_AddTargets(PREFIX [options]) - Description
-
-#]=======================================================================]
+## Code Style
 
 ### CMake Formatting with Gersemi and Pre-commit Hooks
 
@@ -145,12 +142,13 @@ execute_process(
 - **Consistent return patterns**: Use output variables consistently (e.g., first parameter for output)
 - **Proper error propagation**: Use appropriate message levels and FATAL_ERROR for missing required inputs
 
-### Example ClangFormat Utility Functions
-The ClangFormat module demonstrates proper utility function design:
+### Example Utility Functions
+The illustrative `Formatter` module below (not shipped in this repository)
+demonstrates proper utility function design:
 
 ```cmake
 # Validates configuration file and returns style argument
-function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
+function(Formatter_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
     if(EXISTS "${ARG_CONFIG_FILE}")
         set(${ARG_OUTPUT_VAR} "--style=file:${ARG_CONFIG_FILE}" PARENT_SCOPE)
     else()
@@ -159,7 +157,7 @@ function(ClangFormat_ValidateConfig ARG_CONFIG_FILE ARG_OUTPUT_VAR)
 endfunction()
 
 # Collects source files using configurable patterns
-function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
+function(Formatter_CollectFiles ARG_OUTPUT_VAR)
     cmake_parse_arguments(ARG "" "" "SOURCE_DIRS;PATTERNS;EXCLUDE_PATTERNS" ${ARGN})
     
     if(NOT ARG_SOURCE_DIRS)
@@ -175,7 +173,7 @@ function(ClangFormat_CollectFiles ARG_OUTPUT_VAR)
 endfunction()
 
 # Creates command for different modes (FORMAT vs CHECK)
-function(ClangFormat_CreateCommand ARG_OUTPUT_VAR)
+function(Formatter_CreateCommand ARG_OUTPUT_VAR)
     cmake_parse_arguments(ARG "" "EXECUTABLE;STYLE_ARG;MODE" "FILES;ADDITIONAL_ARGS" ${ARGN})
     
     # Build command based on mode
@@ -198,10 +196,10 @@ These functions demonstrate:
 ### API Design
 - **Use keyword arguments** for complex functions with multiple parameters:
 ```cmake
-ClangFormat_AddTargets(
+Formatter_AddTargets(
     my_project
     SOURCE_DIRS src include
-    CONFIG_FILE ${CMAKE_SOURCE_DIR}/.clang-format
+    CONFIG_FILE ${CMAKE_SOURCE_DIR}/formatter.cfg
     EXCLUDE_PATTERNS ".*generated.*"
 )
 ```
@@ -211,8 +209,8 @@ ClangFormat_AddTargets(
 ## Module Architecture
 
 ### Separation of Concerns
-- **Basic utilities** in `<Tool>.cmake` (e.g., `ClangFormat.cmake`)
-- **Find module** in `Find<Tool>.cmake` (e.g., `FindClangFormat.cmake`)
+- **Basic utilities** in `<Tool>.cmake` (e.g., `Gcov.cmake`)
+- **Find module** in `Find<Tool>.cmake` (e.g., `FindGcovr.cmake`)
 - **Find modules depend on utilities**: `include(<Tool>)`
 
 ### Backward Compatibility
@@ -519,7 +517,7 @@ docs/
 - **Find modules**: `FindToolName.cmake`
 - **Utility modules**: `ToolName.cmake` (CamelCase - new pattern)
 - **Test files**: `test_modulename.cmake`
-- **Functions**: `ModuleName_FunctionName` (e.g., `ClangFormat_AddTargets`, `ClangFormat_CollectFiles`, `ClangFormat_ValidateConfig`)
+- **Functions**: `ModuleName_FunctionName` (e.g., `Formatter_AddTargets`, `Formatter_CollectFiles`, `Formatter_ValidateConfig`)
 
 ## Documentation
 

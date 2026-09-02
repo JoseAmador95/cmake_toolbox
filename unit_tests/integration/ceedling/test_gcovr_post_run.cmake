@@ -300,6 +300,39 @@ function(test_extract_functions_fixture)
         message(STATUS "  Content: ${discovered_content}")
         fail("Expected fixtures to be required for extracted tests")
     endif()
+
+    # The discovered names must be real Unity test functions. When the runner is
+    # generated without command line argument support, Unity prints its run
+    # summary instead of the test list and the summary lines get registered as
+    # bogus CTest tests (e.g. "1 Tests 0 Failures 0 Ignored" or "OK").
+    file(STRINGS "${discovered_tests_file}" discovered_lines REGEX "^add_test\\(")
+    if(NOT discovered_lines)
+        fail("No add_test() entries were discovered in ${discovered_tests_file}")
+        return()
+    endif()
+
+    set(found_expected_test OFF)
+    foreach(line IN LISTS discovered_lines)
+        if(NOT line MATCHES "^add_test\\(\"([^\"]+)\"")
+            fail("Unrecognised add_test() entry: ${line}")
+            continue()
+        endif()
+        set(discovered_name "${CMAKE_MATCH_1}")
+
+        if(discovered_name MATCHES "Tests [0-9]+ Failures|(^|/)(OK|FAIL)$|----")
+            fail("Unity summary output was registered as a test: ${discovered_name}")
+        elseif(NOT discovered_name MATCHES "(^|/)test_[A-Za-z0-9_]+$")
+            fail("Discovered test does not look like a Unity test function: ${discovered_name}")
+        elseif(discovered_name MATCHES "(^|/)test_library_value$")
+            set(found_expected_test ON)
+        endif()
+    endforeach()
+
+    if(NOT found_expected_test)
+        message(STATUS "  Debug discovered tests file: ${discovered_tests_file}")
+        message(STATUS "  Content: ${discovered_content}")
+        fail("Expected test_library_value to be discovered")
+    endif()
 endfunction()
 
 function(run_all_tests)

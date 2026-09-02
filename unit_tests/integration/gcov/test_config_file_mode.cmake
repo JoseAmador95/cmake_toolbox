@@ -98,14 +98,12 @@ message(STATUS \"CONFIG_FILE mode configured\")
     message(STATUS "  ✓ CONFIG_FILE mode correctly uses external config")
 endfunction()
 
-function(test_config_file_mode_warns_enforce)
-    message(STATUS "Test 2: CONFIG_FILE mode warns when CMT_GCOVR_ENFORCE_THRESHOLDS is set")
+function(test_missing_config_file_fails)
+    message(STATUS "Test 2: a CMT_GCOVR_CONFIG_FILE that does not exist is a hard error")
 
-    set(src_dir "${TEST_ROOT}/enforce_warning/src")
-    set(build_dir "${TEST_ROOT}/enforce_warning/build")
+    set(src_dir "${TEST_ROOT}/missing_config/src")
+    set(build_dir "${TEST_ROOT}/missing_config/build")
     file(MAKE_DIRECTORY "${src_dir}")
-
-    file(WRITE "${src_dir}/gcovr.cfg" "root = .\n")
 
     set(test_script
         "
@@ -114,10 +112,7 @@ project(GcovConfigFileTest LANGUAGES C)
 set(CMAKE_MODULE_PATH \"${REPO_ROOT}/cmake\")
 
 set(CMT_GCOVR_EXECUTABLE \"${GCOVR_MOCK_PATH}\" CACHE FILEPATH \"\" FORCE)
-
-set(CMT_GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/gcovr.cfg\" CACHE FILEPATH \"\" FORCE)
-set(CMT_GCOVR_ENFORCE_THRESHOLDS ON CACHE BOOL \"\" FORCE)
-set(CMT_GCOVR_FAIL_UNDER_LINE 80 CACHE STRING \"\" FORCE)
+set(CMT_GCOVR_CONFIG_FILE \"\${CMAKE_CURRENT_SOURCE_DIR}/does_not_exist.cfg\" CACHE FILEPATH \"\" FORCE)
 
 include(Gcov)
 
@@ -138,27 +133,21 @@ Gcov_AddToTarget(mylib PUBLIC)
         ERROR_VARIABLE error
     )
 
-    if(NOT result EQUAL 0)
-        message(STATUS "  ✗ Configuration failed: ${error}")
+    if(result EQUAL 0)
+        message(STATUS "  x Configuration should have failed for a missing config file")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    # Check for warning in output
-    string(
-        FIND "${output}${error}"
-        "CMT_GCOVR_ENFORCE_THRESHOLDS is ignored"
-        has_warning
-    )
-    if(has_warning EQUAL -1)
-        message(STATUS "  ✗ Expected warning about CMT_GCOVR_ENFORCE_THRESHOLDS being ignored")
+    if(NOT "${output}${error}" MATCHES "CMT_GCOVR_CONFIG_FILE does not exist")
+        message(STATUS "  x Expected an explicit 'does not exist' error, got: ${error}")
         math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
         set(ERROR_COUNT "${ERROR_COUNT}" PARENT_SCOPE)
         return()
     endif()
 
-    message(STATUS "  ✓ Warning correctly emitted for ignored CMT_GCOVR_ENFORCE_THRESHOLDS")
+    message(STATUS "  ok missing config file fails loudly")
 endfunction()
 
 function(run_all_tests)
@@ -167,7 +156,7 @@ function(run_all_tests)
     setup_test_environment()
 
     test_config_file_mode_uses_external()
-    test_config_file_mode_warns_enforce()
+    test_missing_config_file_fails()
 
     message(STATUS "")
     if(ERROR_COUNT GREATER 0)

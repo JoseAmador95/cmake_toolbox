@@ -19,13 +19,15 @@ set(LONG_DESC
 
 Policy_Register(NAME ${LONG_NAME} DESCRIPTION "${LONG_DESC}" DEFAULT OLD INTRODUCED_VERSION 1.0.0)
 
-Policy_GetFields(${LONG_NAME} LONG)
-if(NOT LONG_NAME STREQUAL "${LONG_NAME}")
+# Use a prefix that does not collide with the input variables, otherwise the
+# assertions below would compare a variable against itself and never fail.
+Policy_GetFields(${LONG_NAME} LONG_POLICY)
+if(NOT LONG_POLICY_NAME STREQUAL "${LONG_NAME}")
     message(SEND_ERROR "Long name not preserved correctly")
     math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
 endif()
 
-if(NOT LONG_DESCRIPTION STREQUAL "${LONG_DESC}")
+if(NOT LONG_POLICY_DESCRIPTION STREQUAL "${LONG_DESC}")
     message(SEND_ERROR "Long description not preserved correctly")
     math(EXPR ERROR_COUNT "${ERROR_COUNT} + 1")
 endif()

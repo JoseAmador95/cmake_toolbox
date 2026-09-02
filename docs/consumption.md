@@ -22,7 +22,7 @@ Best for:
 add_subdirectory(external/cmake_toolbox)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/external/cmake_toolbox/cmake)
 
-include(ClangFormat)
+include(Ceedling)
 include(Policy)
 ```
 
@@ -48,7 +48,7 @@ FetchContent_MakeAvailable(cmake_toolbox)
 
 list(APPEND CMAKE_MODULE_PATH ${cmake_toolbox_SOURCE_DIR}/cmake)
 
-include(ClangTidy)
+include(CompileCommands)
 include(Sanitizer)
 ```
 
@@ -75,7 +75,7 @@ Consume from another project:
 ```cmake
 find_package(cmake_toolbox CONFIG REQUIRED)
 
-include(ClangFormat)
+include(Ceedling)
 include(Policy)
 ```
 

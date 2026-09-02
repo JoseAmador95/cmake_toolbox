@@ -107,15 +107,23 @@ if(all_defs)
     list(REMOVE_DUPLICATES all_defs)
 endif()
 
-list(FIND all_defs \"CMT_CMOCK_MEM_DYNAMIC\" has_dynamic)
+# CMock's cmock_internals.h reads CMOCK_MEM_DYNAMIC / CMOCK_MEM_SIZE, so the
+# CMT_-prefixed CMake variables must be emitted with the un-prefixed macro names.
+list(FIND all_defs \"CMOCK_MEM_DYNAMIC\" has_dynamic)
 if(has_dynamic EQUAL -1)
-    message(FATAL_ERROR \"CMT_CMOCK_MEM_DYNAMIC was not applied to Unity::CMock\")
+    message(FATAL_ERROR \"CMOCK_MEM_DYNAMIC was not applied to Unity::CMock: \${all_defs}\")
 endif()
 
-list(FIND all_defs \"CMT_CMOCK_MEM_SIZE=65536\" has_size)
+list(FIND all_defs \"CMOCK_MEM_SIZE=65536\" has_size)
 if(has_size EQUAL -1)
-    message(FATAL_ERROR \"CMT_CMOCK_MEM_SIZE=65536 was not applied to Unity::CMock\")
+    message(FATAL_ERROR \"CMOCK_MEM_SIZE=65536 was not applied to Unity::CMock: \${all_defs}\")
 endif()
+
+foreach(def IN LISTS all_defs)
+    if(def MATCHES \"^CMT_CMOCK_MEM_\")
+        message(FATAL_ERROR \"Unexpected CMT_-prefixed CMock memory macro emitted: \${def}\")
+    endif()
+endforeach()
 "
     )
 

@@ -41,7 +41,7 @@ Cache Variables
 
 ``CMT_CEEDLING_TEST_LABELS``
   Default labels applied to Ceedling tests.
-  Default: unit
+  Default: ceedling;unit
 
 Functions
 ^^^^^^^^^
@@ -113,7 +113,7 @@ option(CMT_CEEDLING_ENABLE_GCOV "Enable coverage" OFF)
 option(CMT_CEEDLING_ENABLE_SANITIZER "Enable sanitizer" OFF)
 option(CMT_CEEDLING_SANITIZER_DEFAULT "Enable sanitizer by default" ON)
 option(CMT_CEEDLING_EXTRACT_FUNCTIONS "Extract test functions as separate ctest test" OFF)
-set(CMT_CEEDLING_TEST_LABELS "unit" CACHE STRING "Default labels for Ceedling tests")
+set(CMT_CEEDLING_TEST_LABELS "ceedling;unit" CACHE STRING "Default labels for Ceedling tests")
 
 set(_ceedling_gcovr_post_run_default OFF)
 if(CMT_CEEDLING_ENABLE_GCOV)
@@ -143,17 +143,16 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/Unity.cmake)
 
-# Initialize Unity once for Ceedling
-Unity_Initialize()
-
-if(CMT_CEEDLING_EXTRACT_FUNCTIONS AND TARGET Unity::Unity)
-    get_target_property(_cmt_ceedling_unity_target Unity::Unity ALIASED_TARGET)
-    if(_cmt_ceedling_unity_target AND TARGET ${_cmt_ceedling_unity_target})
-        target_compile_definitions(${_cmt_ceedling_unity_target} PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
-    else()
-        target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
-    endif()
+# Initialize Unity once for Ceedling.
+# ENABLE_CEEDLING drives the CMock ":cmdline_args" setting (so the generated
+# runner can list/filter test functions) and adds UNITY_USE_COMMAND_LINE_ARGS
+# to Unity itself, which test discovery relies on.
+set(_cmt_ceedling_unity_args "")
+if(CMT_CEEDLING_EXTRACT_FUNCTIONS)
+    set(_cmt_ceedling_unity_args ENABLE_CEEDLING)
 endif()
+Unity_Initialize(${_cmt_ceedling_unity_args})
+unset(_cmt_ceedling_unity_args)
 
 # ==============================================================================
 # _Ceedling_ParseMockIncludes (Internal)
@@ -574,7 +573,7 @@ function(Ceedling_AddUnitTest)
     endif()
 
     set(_cmt_ceedling_test_labels "")
-    if(DEFINED CMT_CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
+    if(DEFINED CMT_CEEDLING_TEST_LABELS AND NOT CMT_CEEDLING_TEST_LABELS STREQUAL "")
         list(APPEND _cmt_ceedling_test_labels ${CMT_CEEDLING_TEST_LABELS})
     endif()
     if(ARG_LABELS)
@@ -618,7 +617,7 @@ function(Ceedling_AddUnitTest)
             )
 
             set(_cmt_ceedling_gcovr_labels "")
-            if(DEFINED CMT_CEEDLING_TEST_LABELS AND NOT CEEDLING_TEST_LABELS STREQUAL "")
+            if(DEFINED CMT_CEEDLING_TEST_LABELS AND NOT CMT_CEEDLING_TEST_LABELS STREQUAL "")
                 list(APPEND _cmt_ceedling_gcovr_labels ${CMT_CEEDLING_TEST_LABELS})
             endif()
             list(APPEND _cmt_ceedling_gcovr_labels gcovr)

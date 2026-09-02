@@ -27,7 +27,9 @@
 #   - CMOCK_WHEN_NO_PROTOTYPES - Action for missing prototypes (default: "warn")
 #   - CMT_CMOCK_ENFORCE_STRICT_ORDERING - Strict call ordering (default: OFF)
 #   - CMT_CMOCK_MEM_DYNAMIC     - Use dynamic memory allocation (default: OFF)
+#                                 Emits the CMOCK_MEM_DYNAMIC compile definition.
 #   - CMT_CMOCK_MEM_SIZE        - Memory pool size in bytes (static or dynamic increment)
+#                                 Emits the CMOCK_MEM_SIZE=<value> compile definition.
 #
 # USAGE EXAMPLE:
 #   # Configure CMock (optional - sensible defaults provided)
@@ -165,8 +167,11 @@ function(Unity_Initialize)
             set(_cmt_unity_cmock_target Unity::CMock)
         endif()
 
+        # The emitted macros must keep the names CMock's cmock_internals.h checks
+        # (CMOCK_MEM_DYNAMIC / CMOCK_MEM_SIZE), even though the CMake-side
+        # variables use the project's CMT_ prefix.
         if(CMT_CMOCK_MEM_DYNAMIC)
-            target_compile_definitions(${_cmt_unity_cmock_target} PUBLIC CMT_CMOCK_MEM_DYNAMIC)
+            target_compile_definitions(${_cmt_unity_cmock_target} PUBLIC CMOCK_MEM_DYNAMIC)
         endif()
         if(DEFINED CMT_CMOCK_MEM_SIZE AND NOT CMT_CMOCK_MEM_SIZE STREQUAL "")
             set(_cmt_unity_cmock_mem_size "${CMT_CMOCK_MEM_SIZE}")
@@ -182,7 +187,7 @@ function(Unity_Initialize)
                 target_compile_definitions(
                     ${_cmt_unity_cmock_target}
                     PUBLIC
-                        "CMT_CMOCK_MEM_SIZE=${_cmt_unity_cmock_mem_size}"
+                        "CMOCK_MEM_SIZE=${_cmt_unity_cmock_mem_size}"
                 )
             endif()
         endif()
@@ -223,7 +228,13 @@ function(Unity_Initialize)
 
     # Configure Ceedling extract functions mode if enabled
     if(ARG_ENABLE_CEEDLING AND TARGET Unity::Unity)
-        target_compile_definitions(Unity::Unity PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
+        # Unity::Unity may be an ALIAS; compile definitions must be applied to the
+        # real target because ALIAS targets are read-only.
+        get_target_property(_cmt_unity_unity_target Unity::Unity ALIASED_TARGET)
+        if(NOT _cmt_unity_unity_target OR _cmt_unity_unity_target MATCHES "-NOTFOUND$")
+            set(_cmt_unity_unity_target Unity::Unity)
+        endif()
+        target_compile_definitions(${_cmt_unity_unity_target} PUBLIC UNITY_USE_COMMAND_LINE_ARGS)
         message(STATUS "${CMAKE_CURRENT_FUNCTION}: Ceedling extract functions mode enabled")
     endif()
 

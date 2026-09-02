@@ -1,6 +1,4 @@
 include(Ceedling)
-find_package(ClangFormat QUIET)
-include(ClangTidy)
 include(Policy)
 
 add_library(example STATIC ${CMAKE_CURRENT_SOURCE_DIR}/source/example.c)
@@ -34,27 +32,6 @@ foreach(test_file ${POLICY_TEST_FILES})
         PROPERTIES
             LABELS
                 "script;policy"
-    )
-endforeach()
-
-# Automatically add all clang-format unit tests to CTest
-file(GLOB CLANGFORMAT_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/clangformat/test_*.cmake")
-foreach(test_file ${CLANGFORMAT_TEST_FILES})
-    # Extract the test name from the filename (test_<n>.cmake -> <n>)
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-
-    # Add the test to CTest with name clangformat_<n>
-    add_test(
-        NAME clangformat_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
-    )
-    set_tests_properties(
-        clangformat_${test_name}
-        PROPERTIES
-            LABELS
-                "script;clangformat"
     )
 endforeach()
 
@@ -120,27 +97,6 @@ endforeach()
 # 3. Running in project mode (not true unit testing)
 
 # ==============================================================================
-# GcovrSchema Module Unit Tests
-# ==============================================================================
-
-file(GLOB GCOVRSCHEMA_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/gcovrschema/test_*.cmake")
-foreach(test_file ${GCOVRSCHEMA_TEST_FILES})
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    add_test(
-        NAME gcovrschema_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
-    )
-    set_tests_properties(
-        gcovrschema_${test_name}
-        PROPERTIES
-            LABELS
-                "script;gcovrschema"
-    )
-endforeach()
-
-# ==============================================================================
 # CMockSchema Module Unit Tests
 # ==============================================================================
 
@@ -162,27 +118,6 @@ foreach(test_file ${CMOCKSCHEMA_TEST_FILES})
 endforeach()
 
 # ==============================================================================
-# ClangTidy Module Unit Tests
-# ==============================================================================
-
-file(GLOB CLANGTIDY_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/clangtidy/test_*.cmake")
-foreach(test_file ${CLANGTIDY_TEST_FILES})
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    add_test(
-        NAME clangtidy_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
-    )
-    set_tests_properties(
-        clangtidy_${test_name}
-        PROPERTIES
-            LABELS
-                "script;clangtidy"
-    )
-endforeach()
-
-# ==============================================================================
 # CompileCommands Module Unit Tests
 # ==============================================================================
 
@@ -191,6 +126,17 @@ set(_TOOLBOX_TEST_HELPER_ARGS
     -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
     -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+)
+
+# The CompileCommands clang-tidy compatibility test invokes the clang-tidy binary
+# directly. It skips gracefully when clang-tidy is unavailable so that developer
+# machines without the tool still pass. CI enables this option on a leg that
+# installs clang-tidy, turning the skip into a hard failure so the test cannot go
+# silently inert.
+option(
+    CMAKE_TOOLBOX_REQUIRE_CLANG_TIDY
+    "Fail (instead of skipping) the CompileCommands clang-tidy compatibility test when clang-tidy is missing"
+    OFF
 )
 
 get_property(_TOOLBOX_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -205,7 +151,9 @@ if(NOT _TOOLBOX_MULTI_CONFIG)
         add_test(
             NAME compilecommands_${test_name}
             COMMAND
-                ${CMAKE_COMMAND} ${_TOOLBOX_TEST_HELPER_ARGS} -P ${test_file}
+                ${CMAKE_COMMAND} ${_TOOLBOX_TEST_HELPER_ARGS}
+                -DCMAKE_TOOLBOX_REQUIRE_CLANG_TIDY=${CMAKE_TOOLBOX_REQUIRE_CLANG_TIDY} -P
+                ${test_file}
         )
         set_tests_properties(
             compilecommands_${test_name}
@@ -217,48 +165,6 @@ if(NOT _TOOLBOX_MULTI_CONFIG)
 else()
     message(STATUS "Skipping CompileCommands unit tests on multi-config generators")
 endif()
-
-# Automatically add all Cppcheck unit tests to CTest
-file(GLOB CPPCHECK_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/cppcheck/test_*.cmake")
-foreach(test_file ${CPPCHECK_TEST_FILES})
-    # Extract the test name from the filename (test_<name>.cmake -> <name>)
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-
-    # Add the test to CTest with name cppcheck_<name>
-    add_test(
-        NAME cppcheck_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
-    )
-    set_tests_properties(
-        cppcheck_${test_name}
-        PROPERTIES
-            LABELS
-                "script;cppcheck"
-    )
-endforeach()
-
-# Automatically add all IWYU unit tests to CTest
-file(GLOB IWYU_TEST_FILES "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/iwyu/test_*.cmake")
-foreach(test_file ${IWYU_TEST_FILES})
-    # Extract the test name from the filename (test_<name>.cmake -> <name>)
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-
-    # Add the test to CTest with name iwyu_<name>
-    add_test(
-        NAME iwyu_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -P ${test_file}
-    )
-    set_tests_properties(
-        iwyu_${test_name}
-        PROPERTIES
-            LABELS
-                "script;iwyu"
-    )
-endforeach()
 
 # ==============================================================================
 # Sanitizer Module Integration Tests
@@ -428,54 +334,6 @@ foreach(test_file ${SANITIZER_INTEGRATION_TESTS})
     )
 endforeach()
 
-# ClangTidy Integration Tests
-file(
-    GLOB CLANGTIDY_INTEGRATION_TESTS
-    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/clangtidy/test_*.cmake"
-)
-foreach(test_file ${CLANGTIDY_INTEGRATION_TESTS})
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    add_test(
-        NAME integration_clangtidy_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
-            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
-    )
-    set_tests_properties(
-        integration_clangtidy_${test_name}
-        PROPERTIES
-            LABELS
-                "integration;clangtidy"
-    )
-endforeach()
-
-# ClangFormat Integration Tests
-file(
-    GLOB CLANGFORMAT_INTEGRATION_TESTS
-    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/clangformat/test_*.cmake"
-)
-foreach(test_file ${CLANGFORMAT_INTEGRATION_TESTS})
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    add_test(
-        NAME integration_clangformat_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
-            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
-    )
-    set_tests_properties(
-        integration_clangformat_${test_name}
-        PROPERTIES
-            LABELS
-                "integration;clangformat"
-    )
-endforeach()
-
 # CompileCommands Integration Tests
 file(
     GLOB COMPILECOMMANDS_INTEGRATION_TESTS
@@ -593,54 +451,6 @@ foreach(test_file ${FINDUNITY_INTEGRATION_TESTS})
         PROPERTIES
             LABELS
                 "integration;findunity"
-    )
-endforeach()
-
-# Cppcheck Integration Tests
-file(
-    GLOB CPPCHECK_INTEGRATION_TESTS
-    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/cppcheck/test_*.cmake"
-)
-foreach(test_file ${CPPCHECK_INTEGRATION_TESTS})
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    add_test(
-        NAME integration_cppcheck_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
-            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
-    )
-    set_tests_properties(
-        integration_cppcheck_${test_name}
-        PROPERTIES
-            LABELS
-                "integration;cppcheck"
-    )
-endforeach()
-
-# IWYU Integration Tests
-file(
-    GLOB IWYU_INTEGRATION_TESTS
-    "${CMAKE_CURRENT_LIST_DIR}/../unit_tests/integration/iwyu/test_*.cmake"
-)
-foreach(test_file ${IWYU_INTEGRATION_TESTS})
-    get_filename_component(test_filename ${test_file} NAME_WE)
-    string(REGEX REPLACE "^test_" "" test_name ${test_filename})
-    add_test(
-        NAME integration_iwyu_${test_name}
-        COMMAND
-            ${CMAKE_COMMAND} -DCMAKE_TOOLBOX_TEST_GENERATOR=${CMAKE_GENERATOR}
-            -DCMAKE_TOOLBOX_TEST_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCMAKE_TOOLBOX_TEST_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${test_file}
-    )
-    set_tests_properties(
-        integration_iwyu_${test_name}
-        PROPERTIES
-            LABELS
-                "integration;iwyu"
     )
 endforeach()
 

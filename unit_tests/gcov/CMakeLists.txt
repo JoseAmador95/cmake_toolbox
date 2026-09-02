@@ -1,6 +1,6 @@
 # Unit test for Gcov.cmake module
-# This test validates that Gcov_AddToTarget correctly applies
-# compile options and link options to targets with appropriate scope.
+# Validates that Gcov_AddToTarget applies the real coverage flags, per language,
+# with the requested scope, and that the gcovr target is created.
 
 cmake_minimum_required(VERSION 3.22)
 project(GcovModuleTest)
@@ -32,11 +32,8 @@ Gcov_AddToTarget(test_coverage_lib PUBLIC)
 # Verify Properties
 # ==============================================================================
 
-# Get compile options
 get_target_property(COMPILE_OPTIONS test_coverage_lib COMPILE_OPTIONS)
 get_target_property(INTERFACE_COMPILE_OPTIONS test_coverage_lib INTERFACE_COMPILE_OPTIONS)
-
-# Get link options
 get_target_property(LINK_OPTIONS test_coverage_lib LINK_OPTIONS)
 get_target_property(INTERFACE_LINK_OPTIONS test_coverage_lib INTERFACE_LINK_OPTIONS)
 
@@ -44,11 +41,12 @@ message(STATUS "=== Gcov Module Test Results ===")
 message(STATUS "Compiler C: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "Compiler CXX: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "GCOV_COMPILE_FLAGS (override): ${GCOV_COMPILE_FLAGS}")
-message(STATUS "GCOV_LINKER_FLAGS (override): ${GCOV_LINKER_FLAGS}")
+message(STATUS "GCOV_LINK_FLAGS (override): ${GCOV_LINK_FLAGS}")
 message(STATUS "COMPILE_OPTIONS (with genex): ${COMPILE_OPTIONS}")
 message(STATUS "INTERFACE_COMPILE_OPTIONS: ${INTERFACE_COMPILE_OPTIONS}")
 message(STATUS "LINK_OPTIONS (with genex): ${LINK_OPTIONS}")
 message(STATUS "INTERFACE_LINK_OPTIONS: ${INTERFACE_LINK_OPTIONS}")
+message(STATUS "CMT_GCOVR_COMMAND: ${CMT_GCOVR_COMMAND}")
 
 # ==============================================================================
 # Assertions
@@ -56,51 +54,66 @@ message(STATUS "INTERFACE_LINK_OPTIONS: ${INTERFACE_LINK_OPTIONS}")
 
 set(TEST_FAILED FALSE)
 
-# Check properties are set (they will contain generator expressions if using auto-detection)
-if(NOT GCOV_COMPILE_FLAGS AND NOT GCOV_LINKER_FLAGS)
-    # Using automatic detection via generator expressions
-    if(NOT COMPILE_OPTIONS)
-        message(SEND_ERROR "COMPILE_OPTIONS should be set with generator expressions")
+# The expected instrumentation flag: the manual override when given, otherwise
+# the automatic per-language default (--coverage for GNU/Clang/AppleClang).
+set(EXPECTED_COMPILE_FLAG "--coverage")
+if(GCOV_COMPILE_FLAGS)
+    set(EXPECTED_COMPILE_FLAG "${GCOV_COMPILE_FLAGS}")
+endif()
+set(EXPECTED_LINK_FLAG "--coverage")
+if(GCOV_LINK_FLAGS)
+    set(EXPECTED_LINK_FLAG "${GCOV_LINK_FLAGS}")
+endif()
+
+# The core promise of the module: the instrumentation flag really lands on the
+# target, both privately and on the PUBLIC interface.
+foreach(prop COMPILE_OPTIONS INTERFACE_COMPILE_OPTIONS)
+    if(NOT "${${prop}}" MATCHES "${EXPECTED_COMPILE_FLAG}")
+        message(SEND_ERROR "${prop} must contain '${EXPECTED_COMPILE_FLAG}': ${${prop}}")
         set(TEST_FAILED TRUE)
     endif()
+endforeach()
 
-    if(NOT LINK_OPTIONS)
-        message(SEND_ERROR "LINK_OPTIONS should be set with generator expressions")
+foreach(prop LINK_OPTIONS INTERFACE_LINK_OPTIONS)
+    if(NOT "${${prop}}" MATCHES "${EXPECTED_LINK_FLAG}")
+        message(SEND_ERROR "${prop} must contain '${EXPECTED_LINK_FLAG}': ${${prop}}")
         set(TEST_FAILED TRUE)
     endif()
+endforeach()
 
-    # Validate that generator expressions are present for per-language detection
-    string(
-        FIND "${COMPILE_OPTIONS}"
-        "COMPILE_LANGUAGE"
-        HAS_GENEX
-    )
-    if(HAS_GENEX EQUAL -1)
+if(NOT GCOV_COMPILE_FLAGS)
+    # Automatic detection must be language-gated so that mixed toolchains only
+    # get --coverage for the languages that support it.
+    if(NOT COMPILE_OPTIONS MATCHES "\\$<\\$<COMPILE_LANGUAGE:C>:--coverage>")
         message(
             SEND_ERROR
-            "Expected generator expressions in COMPILE_OPTIONS for language detection"
+            "Expected a $<COMPILE_LANGUAGE:C> guarded --coverage: ${COMPILE_OPTIONS}"
         )
         set(TEST_FAILED TRUE)
-    else()
-        message(STATUS "✓ Generator expressions (per-language) detected in compile options")
-        # Verify structure: should have $<$<COMPILE_LANGUAGE:C>:...> or $<$<COMPILE_LANGUAGE:CXX>:...>
-        if(COMPILE_OPTIONS MATCHES "COMPILE_LANGUAGE:C")
-            message(STATUS "✓ C language-specific flags detected")
-        endif()
-        if(COMPILE_OPTIONS MATCHES "COMPILE_LANGUAGE:CXX")
-            message(STATUS "✓ C++ language-specific flags detected")
-        endif()
     endif()
 
-    message(STATUS "✓ Using automatic per-language coverage detection (no manual overrides)")
-else()
-    # User provided manual override
-    message(STATUS "✓ Using manual GCOV_COMPILE_FLAGS/GCOV_LINKER_FLAGS override")
+    # Link options are not language-gated (they apply to the whole target).
+    if(LINK_OPTIONS MATCHES "COMPILE_LANGUAGE")
+        message(SEND_ERROR "LINK_OPTIONS must not be language-gated: ${LINK_OPTIONS}")
+        set(TEST_FAILED TRUE)
+    endif()
+endif()
+
+# The Ceedling module binds to a target literally named 'gcovr'.
+if(NOT TARGET gcovr)
+    message(SEND_ERROR "Expected the 'gcovr' report target to be created")
+    set(TEST_FAILED TRUE)
+endif()
+
+# Without CMT_GCOVR_CONFIG_FILE the module generates a gcovr.cfg.
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/coverage/gcovr_generated.cfg")
+    message(SEND_ERROR "Expected a generated gcovr.cfg in ${CMAKE_BINARY_DIR}/coverage")
+    set(TEST_FAILED TRUE)
 endif()
 
 # Final result
 if(TEST_FAILED)
     message(FATAL_ERROR "Gcov module test FAILED")
 else()
-    message(STATUS "✓ All Gcov module tests PASSED")
+    message(STATUS "All Gcov module tests PASSED")
 endif()
