@@ -62,9 +62,16 @@ Cache Variables
 ``CMT_GCOVR_FAIL_UNDER_LINE``, ``..._BRANCH``, ``..._FUNCTION``, ``..._DECISION``
   Minimum coverage percentages, 0-100; ``0`` disables the threshold. Default: 0.
   There are no ``CMT_GCOVR_MIN_*`` aliases.
-``CMT_GCOVR_SEARCH_PATH``, ``CMT_GCOVR_FILTER``, ``CMT_GCOVR_EXCLUDE``,
-``CMT_GCOVR_EXCLUDE_DIRECTORIES``
+``CMT_GCOVR_SEARCH_PATH``
+  Where gcovr looks for the ``.gcda`` / ``.gcno`` coverage data.
+  Default: ``${CMAKE_BINARY_DIR}``. The data lives in the build tree, while
+  ``--root`` stays on the source tree so that the report paths remain relative
+  to the sources. Without an explicit search path gcovr would scan its working
+  directory instead, picking up unrelated (possibly stale) coverage data from
+  the source tree. Set it explicitly to override the default.
+``CMT_GCOVR_FILTER``, ``CMT_GCOVR_EXCLUDE``, ``CMT_GCOVR_EXCLUDE_DIRECTORIES``
   Semicolon-separated lists; each entry becomes its own config file line.
+  ``CMT_GCOVR_SEARCH_PATH`` accepts a list too.
 ``CMT_GCOVR_EXCLUDE_UNREACHABLE_BRANCHES``, ``CMT_GCOVR_EXCLUDE_THROW_BRANCHES``,
 ``CMT_GCOVR_EXCLUDE_FUNCTION_LINES``, ``CMT_GCOVR_DECISIONS``,
 ``CMT_GCOVR_CALLS``, ``CMT_GCOVR_PRINT_SUMMARY``
@@ -209,7 +216,7 @@ set(CMT_GCOVR_FAIL_UNDER_BRANCH "0" CACHE STRING "Minimum branch coverage % (0 =
 set(CMT_GCOVR_FAIL_UNDER_FUNCTION "0" CACHE STRING "Minimum function coverage % (0 = disabled)")
 set(CMT_GCOVR_FAIL_UNDER_DECISION "0" CACHE STRING "Minimum decision coverage % (0 = disabled)")
 
-set(CMT_GCOVR_SEARCH_PATH "" CACHE STRING "Search paths for .gcda files")
+set(CMT_GCOVR_SEARCH_PATH "${CMAKE_BINARY_DIR}" CACHE STRING "Search paths for .gcda files")
 set(CMT_GCOVR_FILTER "" CACHE STRING "Regex patterns of files to include")
 set(CMT_GCOVR_EXCLUDE "" CACHE STRING "Regex patterns of files to exclude")
 set(CMT_GCOVR_EXCLUDE_DIRECTORIES "" CACHE STRING "Regex patterns of directories to exclude")
