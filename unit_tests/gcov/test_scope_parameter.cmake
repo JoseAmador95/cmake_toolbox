@@ -18,6 +18,13 @@ set(CMAKE_MODULE_PATH
 )
 include(TestHelpers)
 
+# Forward the parent build's toolchain into every sub-CMake below. Without this
+# the child falls back to the platform default generator, which on Windows is
+# MSVC even when the parent leg is MinGW or Ninja/GCC. Gcov then correctly
+# disables itself on MSVC and the coverage assertions fail against a compiler
+# this test was never meant to exercise.
+TestHelpers_GetConfigureArgs(_GCOV_CONFIGURE_ARGS)
+
 set(ERROR_COUNT 0)
 set(TEST_ROOT "${CMAKE_TOOLBOX_TEST_ARTIFACTS_ROOT}/gcov_scope_test")
 
@@ -85,7 +92,7 @@ endforeach()
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -149,7 +156,7 @@ message(STATUS \"Exported compile options: \${exported}\")
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -196,7 +203,7 @@ message(STATUS \"Interface library with INTERFACE scope configured successfully\
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
@@ -238,7 +245,7 @@ message(STATUS \"Executable with coverage flags configured\")
 
     execute_process(
         COMMAND
-            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}"
+            ${CMAKE_COMMAND} -S "${src_dir}" -B "${build_dir}" ${_GCOV_CONFIGURE_ARGS}
         RESULT_VARIABLE result
         OUTPUT_VARIABLE output
         ERROR_VARIABLE error
